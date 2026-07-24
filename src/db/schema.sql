@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
   tarjeta_profesional TEXT,
   especialidad TEXT,
   estado_agronomo TEXT DEFAULT NULL CHECK(estado_agronomo IN (NULL,'pendiente','aprobado','rechazado')),
+  activo INTEGER NOT NULL DEFAULT 1 CHECK(activo IN (0,1)),
+  bloqueado_en TEXT DEFAULT NULL,
+  motivo_bloqueo TEXT DEFAULT NULL,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

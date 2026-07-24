@@ -12,19 +12,26 @@ const router = express.Router();
 // así que el mismo campo sirve como identificador de login para todos los roles.
 router.post('/register', (req, res) => {
   const { nombre, email, telefono, password, rol, tipoProductor, pais, region, tarjetaProfesional, especialidad } = req.body;
+  const emailNormalizado = String(email || '').trim().toLowerCase();
 
-  if (!nombre || !email || !password) {
-    return res.status(400).json({ error: 'nombre, email y password son obligatorios.' });
+  if (!nombre || !emailNormalizado || !telefono || !password || !rol || !tipoProductor || !pais || !region) {
+    return res.status(400).json({
+      error: 'Debes completar todos los datos del formulario: nombre, correo, teléfono, contraseña, tipo de productor, país, región y tipo de cuenta.'
+    });
+  }
+  if (!/^\S+@\S+\.\S+$/.test(emailNormalizado)) {
+    return res.status(400).json({ error: 'El correo electrónico no es válido.' });
   }
   if (password.length < 6) {
     return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' });
   }
-  if (db.prepare('SELECT 1 FROM usuarios WHERE email = ?').get(email)) {
+  if (db.prepare('SELECT 1 FROM usuarios WHERE lower(email) = ?').get(emailNormalizado)) {
     return res.status(409).json({ error: 'Ya existe una cuenta registrada con ese correo.' });
   }
-  const rolSolicitado = ['agricultor', 'agronomo', 'admin'].includes(rol) ? rol : 'agricultor';
-  if (rolSolicitado === 'agronomo' && !tarjetaProfesional) {
-    return res.status(400).json({ error: 'Como agrónomo, tarjetaProfesional es obligatoria.' });
+  const rolSolicitado = ['agricultor', 'agronomo'].includes(rol) ? rol : null;
+  if (!rolSolicitado) return res.status(400).json({ error: 'Tipo de cuenta inválido.' });
+  if (rolSolicitado === 'agronomo' && (!tarjetaProfesional || !especialidad)) {
+    return res.status(400).json({ error: 'Como agrónomo, la tarjeta profesional y la especialidad son obligatorias.' });
   }
 
   const id = nuevoId('usr');
@@ -35,8 +42,8 @@ router.post('/register', (req, res) => {
     INSERT INTO usuarios (id, nombre, email, telefono, password_hash, rol, tipo_productor, pais, region, tarjeta_profesional, especialidad, estado_agronomo)
     VALUES (@id, @nombre, @email, @telefono, @passwordHash, @rolFinal, @tipoProductor, @pais, @region, @tarjetaProfesional, @especialidad, @estadoAgronomo)
   `).run({
-    id, nombre, email, telefono: telefono || null, passwordHash, rolFinal,
-    tipoProductor: tipoProductor || null, pais: pais || null, region: region || null,
+    id, nombre: nombre.trim(), email: emailNormalizado, telefono: telefono.trim(), passwordHash, rolFinal,
+    tipoProductor: tipoProductor.trim(), pais: pais.trim(), region: region.trim(),
     tarjetaProfesional: tarjetaProfesional || null, especialidad: especialidad || null,
     estadoAgronomo: rolSolicitado === 'agronomo' ? 'pendiente' : null
   });
@@ -50,11 +57,15 @@ router.post('/register', (req, res) => {
 // `email` acepta correo o nombre de usuario, según la cuenta creada.
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'email y password son obligatorios.' });
+  const identificador = String(email || '').trim().toLowerCase();
+  if (!identificador || !password) return res.status(400).json({ error: 'email y password son obligatorios.' });
 
-  const usuario = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
+  const usuario = db.prepare('SELECT * FROM usuarios WHERE lower(email) = ?').get(identificador);
   if (!usuario || !bcrypt.compareSync(password, usuario.password_hash)) {
     return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
+  }
+  if (usuario.activo === 0) {
+    return res.status(403).json({ error: 'Tu cuenta está bloqueada. Comunícate con el administrador.' });
   }
   const token = firmarToken(usuario);
   res.json({ token, usuario: sinPassword(usuario) });

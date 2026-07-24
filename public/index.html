@@ -951,6 +951,19 @@
     <span class="pg-title">Panel de Administrador</span>
   </div>
   <div class="phdr-card">
+    <div class="phdr-t">Gestión de usuarios</div>
+    <div class="phdr-s">Consulta las cuentas registradas y controla quién puede acceder a los contenidos y herramientas.</div>
+  </div>
+  <div style="padding:0 14px 10px;display:flex;gap:7px;flex-wrap:wrap">
+    <input id="admin-usuarios-buscar" type="search" placeholder="Buscar por nombre, correo o teléfono" style="flex:1;min-width:180px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:9px 10px;font-size:12px;color:var(--color-text-primary);font-family:inherit">
+    <select id="admin-usuarios-filtro" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:9px 10px;font-size:12px;color:var(--color-text-primary);font-family:inherit">
+      <option value="todos">Todos</option><option value="activos">Activos</option><option value="bloqueados">Bloqueados</option>
+    </select>
+    <button type="button" onclick="renderAdminUsuarios()" style="border:none;border-radius:8px;padding:9px 13px;background:#1b5e20;color:#fff;font-size:11px;font-weight:500;font-family:inherit;cursor:pointer">Buscar</button>
+  </div>
+  <div id="admin-usuarios-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+
+  <div class="phdr-card" style="margin-top:12px">
     <div class="phdr-t">Solicitudes de agrónomos</div>
     <div class="phdr-s">Verifica la tarjeta profesional antes de aprobar el acceso a fincas de productores.</div>
   </div>
@@ -1091,12 +1104,12 @@
       <div class="rh"></div>
       <div class="rt" id="reg-titulo">Únete a Dr Plants</div>
       <div class="rs" id="reg-subtitulo">Regístrate para acceder al agrónomo inteligente y personalizar tu experiencia.</div>
-      <div class="fl"><label>Nombre completo</label><input type="text" id="reg-nombre" placeholder="Tu nombre"></div>
-      <div class="fl"><label id="reg-email-label">Correo electrónico</label><input type="text" id="reg-email" placeholder="tucorreo@ejemplo.com"></div>
-      <div class="fl"><label>Contraseña</label><input type="password" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="fl"><label>Nombre completo *</label><input type="text" id="reg-nombre" placeholder="Tu nombre"></div>
+      <div class="fl"><label id="reg-email-label">Correo electrónico *</label><input type="text" id="reg-email" placeholder="tucorreo@ejemplo.com"></div>
+      <div class="fl"><label>Contraseña *</label><input type="password" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
       <div id="reg-extra-fields">
-        <div class="fl"><label>Teléfono</label><input type="tel" id="reg-telefono" placeholder="+57 300 000 0000"></div>
-        <div class="fl"><label>Tipo de productor</label>
+        <div class="fl"><label>Teléfono *</label><input type="tel" id="reg-telefono" placeholder="+57 300 000 0000"></div>
+        <div class="fl"><label>Tipo de productor *</label>
           <select id="reg-tipo">
             <option>Pequeño agricultor (menos de 5 ha)</option>
             <option>Mediano productor (5 a 50 ha)</option>
@@ -1104,21 +1117,21 @@
             <option>Empresa agropecuaria</option>
           </select>
         </div>
-        <div class="fl"><label>País</label>
+        <div class="fl"><label>País *</label>
           <select id="reg-pais"><option>Colombia</option><option>Ecuador</option><option>Perú</option><option>México</option><option>Otro</option></select>
         </div>
-        <div class="fl"><label>Región, provincia o estado</label>
+        <div class="fl"><label>Región, provincia o estado *</label>
           <input type="text" id="reg-region" placeholder="Ej. Tolima, Pichincha, Lima..."></div>
-        <div class="fl"><label>Tipo de cuenta</label>
+        <div class="fl"><label>Tipo de cuenta *</label>
           <select id="reg-rol" onchange="toggleCamposAgronomo()">
             <option value="agricultor">Soy agricultor / productor</option>
             <option value="agronomo">Soy agrónomo — acompaño fincas de productores</option>
           </select>
         </div>
         <div id="reg-campos-agronomo" style="display:none">
-          <div class="fl"><label>Número de tarjeta profesional</label>
+          <div class="fl"><label>Número de tarjeta profesional *</label>
             <input type="text" id="reg-tarjeta" placeholder="Ej. TP-12345 de Nariño"></div>
-          <div class="fl"><label>Especialidad</label>
+          <div class="fl"><label>Especialidad *</label>
             <input type="text" id="reg-especialidad" placeholder="Ej. Ingeniero agrónomo, suelos y nutrición"></div>
           <div style="font-size:10px;color:var(--color-text-secondary);margin:-4px 0 10px">Tu cuenta quedará en revisión hasta que un administrador de Campus HBC verifique tu tarjeta profesional. En esta demo no se sube un archivo real — en producción aquí iría un cargador de documento.</div>
         </div>
@@ -1126,7 +1139,7 @@
       <div id="reg-error" style="display:none;color:#c62828;font-size:11px;margin-top:-6px;margin-bottom:8px"></div>
       <button class="rbtn" id="reg-btn-primario" onclick="doReg()">Comenzar gratis</button>
       <button style="width:100%;background:none;border:none;color:#1b5e20;font-size:12px;font-weight:500;cursor:pointer;margin-top:8px;font-family:inherit" id="reg-btn-toggle" onclick="regModo='login';renderRegMode()">Ya tengo cuenta — iniciar sesión</button>
-      <button style="width:100%;background:none;border:none;color:var(--color-text-secondary);font-size:12px;cursor:pointer;margin-top:8px;font-family:inherit" onclick="go('home','home')">Cancelar</button>
+      <button style="width:100%;background:none;border:none;color:var(--color-text-secondary);font-size:12px;cursor:pointer;margin-top:8px;font-family:inherit" onclick="go('splash','')">Cancelar</button>
     </div>
   </div>
 </div>
@@ -2275,6 +2288,12 @@ function renderRecPoints(){
 <script>
 
 function go(sid,nid){
+  const pantallasPublicas=['splash','reg'];
+  if(!SESION.autenticado && !pantallasPublicas.includes(sid)){
+    regModo='registro';
+    sid='reg';
+    nid='';
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById('s-'+sid).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
@@ -2900,16 +2919,36 @@ const BACKEND_URL = window.location.origin;
 let SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',token:null};
 
 function guardarEstado(){
-  // TODO backend: reemplazar por, por ejemplo:
-  // fetch('/api/sesion', {method:'POST', body: JSON.stringify({SESION, PROGRESO:[...PROGRESO.completadas], cart})})
-  // Por ahora el estado ya vive correctamente en memoria (SESION, PROGRESO, cart, LOTES)
-  // mientras dura la sesión del navegador — este es solo el punto de enganche futuro.
+  if(SESION.token){
+    localStorage.setItem('drplants_token', SESION.token);
+  }else{
+    localStorage.removeItem('drplants_token');
+  }
 }
 
-function cargarEstado(){
-  // TODO backend: reemplazar por fetch GET a /api/sesion al iniciar la app, y usar la
-  // respuesta para poblar SESION, PROGRESO, cart y LOTES del usuario autenticado real.
-  return null;
+async function cargarEstado(){
+  const token=localStorage.getItem('drplants_token');
+  if(!token)return false;
+  try{
+    const resp=await fetch(BACKEND_URL+'/api/auth/me',{
+      headers:{'Authorization':'Bearer '+token}
+    });
+    if(!resp.ok)throw new Error('Sesión inválida');
+    const usuario=await resp.json();
+    SESION={
+      autenticado:true,nombre:usuario.nombre,email:usuario.email,
+      telefono:usuario.telefono,tipoProductor:usuario.tipo_productor,
+      pais:usuario.pais,region:usuario.region,rol:usuario.rol,token
+    };
+    actualizarUIsesion();
+    await cargarFincasDesdeBackend();
+    return true;
+  }catch(e){
+    localStorage.removeItem('drplants_token');
+    SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',token:null};
+    actualizarUIsesion();
+    return false;
+  }
 }
 
 function actualizarUIsesion(){
@@ -2940,7 +2979,7 @@ function cerrarSesion(){
   SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',token:null};
   guardarEstado();
   actualizarUIsesion();
-  go('home','home');
+  go('splash','');
 }
 
 function openReg(){regModo='registro';go('reg','');}
@@ -3005,26 +3044,32 @@ async function doReg(){
     err.style.display='block';
     return;
   }
-  if(BACKEND_URL&&(!password||password.length<6)){
+  if(!password||password.length<6){
     err.textContent='La contraseña debe tener al menos 6 caracteres.';
     err.style.display='block';
     return;
   }
   if(rol==='agronomo'){
     const tarjeta=document.getElementById('reg-tarjeta').value.trim();
-    if(!tarjeta){
-      err.textContent='Como agrónomo, necesitas indicar tu número de tarjeta profesional.';
+    const especialidad=document.getElementById('reg-especialidad').value.trim();
+    if(!tarjeta||!especialidad){
+      err.textContent='Como agrónomo, debes indicar tarjeta profesional y especialidad.';
       err.style.display='block';
       return;
     }
   }
   err.style.display='none';
-  const telefono=document.getElementById('reg-telefono').value.trim()||null;
+  const telefono=document.getElementById('reg-telefono').value.trim();
   const tipoProductor=document.getElementById('reg-tipo').value;
   const pais=document.getElementById('reg-pais').value;
-  const region=document.getElementById('reg-region').value.trim()||null;
+  const region=document.getElementById('reg-region').value.trim();
+  if(!telefono||!tipoProductor||!pais||!region){
+    err.textContent='Completa teléfono, tipo de productor, país y región para continuar.';
+    err.style.display='block';
+    return;
+  }
   const tarjetaProfesional=rol==='agronomo'?document.getElementById('reg-tarjeta').value.trim():null;
-  const especialidad=rol==='agronomo'?(document.getElementById('reg-especialidad').value.trim()||'Ingeniero agrónomo'):null;
+  const especialidad=rol==='agronomo'?document.getElementById('reg-especialidad').value.trim():null;
 
   // Si hay backend configurado, se registra de verdad (queda guardado en la base de
   // datos real, no solo en memoria del navegador). Si el backend no responde por
@@ -3048,33 +3093,14 @@ async function doReg(){
       go('agronomo','agronomo');
       return;
     }catch(e){
-      err.textContent='No se pudo conectar con el servidor ('+e.message+'). Continuamos en modo demo.';
+      err.textContent='No se pudo crear la cuenta: '+e.message;
       err.style.display='block';
-      // sigue abajo al modo demo en vez de bloquear al usuario
+      return;
     }
   }
 
-  if(rol==='agronomo'){
-    const solicitudId='sol'+(SOLICITUDES_AGRONOMO.length+1)+'_'+Date.now();
-    SOLICITUDES_AGRONOMO.push({id:solicitudId,nombre,telefono,tarjeta:tarjetaProfesional,especialidad,fecha:isoDaysAgo(0),estado:'pendiente'});
-    SESION={autenticado:true,nombre,telefono,tipoProductor,pais,region,rol:'agronomo_pendiente',solicitudId,token:null};
-    guardarEstado();
-    actualizarUIsesion();
-    document.getElementById('ap-tarjeta-txt').textContent=tarjetaProfesional;
-    go('agronomo-pendiente','');
-    return;
-  }
-
-  SESION={autenticado:true,nombre,telefono,tipoProductor,pais,region,rol,token:null};
-  guardarEstado();
-  actualizarUIsesion();
-  if(rol==='admin'){
-    go('panel-admin','');
-    return;
-  }
-  drAgroHistory=[];
-  document.getElementById('chat').innerHTML='<div class="mb"><div class="mb-lbl">Dr. Agro IA</div>Bienvenido a Dr Plants, '+escapeHtml(nombre)+'. Soy tu agrónomo virtual. Cuéntame, ¿en qué cultivo puedo ayudarte hoy?</div>';
-  go('agronomo','agronomo');
+  err.textContent='No hay conexión con el servidor. El registro es obligatorio y no se permite entrar en modo demo.';
+  err.style.display='block';
 }
 
 async function doLogin(){
@@ -3121,7 +3147,56 @@ async function doLogin(){
   }
 }
 
+async function renderAdminUsuarios(){
+  const wrap=document.getElementById('admin-usuarios-list');
+  if(!wrap)return;
+  if(!BACKEND_URL||!SESION.token){mensajeSinBackend('admin-usuarios-list','Los usuarios aparecerán cuando el backend esté conectado.');return;}
+  const filtro=document.getElementById('admin-usuarios-filtro')?.value||'todos';
+  const buscar=document.getElementById('admin-usuarios-buscar')?.value.trim()||'';
+  wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary);padding:8px 0">Cargando usuarios...</div>';
+  try{
+    const usuarios=await apiFetch('/api/admin/usuarios?estado='+encodeURIComponent(filtro)+'&buscar='+encodeURIComponent(buscar));
+    if(!usuarios.length){wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary);padding:8px 0">No se encontraron usuarios.</div>';return;}
+    wrap.innerHTML=usuarios.map(u=>{
+      const activo=Number(u.activo)!==0;
+      const rol=(u.rol||'usuario').replaceAll('_',' ');
+      const estado=activo?'Activo':'Bloqueado';
+      const estiloEstado=activo?'background:#EAF4DC;color:#275D10':'background:#FDECEC;color:#9B1C1C';
+      return `<div class="lab-card" style="align-items:flex-start">
+        <div class="lab-ico"><i class="ti ${activo?'ti-user-check':'ti-user-off'}"></i></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+            <div class="lab-name" style="overflow-wrap:anywhere">${escapeHtml(u.nombre||'Sin nombre')}</div>
+            <span style="font-size:9.5px;border-radius:999px;padding:3px 7px;white-space:nowrap;${estiloEstado}">${estado}</span>
+          </div>
+          <div class="lab-desc" style="overflow-wrap:anywhere">${escapeHtml(u.email||'')} · ${escapeHtml(rol)}</div>
+          <div class="lab-desc">${escapeHtml(u.telefono||'Sin teléfono')} · ${escapeHtml(u.pais||'')} ${u.region?'· '+escapeHtml(u.region):''}</div>
+          ${!activo&&u.motivo_bloqueo?`<div class="lab-desc" style="color:#9B1C1C">Motivo: ${escapeHtml(u.motivo_bloqueo)}</div>`:''}
+          <button type="button" onclick="cambiarAccesoUsuario('${u.id}',${activo?'false':'true'})" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;${activo?'background:var(--color-background-primary);color:#c62828;border:0.5px solid #F09595':'background:#1b5e20;color:#fff;border:none'}">${activo?'Bloquear acceso':'Desbloquear acceso'}</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){mensajeSinBackend('admin-usuarios-list','No se pudieron cargar los usuarios: '+e.message);}
+}
+
+function escapeHtml(valor){
+  return String(valor??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+
+async function cambiarAccesoUsuario(id,activar){
+  let motivo='';
+  if(!activar){
+    motivo=prompt('Motivo del bloqueo (opcional):','')||'';
+    if(!confirm('¿Confirmas que este usuario no podrá ingresar ni usar los contenidos?'))return;
+  }else if(!confirm('¿Confirmas que deseas restablecer el acceso de este usuario?'))return;
+  try{
+    await apiFetch('/api/admin/usuarios/'+encodeURIComponent(id)+'/acceso',{method:'PATCH',body:JSON.stringify({activo:activar,motivo})});
+    await renderAdminUsuarios();
+  }catch(e){alert('No se pudo cambiar el acceso: '+e.message);}
+}
+
 function renderAdminSolicitudes(){
+  renderAdminUsuarios();
   const wrap=document.getElementById('admin-solicitudes-list');
   if(!wrap)return;
   const pendientes=SOLICITUDES_AGRONOMO.filter(s=>s.estado==='pendiente');
@@ -3623,6 +3698,18 @@ async function solicitarTeleconsulta(){
 renderProducts();
 cargarProductosDesdeBackend();
 
+(async function iniciarApp(){
+  const restaurada=await cargarEstado();
+  if(restaurada){
+    go('home','home');
+  }else{
+    go('splash','');
+  }
+})();
+
+
+document.getElementById('admin-usuarios-buscar')?.addEventListener('keydown',e=>{if(e.key==='Enter')renderAdminUsuarios();});
+document.getElementById('admin-usuarios-filtro')?.addEventListener('change',renderAdminUsuarios);
 </script>
 </body>
 </html>

@@ -5,6 +5,79 @@ const { nuevoId, requiereAuth, requiereRol } = require('../auth');
 const router = express.Router();
 router.use(requiereAuth, requiereRol('admin'));
 
+
+// GET /api/admin/database-status — comprobación segura de conexión y persistencia
+router.get('/database-status', (req, res) => {
+  const integrity = db.pragma('integrity_check', { simple: true });
+  const tablas = db.prepare(`
+    SELECT name FROM sqlite_master
+    WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+    ORDER BY name
+  `).all().map(f => f.name);
+  const usuarios = db.prepare('SELECT COUNT(*) AS total FROM usuarios').get().total;
+  const ultimoUsuario = db.prepare(`
+    SELECT id, nombre, email, rol, creado_en
+    FROM usuarios ORDER BY creado_en DESC LIMIT 1
+  `).get() || null;
+
+  res.json({
+    ok: integrity === 'ok',
+    motor: 'sqlite',
+    integrity,
+    tablas,
+    usuarios,
+    ultimoUsuario
+  });
+});
+
+// GET /api/admin/usuarios?estado=todos|activos|bloqueados&buscar=texto
+router.get('/usuarios', (req, res) => {
+  const estado = String(req.query.estado || 'todos');
+  const buscar = `%${String(req.query.buscar || '').trim().toLowerCase()}%`;
+  const condiciones = ["rol <> 'admin'"];
+  const params = [];
+  if (estado === 'activos') condiciones.push('activo = 1');
+  if (estado === 'bloqueados') condiciones.push('activo = 0');
+  if (buscar !== '%%') {
+    condiciones.push('(lower(nombre) LIKE ? OR lower(email) LIKE ? OR lower(telefono) LIKE ?)');
+    params.push(buscar, buscar, buscar);
+  }
+  const usuarios = db.prepare(`
+    SELECT id, nombre, email, telefono, rol, tipo_productor, pais, region,
+           tarjeta_profesional, especialidad, estado_agronomo, activo,
+           bloqueado_en, motivo_bloqueo, creado_en
+    FROM usuarios
+    WHERE ${condiciones.join(' AND ')}
+    ORDER BY activo ASC, creado_en DESC
+  `).all(...params);
+  res.json(usuarios);
+});
+
+// PATCH /api/admin/usuarios/:id/acceso  { activo: true|false, motivo?: string }
+router.patch('/usuarios/:id/acceso', (req, res) => {
+  const activo = req.body.activo;
+  const motivo = String(req.body.motivo || '').trim();
+  if (typeof activo !== 'boolean') {
+    return res.status(400).json({ error: 'activo debe ser true o false.' });
+  }
+  const usuario = db.prepare('SELECT id, nombre, email, rol FROM usuarios WHERE id = ?').get(req.params.id);
+  if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado.' });
+  if (usuario.rol === 'admin') {
+    return res.status(403).json({ error: 'No se puede bloquear una cuenta administradora desde este módulo.' });
+  }
+  db.prepare(`
+    UPDATE usuarios
+    SET activo = ?,
+        bloqueado_en = CASE WHEN ? = 0 THEN datetime('now') ELSE NULL END,
+        motivo_bloqueo = CASE WHEN ? = 0 THEN ? ELSE NULL END
+    WHERE id = ?
+  `).run(activo ? 1 : 0, activo ? 1 : 0, activo ? 1 : 0, motivo || null, usuario.id);
+  res.json(db.prepare(`
+    SELECT id, nombre, email, rol, activo, bloqueado_en, motivo_bloqueo
+    FROM usuarios WHERE id = ?
+  `).get(usuario.id));
+});
+
 // GET /api/admin/agronomos?estado=pendiente
 router.get('/agronomos', (req, res) => {
   const estado = req.query.estado || 'pendiente';
