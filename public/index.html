@@ -6,7 +6,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Dr Plants — Agro Campus HBC</title>
 <meta name="description" content="Ecosistema agro de Campus HBC: agrónomo con IA, laboratorio de diagnóstico, seguimiento de cultivo, tienda y formación tecnológica.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231b5e20'%3E%3Cpath d='M4 20c8 0 14-6 14-14V4h-2C8 4 4 10 4 18v2z'/%3E%3Cpath d='M4 20l9-9' stroke='%23c9a227' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#1b5e20">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dr Plants">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180x180.png">
 <style>
 :root{
   --color-background-primary:#ffffff;
@@ -3710,6 +3718,14 @@ cargarProductosDesdeBackend();
 
 document.getElementById('admin-usuarios-buscar')?.addEventListener('keydown',e=>{if(e.key==='Enter')renderAdminUsuarios();});
 document.getElementById('admin-usuarios-filtro')?.addEventListener('change',renderAdminUsuarios);
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(error => {
+      console.warn('No se pudo registrar el service worker:', error);
+    });
+  });
+}
 </script>
 </body>
 </html>
