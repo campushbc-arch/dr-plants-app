@@ -39,16 +39,31 @@ router.post('/', requiereAuth, async (req, res) => {
       })
     });
 
-    const data = await respuesta.json();
+    const data = await respuesta.json().catch(() => ({}));
 
-    // Guarda el historial real en la base de datos, asociado al usuario autenticado —
-    // esto es lo que en el prototipo vivía solo en `drAgroHistory`/`soporteHistory`/`labHistory`
-    // en memoria del navegador y se perdía al recargar.
+    // Los errores de Anthropic no son errores de sesión de Dr Plants. Normalizamos
+    // el mensaje y respondemos 502 para que el frontend no cierre la sesión del usuario.
+    if (!respuesta.ok) {
+      const detalleProveedor =
+        (typeof data?.error === 'string' && data.error) ||
+        data?.error?.message ||
+        data?.message ||
+        `Anthropic respondió con estado ${respuesta.status}.`;
+
+      console.error('Error de Anthropic:', respuesta.status, detalleProveedor);
+      return res.status(502).json({
+        code: 'AI_PROVIDER_ERROR',
+        error: detalleProveedor,
+        providerStatus: respuesta.status
+      });
+    }
+
+    // Guarda el historial real en la base de datos, asociado al usuario autenticado.
     if (modulo && ['dr_agro', 'soporte', 'laboratorio'].includes(modulo)) {
       guardarEnHistorial(req.usuario.id, modulo, messages, data);
     }
 
-    res.status(respuesta.status).json(data);
+    res.json(data);
   } catch (err) {
     console.error('Error llamando a la API de Claude:', err);
     res.status(502).json({ error: 'No se pudo contactar a la API de Claude en este momento.' });

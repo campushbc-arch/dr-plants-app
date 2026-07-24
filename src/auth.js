@@ -23,12 +23,12 @@ function firmarToken(usuario) {
 function requiereAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!token) return res.status(401).json({ error: 'No autenticado. Falta el token.' });
+  if (!token) return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'No autenticado. Falta el token.' });
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     const usuarioActual = db.prepare('SELECT id, rol, activo FROM usuarios WHERE id = ?').get(payload.id);
     if (!usuarioActual) {
-      return res.status(401).json({ error: 'La cuenta ya no existe.' });
+      return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'La cuenta ya no existe.' });
     }
     if (usuarioActual.activo === 0) {
       return res.status(403).json({ error: 'Tu cuenta está bloqueada. Comunícate con el administrador.' });
@@ -37,14 +37,14 @@ function requiereAuth(req, res, next) {
     req.usuario = { id: usuarioActual.id, rol: usuarioActual.rol };
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Token inválido o expirado.' });
+    return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'Token inválido o expirado.' });
   }
 }
 
 // Middleware: exige un rol específico (o uno de varios)
 function requiereRol(...rolesPermitidos) {
   return (req, res, next) => {
-    if (!req.usuario) return res.status(401).json({ error: 'No autenticado.' });
+    if (!req.usuario) return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'No autenticado.' });
     if (!rolesPermitidos.includes(req.usuario.rol)) {
       return res.status(403).json({ error: `Esta acción requiere rol: ${rolesPermitidos.join(' o ')}.` });
     }

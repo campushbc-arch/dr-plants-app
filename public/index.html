@@ -3586,7 +3586,16 @@ async function enviarMensajeIA(cfg){
     });
     if(response.status===401){
       let detalle='La sesión expiró o el servidor no reconoció el token.';
-      try{ const errorData=await response.json(); detalle=errorData.error||detalle; }catch(_e){}
+      let codigo='AUTH_REQUIRED';
+      try{
+        const errorData=await response.json();
+        codigo=errorData.code||codigo;
+        detalle=typeof errorData.error==='string'
+          ? errorData.error
+          : (errorData.error?.message||detalle);
+      }catch(_e){}
+      // Solo cerramos la sesión cuando el propio backend confirma un problema de autenticación.
+      if(codigo!=='AUTH_REQUIRED') throw new Error(detalle);
       localStorage.removeItem('drplants_token');
       SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',token:null};
       actualizarUIsesion();
@@ -3599,7 +3608,12 @@ async function enviarMensajeIA(cfg){
     }
     if(!response.ok){
       let detalle='El servidor respondió con un error ('+response.status+').';
-      try{ const errorData=await response.json(); detalle=errorData.error||detalle; }catch(_e){}
+      try{
+        const errorData=await response.json();
+        detalle=typeof errorData.error==='string'
+          ? errorData.error
+          : (errorData.error?.message||errorData.message||detalle);
+      }catch(_e){}
       throw new Error(detalle);
     }
     const data=await response.json();
