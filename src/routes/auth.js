@@ -8,7 +8,7 @@ const router = express.Router();
 // POST /api/auth/register
 // El nombre de usuario para iniciar sesión es el correo electrónico (columna `email`),
 // no el nombre — el nombre queda solo como dato de despliegue ("nombre completo").
-// Excepción: el admin fijo de Campus HBC se siembra con email='AGROCAMPUS' (ver seed.js),
+// El administrador se crea con las variables ADMIN_USERNAME y ADMIN_PASSWORD.
 // así que el mismo campo sirve como identificador de login para todos los roles.
 router.post('/register', (req, res) => {
   const { nombre, email, telefono, password, rol, tipoProductor, pais, region, tarjetaProfesional, especialidad } = req.body;
@@ -47,7 +47,7 @@ router.post('/register', (req, res) => {
 });
 
 // POST /api/auth/login  { email, password }
-// `email` acepta tanto un correo real como el usuario fijo "AGROCAMPUS" del admin.
+// `email` acepta correo o nombre de usuario, según la cuenta creada.
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email y password son obligatorios.' });

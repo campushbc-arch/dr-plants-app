@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS usuarios (
   id TEXT PRIMARY KEY,
   nombre TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE, -- identificador de login: correo real para agricultor/agrónomo, o "AGROCAMPUS" para el admin
+  email TEXT NOT NULL UNIQUE, -- identificador de inicio de sesión
   telefono TEXT,
   password_hash TEXT NOT NULL,
   rol TEXT NOT NULL DEFAULT 'agricultor' CHECK(rol IN ('agricultor','agronomo','agronomo_pendiente','admin')),

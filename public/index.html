@@ -2895,7 +2895,7 @@ function lecNav(dir){
 // despliegues (ej. 'https://api.agro.campushbc.com'). Mientras esté vacía, la app sigue
 // funcionando en modo demo (datos en memoria, como hasta ahora) — nunca se rompe por no
 // tener backend configurado, solo pierde la persistencia real.
-const BACKEND_URL = 'https://drplants.campushbc.com';
+const BACKEND_URL = window.location.origin;
 
 let SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',token:null};
 
@@ -3092,14 +3092,6 @@ async function doLogin(){
   // Pero si el backend SÍ está configurado, debe autenticarse contra él de verdad (para
   // obtener un token real y que el panel pueda cargar pedidos/solicitudes reales) — el
   // atajo local es solo el respaldo cuando no hay backend, nunca debe tener prioridad.
-  if(!BACKEND_URL&&email==='AGROCAMPUS'&&password==='Globallabs12'){
-    SESION={autenticado:true,nombre:'Administrador Campus HBC',email:'AGROCAMPUS',telefono:null,tipoProductor:null,pais:null,region:null,rol:'admin',token:null};
-    guardarEstado();
-    actualizarUIsesion();
-    err.style.display='none';
-    go('panel-admin','');
-    return;
-  }
 
   if(!BACKEND_URL){
     err.textContent='El inicio de sesión con correo necesita el backend configurado (ver BACKEND_URL). En modo demo, usa "Comenzar gratis".';

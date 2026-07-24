@@ -13,10 +13,19 @@ const solicitudesRoutes = require('./routes/solicitudes');
 const { seedSiVacio } = require('./db/seed');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-app.use(express.json());
+for (const variable of ['JWT_SECRET', 'ADMIN_USERNAME', 'ADMIN_PASSWORD']) {
+  if (!process.env[variable]) {
+    throw new Error(`Falta la variable de entorno obligatoria: ${variable}`);
+  }
+}
+
+app.set('trust proxy', 1);
+
+const corsOrigin = process.env.CORS_ORIGIN || false;
+app.use(cors({ origin: corsOrigin, credentials: false }));
+app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/health', (req, res) => res.json({ ok: true, servicio: 'dr-plants-backend' }));
 
@@ -51,8 +60,5 @@ app.listen(PORT, () => {
   console.log(`Dr Plants backend escuchando en http://localhost:${PORT}`);
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn('⚠️  ANTHROPIC_API_KEY no está configurada — /api/chat va a fallar hasta que la agregues en las variables de entorno.');
-  }
-  if (!process.env.JWT_SECRET) {
-    console.warn('⚠️  JWT_SECRET no está configurada — la app va a fallar al arrancar sin ella.');
   }
 });

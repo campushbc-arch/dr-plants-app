@@ -16,18 +16,31 @@ function seedSiVacio() {
     return false;
   }
 
+  const demoPassword = process.env.DEMO_PASSWORD;
+  const adminUsername = process.env.ADMIN_USERNAME;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
   const productor = { id: nuevoId('usr'), nombre: 'Productor Demo' };
   db.prepare(`
     INSERT INTO usuarios (id, nombre, email, telefono, password_hash, rol, tipo_productor, pais, region)
     VALUES (?, ?, ?, ?, ?, 'agricultor', 'Mediano productor (5 a 50 ha)', 'Colombia', 'Multi-región demo')
-  `).run(productor.id, productor.nombre, 'productor.demo@drplants.co', '+57 300 000 0000', bcrypt.hashSync('demo1234', 10));
+  `).run(
+    productor.id,
+    productor.nombre,
+    'productor.demo@drplants.co',
+    '+57 300 000 0000',
+    bcrypt.hashSync(demoPassword || nuevoId('pwd'), 12)
+  );
 
-  // Admin fijo de Campus HBC — no se autorregistra, se siembra directamente con credenciales fijas.
+  // El administrador se crea únicamente con credenciales privadas configuradas en Hostinger.
+  if (!adminUsername || !adminPassword) {
+    throw new Error('Faltan ADMIN_USERNAME y ADMIN_PASSWORD en las variables de entorno.');
+  }
   const admin = { id: nuevoId('usr'), nombre: 'Administrador Campus HBC' };
   db.prepare(`
     INSERT INTO usuarios (id, nombre, email, telefono, password_hash, rol)
-    VALUES (?, ?, 'AGROCAMPUS', ?, ?, 'admin')
-  `).run(admin.id, admin.nombre, '+57 316 691 2983', bcrypt.hashSync('Globallabs12', 10));
+    VALUES (?, ?, ?, ?, ?, 'admin')
+  `).run(admin.id, admin.nombre, adminUsername, '+57 316 691 2983', bcrypt.hashSync(adminPassword, 12));
 
   const FINCAS = [
     { nombre: 'Finca La Esperanza', ubicacionId: 'pasto', lotes: [
@@ -86,9 +99,8 @@ function seedSiVacio() {
     `).run(nuevoId('prod'), p.nombre, p.formula, 'campushbc', p.tag, '', p.precio, p.unidad, p.icono, p.destacado);
   }
 
-  console.log('Datos de demostración cargados.');
-  console.log('Productor demo -> email: "productor.demo@drplants.co", password: demo1234');
-  console.log('Admin fijo     -> usuario: "AGROCAMPUS", password: Globallabs12');
+  console.log('Datos iniciales creados correctamente.');
+  if (demoPassword) console.log('La cuenta de demostración quedó habilitada.');
   return true;
 }
 

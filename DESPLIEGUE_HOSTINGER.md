@@ -98,3 +98,15 @@ por ejemplo) — el SQL en `src/db/schema.sql` ya es estándar y el cambio es di
 Revisa primero los **logs de despliegue** en el dashboard de la app Node.js — casi siempre
 dicen exactamente qué falta (una variable de entorno, un puerto ocupado, etc.). Si me
 pegas ese log, te ayudo a interpretarlo.
+
+**Si la subida del ZIP falla con "Unsupported framework or invalid project structure"**
+antes de siquiera llegar a la pantalla de configuración: es un problema de cómo Hostinger
+valida el archivo comprimido, no de tu código (ya lo probamos exhaustivamente). En ese
+caso, usa la opción **"Import Git repository"** en vez de subir el ZIP — Hostinger la
+marca como "Recommended" y lee el código directo del repositorio, sin ese paso de
+validación de archivo comprimido. Los pasos para eso están en la sección de arriba
+("Opción B — Conectar un repositorio de GitHub").
+
+Si llegas a la pantalla de configuración y te pide **Entry file**, debe decir `app.js`
+(así está definido en este paquete). Si el desplegable de **Framework preset** no detecta
+"Express" solo, selecciónalo manualmente — Hostinger lo soporta explícitamente.
