@@ -173,7 +173,7 @@ CREATE INDEX IF NOT EXISTS idx_solicitudes_tele_usuario ON solicitudes_teleconsu
 CREATE TABLE IF NOT EXISTS archivos_usuario (
   id TEXT PRIMARY KEY,
   usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-  tipo TEXT NOT NULL CHECK(tipo IN ('foto_perfil','tarjeta_profesional','analisis_suelo','otro_pdf')),
+  tipo TEXT NOT NULL CHECK(tipo IN ('foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf')),
   nombre_original TEXT NOT NULL,
   nombre_guardado TEXT NOT NULL,
   mime_type TEXT NOT NULL,

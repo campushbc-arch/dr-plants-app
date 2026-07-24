@@ -82,8 +82,10 @@ router.patch('/usuarios/:id/acceso', (req, res) => {
 router.get('/agronomos', (req, res) => {
   const estado = req.query.estado || 'pendiente';
   const filas = db.prepare(`
-    SELECT id, nombre, email, telefono, tarjeta_profesional, especialidad, estado_agronomo, creado_en
-    FROM usuarios WHERE rol IN ('agronomo','agronomo_pendiente') AND estado_agronomo = ?
+    SELECT u.id, u.nombre, u.email, u.telefono, u.tarjeta_profesional, u.especialidad, u.estado_agronomo, u.creado_en,
+      (SELECT a.id FROM archivos_usuario a WHERE a.usuario_id=u.id AND a.tipo='documento_identidad' ORDER BY a.creado_en DESC LIMIT 1) AS documento_identidad_archivo_id,
+      (SELECT a.id FROM archivos_usuario a WHERE a.usuario_id=u.id AND a.tipo='tarjeta_profesional' ORDER BY a.creado_en DESC LIMIT 1) AS tarjeta_profesional_archivo_id
+    FROM usuarios u WHERE u.rol IN ('agronomo','agronomo_pendiente') AND u.estado_agronomo = ?
     ORDER BY creado_en DESC
   `).all(estado);
   res.json(filas);
@@ -98,6 +100,12 @@ router.patch('/agronomos/:id', (req, res) => {
   const usuario = db.prepare("SELECT * FROM usuarios WHERE id = ? AND rol IN ('agronomo','agronomo_pendiente')").get(req.params.id);
   if (!usuario) return res.status(404).json({ error: 'Solicitud de agrónomo no encontrada.' });
 
+  if (accion === 'aprobar') {
+    const documentos = db.prepare(`SELECT tipo FROM archivos_usuario WHERE usuario_id=? AND tipo IN ('documento_identidad','tarjeta_profesional')`).all(usuario.id).map(x=>x.tipo);
+    if (!documentos.includes('documento_identidad') || !documentos.includes('tarjeta_profesional')) {
+      return res.status(400).json({ error: 'No se puede aprobar: faltan el documento de identidad o la tarjeta profesional.' });
+    }
+  }
   const nuevoEstado = accion === 'aprobar' ? 'aprobado' : 'rechazado';
   const nuevoRol = accion === 'aprobar' ? 'agronomo' : 'agronomo_pendiente';
   db.prepare(`UPDATE usuarios SET estado_agronomo = ?, rol = ?,
@@ -118,6 +126,14 @@ router.post('/agronomos/:id/asignar-finca', (req, res) => {
   db.prepare('INSERT OR IGNORE INTO agronomo_asignacion (id, finca_id, agronomo_id) VALUES (?, ?, ?)')
     .run(nuevoId('asig'), fincaId, agronomo.id);
   res.status(201).json({ ok: true });
+});
+
+// GET /api/admin/archivos/:id — permite al administrador revisar documentos de solicitudes
+router.get('/archivos/:id', (req, res) => {
+  const fs = require('fs');
+  const archivo = db.prepare('SELECT * FROM archivos_usuario WHERE id=?').get(req.params.id);
+  if (!archivo || !fs.existsSync(archivo.ruta)) return res.status(404).json({ error: 'Documento no encontrado.' });
+  res.type(archivo.mime_type).sendFile(archivo.ruta);
 });
 
 // --- Catálogo de productos y categorías ---

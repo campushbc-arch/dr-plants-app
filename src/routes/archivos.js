@@ -28,9 +28,9 @@ const upload = multer({
 router.post('/subir', upload.single('archivo'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo.' });
   const tipo = String(req.body.tipo || 'otro_pdf');
-  const permitidos = ['foto_perfil','tarjeta_profesional','analisis_suelo','otro_pdf'];
+  const permitidos = ['foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf'];
   if (!permitidos.includes(tipo)) return res.status(400).json({ error: 'Tipo de archivo inválido.' });
-  if (tipo !== 'foto_perfil' && req.file.mimetype !== 'application/pdf') {
+  if (['analisis_suelo','otro_pdf'].includes(tipo) && req.file.mimetype !== 'application/pdf') {
     fs.unlinkSync(req.file.path);
     return res.status(400).json({ error: 'Este documento debe estar en formato PDF.' });
   }

@@ -1144,7 +1144,11 @@
             <input type="text" id="reg-tarjeta" placeholder="Ej. TP-12345 de Nariño"></div>
           <div class="fl"><label>Especialidad *</label>
             <input type="text" id="reg-especialidad" placeholder="Ej. Ingeniero agrónomo, suelos y nutrición"></div>
-          <div style="font-size:10px;color:var(--color-text-secondary);margin:-4px 0 10px">Tu cuenta quedará en revisión hasta que un administrador de Campus HBC verifique tu tarjeta profesional. En esta demo no se sube un archivo real — en producción aquí iría un cargador de documento.</div>
+          <div class="fl"><label>Documento de identidad * (PDF, JPG, PNG o WEBP)</label>
+            <input type="file" id="reg-documento-identidad" accept="application/pdf,image/jpeg,image/png,image/webp"></div>
+          <div class="fl"><label>Tarjeta profesional * (PDF, JPG, PNG o WEBP)</label>
+            <input type="file" id="reg-tarjeta-archivo" accept="application/pdf,image/jpeg,image/png,image/webp"></div>
+          <div style="font-size:10px;color:var(--color-text-secondary);margin:-4px 0 10px">Los dos documentos son obligatorios. La cuenta quedará pendiente hasta que el administrador revise y apruebe la identidad y la tarjeta profesional.</div>
         </div>
       </div>
       <div id="reg-error" style="display:none;color:#c62828;font-size:11px;margin-top:-6px;margin-bottom:8px"></div>
@@ -3063,8 +3067,21 @@ async function doReg(){
   if(rol==='agronomo'){
     const tarjeta=document.getElementById('reg-tarjeta').value.trim();
     const especialidad=document.getElementById('reg-especialidad').value.trim();
-    if(!tarjeta||!especialidad){
-      err.textContent='Como agrónomo, debes indicar tarjeta profesional y especialidad.';
+    const documentoIdentidad=document.getElementById('reg-documento-identidad').files[0];
+    const tarjetaArchivo=document.getElementById('reg-tarjeta-archivo').files[0];
+    if(!tarjeta||!especialidad||!documentoIdentidad||!tarjetaArchivo){
+      err.textContent='Como agrónomo, debes indicar número de tarjeta, especialidad y adjuntar el documento de identidad y la tarjeta profesional.';
+      err.style.display='block';
+      return;
+    }
+    const tiposPermitidos=['application/pdf','image/jpeg','image/png','image/webp'];
+    if(!tiposPermitidos.includes(documentoIdentidad.type)||!tiposPermitidos.includes(tarjetaArchivo.type)){
+      err.textContent='Los documentos deben estar en PDF, JPG, PNG o WEBP.';
+      err.style.display='block';
+      return;
+    }
+    if(documentoIdentidad.size>10*1024*1024||tarjetaArchivo.size>10*1024*1024){
+      err.textContent='Cada archivo debe pesar máximo 10 MB.';
       err.style.display='block';
       return;
     }
@@ -3087,11 +3104,22 @@ async function doReg(){
   // cualquier razón, seguimos en modo demo en vez de dejar al usuario sin poder avanzar.
   if(BACKEND_URL){
     try{
-      const resp=await fetch(BACKEND_URL+'/api/auth/register',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({nombre,email,telefono,password,rol,tipoProductor,pais,region,tarjetaProfesional,especialidad})
-      });
+      const formData=new FormData();
+      formData.append('nombre',nombre);
+      formData.append('email',email);
+      formData.append('telefono',telefono);
+      formData.append('password',password);
+      formData.append('rol',rol);
+      formData.append('tipoProductor',tipoProductor);
+      formData.append('pais',pais);
+      formData.append('region',region);
+      if(tarjetaProfesional)formData.append('tarjetaProfesional',tarjetaProfesional);
+      if(especialidad)formData.append('especialidad',especialidad);
+      if(rol==='agronomo'){
+        formData.append('documentoIdentidad',document.getElementById('reg-documento-identidad').files[0]);
+        formData.append('tarjetaArchivo',document.getElementById('reg-tarjeta-archivo').files[0]);
+      }
+      const resp=await fetch(BACKEND_URL+'/api/auth/register',{method:'POST',body:formData});
       const data=await resp.json();
       if(!resp.ok)throw new Error(data.error||'No se pudo registrar');
       if(data.pendienteAprobacion){
@@ -3225,6 +3253,10 @@ async function renderAdminSolicitudes(){
           <div class="lab-name">${escapeHtml(s.nombre)}</div>
           <div class="lab-desc">${escapeHtml(s.email||'')} · ${escapeHtml(s.especialidad||'')}</div>
           <div class="lab-desc">Tarjeta: ${escapeHtml(s.tarjeta_profesional||'Sin registrar')} · ${escapeHtml(s.telefono||'Sin teléfono')}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button onclick="descargarDocumentoAdmin('${s.documento_identidad_archivo_id}','documento-identidad')" style="flex:1;min-width:130px;background:var(--color-background-primary);color:#1b5e20;border:0.5px solid #C0DD97;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit">Ver identidad</button>
+            <button onclick="descargarDocumentoAdmin('${s.tarjeta_profesional_archivo_id}','tarjeta-profesional')" style="flex:1;min-width:130px;background:var(--color-background-primary);color:#1b5e20;border:0.5px solid #C0DD97;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit">Ver tarjeta</button>
+          </div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <button onclick="aprobarAgronomo('${s.id}')" style="flex:1;background:#1b5e20;color:#fff;border:none;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit">Aprobar</button>
             <button onclick="rechazarAgronomo('${s.id}')" style="flex:1;background:var(--color-background-primary);color:#c62828;border:0.5px solid #F09595;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit">Rechazar</button>
@@ -3310,6 +3342,21 @@ async function actualizarSolicitud(tipo,id,estado){
     await apiFetch('/api/admin/solicitudes/'+tipo+'/'+id,{method:'PATCH',body:JSON.stringify({estado})});
     if(tipo==='laboratorio')renderAdminSolLab();else renderAdminSolTele();
   }catch(e){alert('No se pudo actualizar: '+e.message);}
+}
+
+
+async function descargarDocumentoAdmin(id,nombre){
+  if(!id){alert('Este documento no está disponible.');return;}
+  try{
+    const token=obtenerTokenSesion();
+    const resp=await fetch(BACKEND_URL+'/api/admin/archivos/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+token}});
+    if(!resp.ok){const d=await resp.json().catch(()=>({}));throw new Error(d.error||'No se pudo abrir el documento');}
+    const blob=await resp.blob();
+    const url=URL.createObjectURL(blob);
+    const win=window.open(url,'_blank');
+    if(!win){const a=document.createElement('a');a.href=url;a.download=nombre;a.click();}
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){alert('No se pudo abrir el documento: '+e.message);}
 }
 
 async function aprobarAgronomo(id){
