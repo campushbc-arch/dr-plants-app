@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
 
@@ -14,7 +15,7 @@ const router = express.Router();
 // para que llame a este endpoint en vez de api.anthropic.com directamente, mandando el
 // token de sesión (Authorization: Bearer <token>) en vez de nada.
 router.post('/', requiereAuth, async (req, res) => {
-  const { system, messages, modulo } = req.body;
+  const { system, messages, modulo, archivoIds = [] } = req.body;
   if (!Array.isArray(messages) || !messages.length) {
     return res.status(400).json({ error: 'Falta el arreglo "messages".' });
   }
@@ -23,6 +24,18 @@ router.post('/', requiereAuth, async (req, res) => {
   }
 
   try {
+    let mensajesProveedor = messages;
+    if (Array.isArray(archivoIds) && archivoIds.length) {
+      const adjuntos = archivoIds.slice(0, 3).map(id => db.prepare('SELECT * FROM archivos_usuario WHERE id=? AND usuario_id=?').get(id, req.usuario.id)).filter(Boolean);
+      const ultimo = messages[messages.length - 1];
+      const bloques = [{ type: 'text', text: typeof ultimo.content === 'string' ? ultimo.content : 'Analiza los documentos adjuntos.' }];
+      for (const a of adjuntos) {
+        if (a.mime_type === 'application/pdf' && fs.existsSync(a.ruta)) {
+          bloques.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fs.readFileSync(a.ruta).toString('base64') }, title: a.nombre_original });
+        }
+      }
+      mensajesProveedor = [...messages.slice(0, -1), { role: 'user', content: bloques }];
+    }
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -34,7 +47,7 @@ router.post('/', requiereAuth, async (req, res) => {
         model: 'claude-sonnet-4-6',
         max_tokens: 600,
         system,
-        messages,
+        messages: mensajesProveedor,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }]
       })
     });

@@ -10,6 +10,7 @@ const adminRoutes = require('./routes/admin');
 const productosRoutes = require('./routes/productos');
 const pedidosRoutes = require('./routes/pedidos');
 const solicitudesRoutes = require('./routes/solicitudes');
+const archivosRoutes = require('./routes/archivos');
 const { seedSiVacio } = require('./db/seed');
 
 const app = express();
@@ -43,6 +44,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/solicitudes', solicitudesRoutes);
+app.use('/api/archivos', archivosRoutes);
 
 // Sirve la app (dr_plants_v4.html renombrado a public/index.html) desde el mismo dominio
 // y puerto que la API — así todo vive en drplants.campushbc.com sin necesidad de CORS

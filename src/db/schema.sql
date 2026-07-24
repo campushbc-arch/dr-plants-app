@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
   activo INTEGER NOT NULL DEFAULT 1 CHECK(activo IN (0,1)),
   bloqueado_en TEXT DEFAULT NULL,
   motivo_bloqueo TEXT DEFAULT NULL,
+  foto_perfil TEXT DEFAULT NULL,
+  aprobado_en TEXT DEFAULT NULL,
+  rechazado_en TEXT DEFAULT NULL,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -165,3 +168,17 @@ CREATE INDEX IF NOT EXISTS idx_mensajes_conversacion ON mensajes(conversacion_id
 CREATE INDEX IF NOT EXISTS idx_pedidos_usuario ON pedidos(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_solicitudes_lab_usuario ON solicitudes_laboratorio(usuario_id);
 CREATE INDEX IF NOT EXISTS idx_solicitudes_tele_usuario ON solicitudes_teleconsulta(usuario_id);
+
+
+CREATE TABLE IF NOT EXISTS archivos_usuario (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL CHECK(tipo IN ('foto_perfil','tarjeta_profesional','analisis_suelo','otro_pdf')),
+  nombre_original TEXT NOT NULL,
+  nombre_guardado TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  tamano_bytes INTEGER NOT NULL,
+  ruta TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_archivos_usuario ON archivos_usuario(usuario_id, creado_en);

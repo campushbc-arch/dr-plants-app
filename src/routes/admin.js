@@ -82,7 +82,7 @@ router.patch('/usuarios/:id/acceso', (req, res) => {
 router.get('/agronomos', (req, res) => {
   const estado = req.query.estado || 'pendiente';
   const filas = db.prepare(`
-    SELECT id, nombre, telefono, tarjeta_profesional, especialidad, estado_agronomo, creado_en
+    SELECT id, nombre, email, telefono, tarjeta_profesional, especialidad, estado_agronomo, creado_en
     FROM usuarios WHERE rol IN ('agronomo','agronomo_pendiente') AND estado_agronomo = ?
     ORDER BY creado_en DESC
   `).all(estado);
@@ -100,7 +100,10 @@ router.patch('/agronomos/:id', (req, res) => {
 
   const nuevoEstado = accion === 'aprobar' ? 'aprobado' : 'rechazado';
   const nuevoRol = accion === 'aprobar' ? 'agronomo' : 'agronomo_pendiente';
-  db.prepare('UPDATE usuarios SET estado_agronomo = ?, rol = ? WHERE id = ?').run(nuevoEstado, nuevoRol, usuario.id);
+  db.prepare(`UPDATE usuarios SET estado_agronomo = ?, rol = ?,
+    aprobado_en = CASE WHEN ? = 'aprobado' THEN datetime('now') ELSE aprobado_en END,
+    rechazado_en = CASE WHEN ? = 'rechazado' THEN datetime('now') ELSE rechazado_en END
+    WHERE id = ?`).run(nuevoEstado, nuevoRol, nuevoEstado, nuevoEstado, usuario.id);
   res.json(db.prepare('SELECT id, nombre, rol, estado_agronomo FROM usuarios WHERE id = ?').get(usuario.id));
 });
 

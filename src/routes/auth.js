@@ -49,6 +49,9 @@ router.post('/register', (req, res) => {
   });
 
   const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(id);
+  if (rolFinal === 'agronomo_pendiente') {
+    return res.status(201).json({ pendienteAprobacion: true, usuario: sinPassword(usuario), mensaje: 'Registro recibido. Tu cuenta requiere aprobación administrativa antes de iniciar sesión.' });
+  }
   const token = firmarToken(usuario);
   res.status(201).json({ token, usuario: sinPassword(usuario) });
 });
@@ -63,6 +66,12 @@ router.post('/login', (req, res) => {
   const usuario = db.prepare('SELECT * FROM usuarios WHERE lower(email) = ?').get(identificador);
   if (!usuario || !bcrypt.compareSync(password, usuario.password_hash)) {
     return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
+  }
+  if (usuario.rol === 'agronomo_pendiente' || usuario.estado_agronomo === 'pendiente') {
+    return res.status(403).json({ code: 'PENDING_APPROVAL', error: 'Tu registro como agrónomo está pendiente de aprobación.' });
+  }
+  if (usuario.estado_agronomo === 'rechazado') {
+    return res.status(403).json({ code: 'REJECTED', error: 'Tu solicitud como agrónomo fue rechazada. Comunícate con el administrador.' });
   }
   if (usuario.activo === 0) {
     return res.status(403).json({ error: 'Tu cuenta está bloqueada. Comunícate con el administrador.' });

@@ -473,6 +473,7 @@
     <div class="chip" onclick="chipMsg('¿Cuál es el plan de riego recomendado para esta semana del cultivo?')">Plan de riego</div>
     <div class="chip" onclick="chipMsg('¿Qué fertilización recomiendas para esta etapa del cultivo?')">Fertilización</div>
   </div>
+  <div style="padding:0 14px 6px"><label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#1b5e20;cursor:pointer"><i class="ti ti-paperclip"></i> Adjuntar análisis de suelo u otro PDF<input id="dr-agro-pdf" type="file" accept="application/pdf" style="display:none" onchange="subirPdfDrAgro(this.files[0])"></label><span id="dr-agro-pdf-nombre" style="font-size:10px;color:var(--color-text-secondary);margin-left:8px"></span></div>
   <div class="cin">
     <input id="cin" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')sendMsg()">
     <button class="csend" id="csendbtn" onclick="sendMsg()" aria-label="Enviar"><i class="ti ti-send"></i></button>
@@ -1051,6 +1052,8 @@
       <div style="font-size:10.5px;color:var(--color-text-secondary)" id="perfil-subt">Sesión de demostración · no has iniciado sesión</div>
     </div>
   </div>
+
+  <div style="padding:10px 14px 0"><label class="cta-btn" style="display:flex;justify-content:center;cursor:pointer;background:var(--color-background-secondary);color:var(--color-text-primary);border:0.5px solid var(--color-border-tertiary)"><i class="ti ti-camera"></i> Cambiar foto de perfil<input id="perfil-foto-input" type="file" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="subirFotoPerfil(this.files[0])"></label><div id="perfil-foto-msg" style="font-size:10px;color:var(--color-text-secondary);margin-top:5px"></div></div>
 
   <div class="mstats" id="perfil-stats" style="margin-top:16px"></div>
 
@@ -3091,11 +3094,15 @@ async function doReg(){
       });
       const data=await resp.json();
       if(!resp.ok)throw new Error(data.error||'No se pudo registrar');
+      if(data.pendienteAprobacion){
+        document.getElementById('ap-tarjeta-txt').textContent=tarjetaProfesional||'';
+        go('agronomo-pendiente','');
+        return;
+      }
       SESION={autenticado:true,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,token:data.token};
       guardarEstado();
       actualizarUIsesion();
       cargarFincasDesdeBackend();
-      if(rol==='agronomo'){go('agronomo-pendiente','');return;}
       drAgroHistory=[];
       document.getElementById('chat').innerHTML='<div class="mb"><div class="mb-lbl">Dr. Agro IA</div>Bienvenido a Dr Plants, '+escapeHtml(nombre)+'. Soy tu agrónomo virtual. Cuéntame, ¿en qué cultivo puedo ayudarte hoy?</div>';
       go('agronomo','agronomo');
@@ -3203,32 +3210,29 @@ async function cambiarAccesoUsuario(id,activar){
   }catch(e){alert('No se pudo cambiar el acceso: '+e.message);}
 }
 
-function renderAdminSolicitudes(){
+async function renderAdminSolicitudes(){
   renderAdminUsuarios();
   const wrap=document.getElementById('admin-solicitudes-list');
   if(!wrap)return;
-  const pendientes=SOLICITUDES_AGRONOMO.filter(s=>s.estado==='pendiente');
-  if(!pendientes.length){
-    wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary);padding:8px 0">No hay solicitudes pendientes por revisar.</div>';
-  }else{
-    wrap.innerHTML=pendientes.map(s=>`
+  wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary);padding:8px 0">Cargando solicitudes...</div>';
+  try{
+    const pendientes=await apiFetch('/api/admin/agronomos?estado=pendiente');
+    if(!pendientes.length){wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary);padding:8px 0">No hay solicitudes pendientes por revisar.</div>';}
+    else wrap.innerHTML=pendientes.map(s=>`
       <div class="lab-card" style="align-items:flex-start">
         <div class="lab-ico"><i class="ti ti-user-circle"></i></div>
         <div style="flex:1">
-          <div class="lab-name">${s.nombre}</div>
-          <div class="lab-desc">${s.especialidad} · ${s.tarjeta}</div>
-          <div class="lab-desc">${s.telefono||'Sin teléfono'} · Solicitado ${new Date(s.fecha).toLocaleDateString('es-CO',{day:'numeric',month:'short'})}</div>
+          <div class="lab-name">${escapeHtml(s.nombre)}</div>
+          <div class="lab-desc">${escapeHtml(s.email||'')} · ${escapeHtml(s.especialidad||'')}</div>
+          <div class="lab-desc">Tarjeta: ${escapeHtml(s.tarjeta_profesional||'Sin registrar')} · ${escapeHtml(s.telefono||'Sin teléfono')}</div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <button onclick="aprobarAgronomo('${s.id}')" style="flex:1;background:#1b5e20;color:#fff;border:none;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit">Aprobar</button>
             <button onclick="rechazarAgronomo('${s.id}')" style="flex:1;background:var(--color-background-primary);color:#c62828;border:0.5px solid #F09595;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit">Rechazar</button>
           </div>
         </div>
       </div>`).join('');
-  }
-  renderAdminProductos();
-  renderAdminPedidos();
-  renderAdminSolLab();
-  renderAdminSolTele();
+  }catch(e){mensajeSinBackend('admin-solicitudes-list','No se pudieron cargar las solicitudes: '+e.message);}
+  renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminSolTele();
 }
 
 function mensajeSinBackend(id,texto){
@@ -3308,20 +3312,14 @@ async function actualizarSolicitud(tipo,id,estado){
   }catch(e){alert('No se pudo actualizar: '+e.message);}
 }
 
-function aprobarAgronomo(id){
-  const s=SOLICITUDES_AGRONOMO.find(x=>x.id===id);
-  if(!s)return;
-  s.estado='aprobado';
-  if(SESION.solicitudId===id){SESION.rol='agronomo';actualizarUIsesion();}
-  guardarEstado();
-  renderAdminSolicitudes();
+async function aprobarAgronomo(id){
+  try{await apiFetch('/api/admin/agronomos/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify({accion:'aprobar'})});await renderAdminSolicitudes();}
+  catch(e){alert('No se pudo aprobar: '+e.message);}
 }
-function rechazarAgronomo(id){
-  const s=SOLICITUDES_AGRONOMO.find(x=>x.id===id);
-  if(!s)return;
-  s.estado='rechazado';
-  guardarEstado();
-  renderAdminSolicitudes();
+async function rechazarAgronomo(id){
+  if(!confirm('¿Rechazar esta solicitud de agrónomo?'))return;
+  try{await apiFetch('/api/admin/agronomos/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify({accion:'rechazar'})});await renderAdminSolicitudes();}
+  catch(e){alert('No se pudo rechazar: '+e.message);}
 }
 
 function toggleNuevoProductoForm(){
@@ -3582,7 +3580,8 @@ async function enviarMensajeIA(cfg){
       system:cfg.system,
       messages:cfg.history,
       modulo:cfg.chatId==='chat'?'dr_agro':(cfg.chatId==='soporte-chat'?'soporte':'laboratorio'),
-      tools:[{type:"web_search_20250305",name:"web_search"}]
+      tools:[{type:"web_search_20250305",name:"web_search"}],
+      archivoIds:cfg.chatId==='chat'&&DR_AGRO_ARCHIVO_ID?[DR_AGRO_ARCHIVO_ID]:[]
     });
     if(response.status===401){
       let detalle='La sesión expiró o el servidor no reconoció el token.';
@@ -3753,6 +3752,23 @@ cargarProductosDesdeBackend();
   }
 })();
 
+
+let DR_AGRO_ARCHIVO_ID=null;
+async function subirArchivoUsuario(file,tipo){
+  if(!file)return null;
+  const token=localStorage.getItem('drplants_token')||SESION.token;
+  const fd=new FormData();fd.append('archivo',file);fd.append('tipo',tipo);
+  const r=await fetch('/api/archivos/subir',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||'No se pudo subir el archivo');return d;
+}
+async function subirFotoPerfil(file){
+  const msg=document.getElementById('perfil-foto-msg');
+  try{msg.textContent='Subiendo...';const d=await subirArchivoUsuario(file,'foto_perfil');const token=localStorage.getItem('drplants_token')||SESION.token;const img=document.createElement('img');img.src=d.url+'?t='+Date.now();img.style='width:100%;height:100%;object-fit:cover;border-radius:50%';img.alt='Foto de perfil';const av=document.getElementById('perfil-avatar');av.innerHTML='';av.appendChild(img);msg.textContent='Foto actualizada.';}catch(e){msg.textContent=e.message;}
+}
+async function subirPdfDrAgro(file){
+  const el=document.getElementById('dr-agro-pdf-nombre');
+  try{el.textContent='Subiendo...';const d=await subirArchivoUsuario(file,'analisis_suelo');DR_AGRO_ARCHIVO_ID=d.id;el.textContent='Adjunto: '+d.nombre;}catch(e){el.textContent=e.message;DR_AGRO_ARCHIVO_ID=null;}
+}
 
 document.getElementById('admin-usuarios-buscar')?.addEventListener('keydown',e=>{if(e.key==='Enter')renderAdminUsuarios();});
 document.getElementById('admin-usuarios-filtro')?.addEventListener('change',renderAdminUsuarios);

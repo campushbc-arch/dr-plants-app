@@ -2,7 +2,8 @@ const Database = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'data', 'drplants.db');
+const HOME_DIR = process.env.HOME || path.join(__dirname, '..', '..');
+const DB_PATH = process.env.DB_PATH || path.join(HOME_DIR, 'data', 'drplants', 'drplants.db');
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 const db = new Database(DB_PATH);
@@ -25,4 +26,15 @@ if (!columnasUsuarios.includes('motivo_bloqueo')) {
   db.exec('ALTER TABLE usuarios ADD COLUMN motivo_bloqueo TEXT DEFAULT NULL');
 }
 
+if (!columnasUsuarios.includes('foto_perfil')) {
+  db.exec('ALTER TABLE usuarios ADD COLUMN foto_perfil TEXT DEFAULT NULL');
+}
+if (!columnasUsuarios.includes('aprobado_en')) {
+  db.exec('ALTER TABLE usuarios ADD COLUMN aprobado_en TEXT DEFAULT NULL');
+}
+if (!columnasUsuarios.includes('rechazado_en')) {
+  db.exec('ALTER TABLE usuarios ADD COLUMN rechazado_en TEXT DEFAULT NULL');
+}
+
+console.log(`Base de datos activa: ${DB_PATH}`);
 module.exports = db;
