@@ -182,3 +182,19 @@ CREATE TABLE IF NOT EXISTS archivos_usuario (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_archivos_usuario ON archivos_usuario(usuario_id, creado_en);
+
+
+-- Observaciones profesionales: no alteran el dato original del productor.
+CREATE TABLE IF NOT EXISTS observaciones_agronomicas (
+  id TEXT PRIMARY KEY,
+  lote_id TEXT NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  autor_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL DEFAULT 'observacion' CHECK(tipo IN ('observacion','correccion','recomendacion','alerta')),
+  texto TEXT NOT NULL,
+  referencia_tipo TEXT DEFAULT NULL,
+  referencia_id TEXT DEFAULT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT DEFAULT NULL,
+  eliminado_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_obs_lote ON observaciones_agronomicas(lote_id, creado_en);

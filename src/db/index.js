@@ -36,5 +36,28 @@ if (!columnasUsuarios.includes('rechazado_en')) {
   db.exec('ALTER TABLE usuarios ADD COLUMN rechazado_en TEXT DEFAULT NULL');
 }
 
+
+
+function migrarColumnas(tabla, columnas) {
+  const existentes = db.prepare(`PRAGMA table_info(${tabla})`).all().map(c => c.name);
+  for (const [nombre, definicion] of Object.entries(columnas)) {
+    if (!existentes.includes(nombre)) db.exec(`ALTER TABLE ${tabla} ADD COLUMN ${nombre} ${definicion}`);
+  }
+}
+
+migrarColumnas('fincas', {
+  pais: "TEXT DEFAULT NULL", region: "TEXT DEFAULT NULL", ciudad: "TEXT DEFAULT NULL",
+  actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL"
+});
+migrarColumnas('lotes', {
+  cultivo_nombre: "TEXT DEFAULT NULL", variedad: "TEXT DEFAULT NULL",
+  actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL"
+});
+for (const tabla of ['aplicaciones','analisis_laboratorio','costos_operativos']) {
+  migrarColumnas(tabla, {
+    creado_por: "TEXT DEFAULT NULL", actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL"
+  });
+}
+
 console.log(`Base de datos activa: ${DB_PATH}`);
 module.exports = db;

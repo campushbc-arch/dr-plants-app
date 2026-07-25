@@ -716,44 +716,27 @@
     <div class="fgrp"><label>Finca</label><input id="nl-finca" placeholder="Ej. Finca La Esperanza"></div>
     <div class="fgrp"><label>Nombre del lote</label><input id="nl-nombre" placeholder="Ej. Lote Alto"></div>
     <div class="fgrp"><label>Tipo de cultivo</label>
-      <select id="nl-cultivo" onchange="actualizarHintPiso()">
-        <option value="papa">Papa Pastusa</option>
-        <option value="cafe">Café Pergamino</option>
-        <option value="aguacate">Aguacate Hass</option>
-        <option value="limon">Limón Tahití</option>
-        <option value="mango">Mango Tommy</option>
-        <option value="cana">Caña de Azúcar</option>
-        <option value="arroz">Arroz</option>
-      </select>
+      <input id="nl-cultivo" list="catalogo-cultivos" placeholder="Escribe las primeras letras, por ejemplo: agu..." oninput="actualizarVariedadesCultivo();actualizarHintPiso()" autocomplete="off">
+      <datalist id="catalogo-cultivos"></datalist>
+      <div style="font-size:9.5px;color:var(--color-text-secondary);margin-top:4px">Puedes elegir una opción o escribir un cultivo que aún no esté en el catálogo.</div>
+    </div>
+    <div class="fgrp"><label>Variedad o cultivar</label>
+      <input id="nl-variedad" list="catalogo-variedades" placeholder="Escribe las primeras letras o registra una variedad propia" autocomplete="off">
+      <datalist id="catalogo-variedades"></datalist>
     </div>
     <div class="frow2">
       <div class="fgrp"><label>Área (ha)</label><input id="nl-area" type="number" step="0.1" placeholder="4.5"></div>
       <div class="fgrp"><label>Fecha de siembra</label><input id="nl-fecha" type="date"></div>
     </div>
-    <div class="fgrp"><label>Ubicación (para clima y piso térmico)</label>
-      <select id="nl-ubicacion" onchange="actualizarHintPiso()">
-        <optgroup label="Colombia">
-          <option value="ibague">Ibagué, Tolima · Templado</option>
-          <option value="espinal">Espinal, Tolima · Cálido</option>
-          <option value="bogota">Bogotá, Cundinamarca · Frío</option>
-          <option value="pasto">Pasto, Nariño · Frío</option>
-          <option value="manizales">Manizales, Caldas · Frío</option>
-          <option value="medellin">Medellín, Antioquia · Templado</option>
-          <option value="cali">Cali, Valle del Cauca · Templado</option>
-          <option value="cartagena">Cartagena, Bolívar · Cálido</option>
-          <option value="villavicencio">Villavicencio, Meta · Cálido</option>
-        </optgroup>
-        <optgroup label="Ecuador">
-          <option value="quito">Quito, Pichincha · Frío</option>
-        </optgroup>
-        <optgroup label="Perú">
-          <option value="lima">Lima · Cálido</option>
-        </optgroup>
-        <optgroup label="México">
-          <option value="cdmx">Ciudad de México · Frío</option>
-        </optgroup>
-      </select>
+    <div class="fgrp"><label>País</label>
+      <select id="nl-pais" onchange="cargarDepartamentos()"><option value="Colombia">Colombia</option><option value="Peru">Perú</option><option value="Chile">Chile</option></select>
     </div>
+    <div class="frow2">
+      <div class="fgrp"><label id="nl-region-label">Departamento</label><select id="nl-region" onchange="cargarCiudades()"><option value="">Selecciona…</option></select></div>
+      <div class="fgrp"><label>Ciudad / municipio / comuna</label><select id="nl-ciudad" onchange="resolverUbicacionSeleccionada()"><option value="">Selecciona…</option></select></div>
+    </div>
+    <input id="nl-ubicacion" type="hidden">
+    <div id="geo-estado" style="font-size:9.5px;color:var(--color-text-secondary)">Cargando divisiones territoriales…</div>
     <div id="nl-piso-hint" style="font-size:10.5px;color:var(--color-text-secondary)"></div>
     <button class="cta-btn" onclick="crearLote()"><i class="ti ti-check" aria-hidden="true"></i> Crear lote y generar plan</button>
   </div>
@@ -852,6 +835,19 @@
       <div class="fgrp"><label>Descripción</label><input id="co-descripcion" placeholder="Ej. Jornales de cosecha"></div>
       <div class="fgrp"><label>Costo (COP)</label><input id="co-costo" type="number" placeholder="350000"></div>
       <button class="cta-btn gold" onclick="registrarCosto()"><i class="ti ti-check" aria-hidden="true"></i> Guardar costo</button>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <div class="sec-lbl" style="padding:0 14px">Observaciones y correcciones del agrónomo</div>
+    <div id="ld-observaciones" style="padding:0 14px;display:flex;flex-direction:column;gap:7px"></div>
+    <div id="ld-obs-actions" style="padding:10px 14px 4px;display:none">
+      <button class="cta-btn" onclick="toggleObsForm()"><i class="ti ti-message-plus"></i> Agregar observación profesional</button>
+    </div>
+    <div class="fform" id="ld-obsform" style="display:none;padding-top:4px;margin-bottom:6px">
+      <div class="fgrp"><label>Tipo</label><select id="obs-tipo"><option value="observacion">Observación</option><option value="correccion">Corrección sugerida</option><option value="recomendacion">Recomendación</option><option value="alerta">Alerta</option></select></div>
+      <div class="fgrp"><label>Detalle profesional</label><textarea id="obs-texto" rows="4" placeholder="Describe la observación, corrección o recomendación sin modificar el registro original del productor."></textarea></div>
+      <button class="cta-btn gold" onclick="registrarObservacion()"><i class="ti ti-check"></i> Guardar observación</button>
     </div>
   </div>
 
@@ -1521,6 +1517,13 @@ async function cargarPrecioMercado(m){
 // Cada cultivo indica en qué piso(s) térmico(s) se produce realmente (clasificación andina estándar,
 // válida en Colombia y en gran parte de los países andinos de LATAM):
 // Cálido 0-1000m · Templado 1000-2000m · Frío 2000-3000m · Páramo >3000m
+const CROP_CATALOG={"Papa": ["Pastusa Suprema", "Diacol Capiro", "Criolla Colombia", "Única", "R-12", "Yungay", "Canchán", "Perricholi", "Desirée"], "Café": ["Castillo", "Caturra", "Colombia", "Bourbon", "Typica", "Geisha", "Catimor", "Pacamara", "Mundo Novo"], "Aguacate": ["Hass", "Fuerte", "Reed", "Bacon", "Zutano", "Lorena", "Choquette", "Semil 34", "Nabal"], "Arroz": ["Fedearroz 67", "Fedearroz 70", "IR64", "Capirona", "Tinajones", "NIR-1", "INIA 509 La Esperanza"], "Maíz": ["Amarillo duro", "Blanco", "Dulce", "Morocho", "Choclo", "Pisingallo", "Híbrido DK7088", "ICA V-305"], "Trigo": ["Durum", "Harina", "Primavera", "Invierno", "INIA 419 San Francisco", "Pandora INIA"], "Cebada": ["Cervecera", "Forrajera", "Maltera", "INIA 411 San Cristóbal"], "Quinua": ["Blanca de Junín", "Salcedo INIA", "Pasankalla", "Negra Collana", "Dorada", "Real"], "Frijol": ["Cargamanto", "Calima", "Canario", "Cabecita negra", "Bola roja", "Lima", "Panamito", "INIA 425 Martín Cusco"], "Soya": ["Soyica P-34", "Valle 2000", "Orinoquía 3", "Huasteca", "Cristalina"], "Lenteja": ["Pardina", "Castellana", "Roja", "Verde"], "Garbanzo": ["Kabuli", "Desi", "Blanco Sinaloa"], "Arveja": ["Santa Isabel", "Andina", "Verde temprana", "Alderman"], "Haba": ["Pacae", "Blanca", "Verde", "Muchamiel"], "Caña de azúcar": ["CC 85-92", "CC 93-4418", "CC 01-1940", "POJ 2878", "RB 867515"], "Banano": ["Cavendish", "Williams", "Valery", "Gran Enano", "Gros Michel"], "Plátano": ["Dominico Hartón", "Hartón", "Dominico", "Maqueño", "Barraganete", "Bellaco"], "Cacao": ["CCN-51", "ICS-95", "TSH-565", "Fino de aroma", "Nacional", "Criollo", "Trinitario"], "Yuca": ["Valencia", "Chirosa", "Verónica", "ICA Costeña", "Amarilla", "Señorita"], "Batata": ["Beauregard", "Morada", "Blanca", "Anaranjada"], "Ñame": ["Espino", "Diamante 22", "Criollo", "Papa"], "Arracacha": ["Amarilla", "Blanca", "Morada"], "Oca": ["Amarilla", "Rosada", "Morada"], "Olluco": ["Amarillo", "Rosado", "Largo"], "Maca": ["Amarilla", "Roja", "Negra"], "Tomate": ["Chonto", "Milano", "Cherry", "Roma", "San Marzano", "Rio Grande", "Daniela"], "Cebolla": ["Junca", "Roja Arequipeña", "Blanca", "Yellow Granex", "Valenciana"], "Ajo": ["Morado", "Blanco", "Napuri", "Chileno"], "Zanahoria": ["Nantes", "Chantenay", "Imperator", "Brasilia"], "Lechuga": ["Batavia", "Romana", "Crespa", "Iceberg", "Mantecosa"], "Brócoli": ["Legacy", "Marathon", "Avenger", "Imperial"], "Coliflor": ["Snowball", "White Corona", "Incline"], "Repollo": ["Copenhagen Market", "Gloria", "Corazón de buey", "Morado"], "Espinaca": ["Bloomsdale", "Viroflay", "Baby"], "Acelga": ["Fordhook Giant", "Bright Lights", "Verde"], "Apio": ["Tall Utah", "Golden Self Blanching"], "Pimentón": ["California Wonder", "Nathalie", "Martha", "King Arthur"], "Ají": ["Limo", "Panca", "Amarillo", "Rocoto", "Tabasco", "Habanero"], "Pepino": ["Cohombro", "Europeo", "Pickling", "Ashley"], "Zapallo": ["Macre", "Loche", "Butternut", "Hubbard"], "Calabacín": ["Black Beauty", "Grey Zucchini", "Verde"], "Alcachofa": ["Green Globe", "Lorca", "Imperial Star"], "Espárrago": ["UC 157", "Atlas", "Grande", "Mary Washington"], "Mango": ["Tommy Atkins", "Kent", "Keitt", "Haden", "Edward", "Ataulfo", "Hilacha"], "Limón": ["Tahití", "Sutil", "Eureka", "Lisbon", "Meyer"], "Naranja": ["Valencia", "Washington Navel", "Salustiana", "Lane Late"], "Mandarina": ["Oneco", "Clementina", "Satsuma", "Arrayana", "W. Murcott"], "Toronja": ["Ruby Red", "Star Ruby", "Marsh"], "Piña": ["MD-2", "Golden", "Perolera", "Manzana", "Cayena Lisa"], "Papaya": ["Maradol", "Tainung 1", "Red Lady", "Hawaiana"], "Maracuyá": ["Amarillo", "Púrpura", "Gulupa"], "Granadilla": ["Colombiana", "Criolla", "Real"], "Guanábana": ["Elita", "Criolla", "Morada"], "Guayaba": ["Palmira ICA-1", "Pera", "Manzana", "Rosada"], "Lulo": ["La Selva", "Castilla", "Septentrionale"], "Mora": ["Castilla", "Andimora", "Brazos", "Tupi"], "Fresa": ["Albion", "San Andreas", "Camarosa", "Monterey", "Festival"], "Arándano": ["Biloxi", "Ventura", "Emerald", "Legacy", "Duke", "Bluecrop"], "Frambuesa": ["Heritage", "Autumn Bliss", "Tulameen"], "Uva": ["Red Globe", "Thompson Seedless", "Crimson Seedless", "Italia", "Cabernet Sauvignon", "Carmenere", "Sauvignon Blanc"], "Manzana": ["Gala", "Fuji", "Granny Smith", "Pink Lady", "Red Delicious"], "Pera": ["Packham’s Triumph", "Williams", "Abate Fetel", "Forelle"], "Durazno": ["Andes Du-1", "Early Grande", "Diamante", "Conservero"], "Ciruela": ["Santa Rosa", "Angeleno", "D’Agen"], "Cereza": ["Bing", "Lapins", "Santina", "Regina", "Sweetheart"], "Kiwi": ["Hayward", "Jintao", "Soreli"], "Olivo": ["Arbequina", "Arbosana", "Koroneiki", "Picual", "Frantoio"], "Palma de aceite": ["Tenera", "Dura", "Pisifera", "Híbrido OxG"], "Coco": ["Enano Malayo", "Alto del Pacífico", "Híbrido"], "Algodón": ["Delta Opal", "DP 455", "FiberMax", "Tangüis", "Pima"], "Tabaco": ["Virginia", "Burley", "Negro"], "Caucho": ["RRIM 600", "FX 3864", "IAN 873"], "Flores - Rosa": ["Freedom", "Explorer", "Mondial", "Vendela", "Topaz"], "Flores - Clavel": ["Nelson", "Baltico", "Bizet", "Minami"], "Flores - Crisantemo": ["Anastasia", "Zembla", "Baltica", "Reagan"], "Flores - Alstroemeria": ["Virginia", "Primadonna", "Himalaya"], "Kiwicha": ["Oscar Blanco", "Centenario", "INIA 414 Taray"], "Cañihua": ["Cupi", "Ramís", "Illpa INIA 406"], "Lupino / Tarwi": ["Andino", "Yunguyo", "Altagracia"], "Té": ["Camellia sinensis var. sinensis", "Camellia sinensis var. assamica"], "Yerba mate": ["Cambona 4", "Selecta", "Criolla"], "Pastos y forrajes": ["Kikuyo", "Ryegrass", "Brachiaria brizantha", "Mombasa", "Elefante", "Angleton", "Alfalfa", "Trébol rojo", "Trébol blanco", "Avena forrajera"], "Canola": ["Hyola 61", "Invigor", "Solar"], "Girasol": ["Hélio 250", "Dekasol", "Advanta"], "Sésamo / Ajonjolí": ["Blanco", "Negro", "ICA Pacandé"], "Maní": ["Virginia", "Runner", "Valencia", "Rojo"]};
+const CROP_INDEX=Object.keys(CROP_CATALOG);
+function slugCultivo(nombre){return String(nombre||'cultivo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function poblarCatalogoCultivos(){const dl=document.getElementById('catalogo-cultivos');if(dl)dl.innerHTML=CROP_INDEX.map(x=>`<option value="${x}"></option>`).join('');}
+function actualizarVariedadesCultivo(){const nombre=document.getElementById('nl-cultivo')?.value.trim();const dl=document.getElementById('catalogo-variedades');if(!dl)return;const key=CROP_INDEX.find(x=>x.toLowerCase()===String(nombre).toLowerCase());dl.innerHTML=(key?CROP_CATALOG[key]:[]).map(x=>`<option value="${x}"></option>`).join('');}
+function cropDataPorNombre(nombre,variedad=''){const key=CROP_INDEX.find(x=>x.toLowerCase()===String(nombre).toLowerCase())||nombre||'Cultivo';const id=slugCultivo(key);if(!CROPS[id])CROPS[id]={label:key+(variedad?' '+variedad:''),emoji:'🌱',ciclo:24,precio:'—',precioNum:0,rendimientoHa:0,unidad:'sin referencia',pisos:['Cálido','Templado','Frío','Páramo']};return {id,data:CROPS[id]};}
+
 const CROPS={
   papa:{label:'Papa Pastusa',emoji:'🥔',ciclo:22,precio:'$42.000',precioNum:42000,rendimientoHa:25,unidad:'por carga 125kg',pisos:['Frío','Páramo']},
   cafe:{label:'Café Pergamino',emoji:'☕',ciclo:36,precio:'$2.850.000',precioNum:2850000,rendimientoHa:1.4,unidad:'por carga 125kg',pisos:['Templado']},
@@ -1561,6 +1564,33 @@ const LOCATIONS={
   lima:{label:'Lima',pais:'Perú',lat:-12.0464,lon:-77.0428,altitud:161},
   cdmx:{label:'Ciudad de México',pais:'México',lat:19.4326,lon:-99.1332,altitud:2240}
 };
+
+const GEO_API='https://countriesnow.space/api/v0.1/countries';
+const GEO_FALLBACK={
+ Colombia:{'Antioquia':['Medellín','Apartadó','Bello','Envigado','Itagüí','Rionegro'],'Cundinamarca':['Bogotá','Soacha','Chía','Zipaquirá','Facatativá'],'Tolima':['Ibagué','Espinal','Honda','Melgar'],'Valle del Cauca':['Cali','Palmira','Buenaventura','Tuluá'],'Nariño':['Pasto','Ipiales','Tumaco'],'Bolívar':['Cartagena','Magangué','Turbaco'],'Meta':['Villavicencio','Acacías','Granada']},
+ Peru:{'Lima':['Lima','Cañete','Huaral','Huaura'],'Arequipa':['Arequipa','Camaná','Mollendo'],'Cusco':['Cusco','Sicuani','Quillabamba'],'Piura':['Piura','Sullana','Talara'],'La Libertad':['Trujillo','Chepén','Virú'],'Junín':['Huancayo','Tarma','Satipo']},
+ Chile:{'Región Metropolitana de Santiago':['Santiago','Puente Alto','Maipú','Melipilla'],'Valparaíso':['Valparaíso','Viña del Mar','Quillota','San Antonio'],'O’Higgins':['Rancagua','San Fernando','Santa Cruz'],'Maule':['Talca','Curicó','Linares'],'Ñuble':['Chillán','San Carlos'],'Biobío':['Concepción','Los Ángeles','Arauco'],'La Araucanía':['Temuco','Angol','Villarrica']}
+};
+let GEO_STATES_CACHE=null;
+async function fetchJsonConTimeout(url,opts={},ms=9000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{...opts,signal:c.signal});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json();}finally{clearTimeout(t)}}
+function paisApi(){const p=document.getElementById('nl-pais').value;return p==='Peru'?'Peru':p;}
+async function cargarDepartamentos(){
+ const pais=paisApi(), sel=document.getElementById('nl-region'), city=document.getElementById('nl-ciudad'), estado=document.getElementById('geo-estado');
+ document.getElementById('nl-region-label').textContent=pais==='Chile'?'Región':pais==='Peru'?'Departamento / región':'Departamento';
+ sel.innerHTML='<option value="">Cargando…</option>';city.innerHTML='<option value="">Selecciona primero la región</option>';estado.textContent='Consultando catálogo territorial…';
+ try{if(!GEO_STATES_CACHE){const d=await fetchJsonConTimeout(GEO_API+'/states');GEO_STATES_CACHE=d.data||[];}const rec=GEO_STATES_CACHE.find(x=>x.name===pais || (pais==='Peru'&&x.name==='Peru'));const states=(rec?.states||[]).map(x=>x.name).sort((a,b)=>a.localeCompare(b,'es'));if(!states.length)throw new Error('sin datos');sel.innerHTML='<option value="">Selecciona…</option>'+states.map(x=>`<option>${x}</option>`).join('');estado.textContent='Lista territorial completa cargada.';}catch(e){const states=Object.keys(GEO_FALLBACK[pais]||{});sel.innerHTML='<option value="">Selecciona…</option>'+states.map(x=>`<option>${x}</option>`).join('');estado.textContent='Modo sin conexión: se muestran ciudades principales y puedes escribir una ubicación personalizada.';}
+}
+async function cargarCiudades(){
+ const pais=paisApi(), region=document.getElementById('nl-region').value, sel=document.getElementById('nl-ciudad'), estado=document.getElementById('geo-estado');if(!region)return;
+ sel.innerHTML='<option value="">Cargando…</option>';
+ try{const d=await fetchJsonConTimeout(GEO_API+'/state/cities',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:pais,state:region})});const cities=(d.data||[]).sort((a,b)=>a.localeCompare(b,'es'));if(!cities.length)throw new Error('sin ciudades');sel.innerHTML='<option value="">Selecciona…</option>'+cities.map(x=>`<option>${x}</option>`).join('');estado.textContent=`${cities.length} ciudades/municipios/comunas disponibles.`;}catch(e){const cities=(GEO_FALLBACK[pais]?.[region]||[]);sel.innerHTML='<option value="">Selecciona…</option>'+cities.map(x=>`<option>${x}</option>`).join('')+'<option value="__otra__">Otra ubicación…</option>';estado.textContent='No se pudo consultar el catálogo completo. Usa una opción disponible o “Otra ubicación”.';}
+}
+async function resolverUbicacionSeleccionada(){
+ let pais=paisApi(),region=document.getElementById('nl-region').value,city=document.getElementById('nl-ciudad').value;if(city==='__otra__')city=prompt('Escribe la ciudad, municipio o comuna:')||'';if(!city)return;
+ const key=slugCultivo(`${pais}-${region}-${city}`);document.getElementById('nl-ubicacion').value=key;
+ try{const q=encodeURIComponent(`${city}, ${region}, ${pais}`);const d=await fetchJsonConTimeout(`https://geocoding-api.open-meteo.com/v1/search?name=${q}&count=1&language=es&format=json`);const x=d.results?.[0];if(x)LOCATIONS[key]={label:`${city}, ${region}`,pais,lat:x.latitude,lon:x.longitude,altitud:x.elevation||0};else LOCATIONS[key]={label:`${city}, ${region}`,pais,lat:0,lon:0,altitud:0};}catch(e){LOCATIONS[key]={label:`${city}, ${region}`,pais,lat:0,lon:0,altitud:0};}
+ actualizarHintPiso();
+}
 const PLAN_STEPS=[
   {key:'raizcampus',nombre:'RAIZCAMPUS 12-24-12',etapa:'Desarrollo radicular'},
   {key:'crecicampus',nombre:'CRECICAMPUS 18-12-18',etapa:'Crecimiento y estructura'},
@@ -1597,10 +1627,15 @@ async function cargarFincasDesdeBackend(){
       FINCA_IDS[f.nombre]=f.id;
       const lotes=await apiFetch('/api/fincas/'+f.id+'/lotes');
       for(const l of lotes){
+        let detalle=null;
+        try{detalle=await apiFetch('/api/fincas/lotes/'+l.id);}catch(_e){}
         nuevosLotes.push({
-          id:l.id,finca:f.nombre,nombre:l.nombre,cultivoId:l.cultivo_id,area:l.area_ha,
+          id:l.id,finca:f.nombre,nombre:l.nombre,cultivoId:l.cultivo_id,cultivoNombre:l.cultivo_nombre||l.cultivo_id,variedad:l.variedad||'',area:l.area_ha,
           fechaSiembra:l.fecha_siembra,ubicacionId:f.ubicacion_id,salud:l.salud_pct,
-          aplicaciones:[],analisis:[],costosOperativos:[]
+          aplicaciones:(detalle?.aplicaciones||[]).map(a=>({...a,costo:a.costo_cop})),
+          analisis:detalle?.analisis||[],
+          costosOperativos:(detalle?.costosOperativos||[]).map(c=>({...c,costo:c.costo_cop})),
+          observaciones:detalle?.observaciones||[]
         });
       }
     }
@@ -1748,19 +1783,19 @@ function costoAcum(lote){
   return lote.aplicaciones.reduce((s,a)=>s+a.costo,0)+(lote.costosOperativos||[]).reduce((s,c)=>s+c.costo,0);
 }
 function weekOf(lote){
-  const crop=CROPS[lote.cultivoId];
+  const crop=CROPS[lote.cultivoId]||cropDataPorNombre(lote.cultivoNombre||lote.cultivoId,lote.variedad).data;
   const days=Math.floor((Date.now()-new Date(lote.fechaSiembra))/86400000);
   return Math.max(1,Math.min(crop.ciclo,Math.floor(days/7)+1));
 }
 function etapaIdx(lote){
-  const crop=CROPS[lote.cultivoId];
+  const crop=CROPS[lote.cultivoId]||cropDataPorNombre(lote.cultivoNombre||lote.cultivoId,lote.variedad).data;
   const pct=weekOf(lote)/crop.ciclo;
   if(pct<=0.22)return 0;
   if(pct<=0.65)return 1;
   return 2;
 }
 function fechaCosecha(lote){
-  const crop=CROPS[lote.cultivoId];
+  const crop=CROPS[lote.cultivoId]||cropDataPorNombre(lote.cultivoNombre||lote.cultivoId,lote.variedad).data;
   const d=new Date(lote.fechaSiembra);
   d.setDate(d.getDate()+crop.ciclo*7);
   return d.toLocaleDateString('es-CO',{day:'numeric',month:'short'});
@@ -1833,7 +1868,7 @@ function renderPanelAgronomo(){
     const color=saludProm>=85?'#1b5e20':saludProm>=70?'#c9a227':'#c62828';
     const bg=saludProm>=85?'#EAF3DE':saludProm>=70?'#FAEEDA':'#FCEBEB';
     const ultimaApp=lotesFinca.flatMap(l=>l.aplicaciones).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
-    const cultivos=[...new Set(lotesFinca.map(l=>CROPS[l.cultivoId].label))].join(', ');
+    const cultivos=[...new Set(lotesFinca.map(l=>(CROPS[l.cultivoId]||cropDataPorNombre(l.cultivoNombre||l.cultivoId,l.variedad).data).label))].join(', ');
     return `<div class="lab-card" style="cursor:pointer;align-items:center" onclick="verFincaFiltrada('${f}')">
       <div class="lab-ico" style="background:${bg};color:${color};font-size:11px;font-weight:600">${saludProm}%</div>
       <div style="flex:1">
@@ -1901,12 +1936,12 @@ function openLote(id){
 function renderLoteDetalle(){
   const lote=LOTES.find(l=>l.id===currentLote);
   if(!lote)return;
-  const crop=CROPS[lote.cultivoId];
+  const crop=CROPS[lote.cultivoId]||cropDataPorNombre(lote.cultivoNombre||lote.cultivoId,lote.variedad).data;
   const week=weekOf(lote);
   const pct=Math.round(week/crop.ciclo*100);
   document.getElementById('ld-title').textContent=lote.nombre;
   document.getElementById('ld-cardwrap').innerHTML=`<div class="cult-card">
-      <div class="cbadge">${crop.emoji} ${crop.label} · Activo · ${lote.finca}</div>
+      <div class="cbadge">${crop.emoji} ${crop.label}${lote.variedad?' · '+lote.variedad:''} · Activo · ${lote.finca}</div><div style="display:flex;gap:6px;margin-top:8px"><button class="mini-btn" onclick="editarLoteActual()">Editar lote</button><button class="mini-btn" onclick="eliminarLoteActual()">Eliminar</button></div>
       <div class="cname">${lote.nombre}</div>
       <div class="carea">${lote.area} ha · ${LOCATIONS[lote.ubicacionId].label} · Siembra ${new Date(lote.fechaSiembra).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})}</div>
       <div class="prow-lbl"><span>Ciclo del cultivo</span><span>Semana ${week} / ${crop.ciclo}</span></div>
@@ -1923,6 +1958,8 @@ function renderLoteDetalle(){
   renderAppLog(lote);
   renderAnalisisLog(lote);
   renderCostosLog(lote);
+  renderObservaciones(lote);
+  document.getElementById('ld-obs-actions').style.display=['agronomo','admin'].includes(SESION.rol)?'block':'none';
   loadWeather(lote);
   document.getElementById('ld-appform').style.display='none';
   document.getElementById('ld-analisisform').style.display='none';
@@ -1930,7 +1967,7 @@ function renderLoteDetalle(){
 }
 
 function renderProyeccion(lote){
-  const crop=CROPS[lote.cultivoId];
+  const crop=CROPS[lote.cultivoId]||cropDataPorNombre(lote.cultivoNombre||lote.cultivoId,lote.variedad).data;
   const week=weekOf(lote);
   const avanceCiclo=week/crop.ciclo;
   const rendimientoEsperado=crop.rendimientoHa*lote.area;
@@ -1968,7 +2005,7 @@ function renderPlan(lote){
 }
 
 function renderMarket(lote){
-  const crop=CROPS[lote.cultivoId];
+  const crop=CROPS[lote.cultivoId]||cropDataPorNombre(lote.cultivoNombre||lote.cultivoId,lote.variedad).data;
   document.getElementById('ld-market').innerHTML=`<div class="crow" onclick="go('precios','')">
     <span class="cemi">${crop.emoji}</span>
     <div class="cinf"><div class="cn">${crop.label}</div><div class="creg">Precio de referencia hoy</div></div>
@@ -1985,9 +2022,20 @@ function renderAppLog(lote){
         <div class="applog-name">${a.producto}</div>
         <div class="applog-meta">${a.tipo} · ${a.cantidad} · ${new Date(a.fecha).toLocaleDateString('es-CO',{day:'numeric',month:'short'})}</div>
       </div>
-      <div class="applog-cost">${fmtCOP(a.costo)}</div>
+      <div class="applog-cost">${fmtCOP(a.costo)}</div>${accionesRegistro('aplicaciones',a.id)}
     </div>`).join('') || '<div style="font-size:11px;color:var(--color-text-secondary);padding:6px 0">Aún no hay aplicaciones registradas.</div>';
 }
+
+
+function puedeEditarDatosCultivo(){return SESION.rol!=='agronomo';}
+async function editarRegistro(tipo,id){const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;const mapa={aplicaciones:'aplicaciones',analisis:'analisis',costos:'costosOperativos'};const arr=lote[mapa[tipo]];const r=arr.find(x=>x.id===id);if(!r)return;let body={};if(tipo==='aplicaciones'){body={tipo:prompt('Tipo:',r.tipo)||r.tipo,producto:prompt('Producto:',r.producto)||r.producto,fecha:prompt('Fecha AAAA-MM-DD:',r.fecha)||r.fecha,cantidad:prompt('Cantidad:',r.cantidad)||r.cantidad,costoCop:Number(prompt('Costo:',r.costo||r.costo_cop||0))};}if(tipo==='analisis'){body={tipo:prompt('Tipo:',r.tipo)||r.tipo,fecha:prompt('Fecha AAAA-MM-DD:',r.fecha)||r.fecha,resultado:prompt('Resultado:',r.resultado)||r.resultado};}if(tipo==='costos'){body={categoria:prompt('Categoría:',r.categoria)||r.categoria,descripcion:prompt('Descripción:',r.descripcion)||r.descripcion,fecha:prompt('Fecha AAAA-MM-DD:',r.fecha)||r.fecha,costoCop:Number(prompt('Costo:',r.costo||r.costo_cop||0))};}try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/'+tipo+'/'+id,{method:'PATCH',body:JSON.stringify(body)});Object.assign(r,body,{costo:body.costoCop??r.costo});guardarEstado();openLote(lote.id);}catch(e){alert(e.message)}}
+async function eliminarRegistro(tipo,id){if(!confirm('¿Eliminar este registro equivocado?'))return;const lote=LOTES.find(l=>l.id===currentLote);const mapa={aplicaciones:'aplicaciones',analisis:'analisis',costos:'costosOperativos'};try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/'+tipo+'/'+id,{method:'DELETE'});lote[mapa[tipo]]=lote[mapa[tipo]].filter(x=>x.id!==id);guardarEstado();openLote(lote.id);}catch(e){alert(e.message)}}
+function accionesRegistro(tipo,id){return puedeEditarDatosCultivo()?`<div style="display:flex;gap:5px;margin-top:5px"><button class="mini-btn" onclick="editarRegistro('${tipo}','${id}')">Editar</button><button class="mini-btn" onclick="eliminarRegistro('${tipo}','${id}')">Eliminar</button></div>`:'';}
+function renderObservaciones(lote){const box=document.getElementById('ld-observaciones');const obs=lote.observaciones||[];box.innerHTML=obs.map(o=>`<div class="lab-card" style="align-items:flex-start"><div class="lab-ico"><i class="ti ti-message-2"></i></div><div style="flex:1"><div class="lab-name">${o.tipo||'observación'} · ${o.autor_nombre||'Agrónomo'}</div><div class="lab-desc">${o.texto}</div>${(SESION.rol==='admin'||o.autor_id===SESION.id)?`<div style="display:flex;gap:5px;margin-top:6px"><button class="mini-btn" onclick="editarObservacion('${o.id}')">Editar</button><button class="mini-btn" onclick="eliminarObservacion('${o.id}')">Eliminar</button></div>`:''}</div></div>`).join('')||'<div style="font-size:11px;color:var(--color-text-secondary)">Aún no hay observaciones profesionales.</div>';}
+function toggleObsForm(){const f=document.getElementById('ld-obsform');f.style.display=f.style.display==='none'?'block':'none';}
+async function registrarObservacion(){const lote=LOTES.find(l=>l.id===currentLote),texto=document.getElementById('obs-texto').value.trim(),tipo=document.getElementById('obs-tipo').value;if(!texto)return;try{let o={id:'obs_'+Date.now(),tipo,texto,autor_nombre:SESION.nombre,autor_id:SESION.id};if(BACKEND_URL&&SESION.token)o=await apiFetch('/api/fincas/lotes/'+lote.id+'/observaciones',{method:'POST',body:JSON.stringify({tipo,texto})});lote.observaciones=lote.observaciones||[];lote.observaciones.unshift(o);document.getElementById('obs-texto').value='';guardarEstado();renderObservaciones(lote);}catch(e){alert(e.message)}}
+async function editarObservacion(id){const lote=LOTES.find(l=>l.id===currentLote),o=(lote.observaciones||[]).find(x=>x.id===id);const texto=prompt('Editar observación:',o?.texto||'');if(!texto)return;try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/observaciones/'+id,{method:'PATCH',body:JSON.stringify({texto,tipo:o.tipo})});o.texto=texto;guardarEstado();renderObservaciones(lote);}catch(e){alert(e.message)}}
+async function eliminarObservacion(id){if(!confirm('¿Eliminar esta observación?'))return;const lote=LOTES.find(l=>l.id===currentLote);try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/observaciones/'+id,{method:'DELETE'});lote.observaciones=(lote.observaciones||[]).filter(x=>x.id!==id);guardarEstado();renderObservaciones(lote);}catch(e){alert(e.message)}}
 
 const WX_ICONS={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌦️',61:'🌧️',63:'🌧️',65:'🌧️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'};
 const WX_DESC={0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Niebla',48:'Niebla',51:'Llovizna ligera',53:'Llovizna',55:'Llovizna densa',61:'Lluvia ligera',63:'Lluvia',65:'Lluvia fuerte',80:'Chubascos',81:'Chubascos',82:'Chubascos fuertes',95:'Tormenta',96:'Tormenta',99:'Tormenta fuerte'};
@@ -2035,85 +2083,45 @@ function pisoDeUbicacion(ubicacionId){
 }
 
 function actualizarHintPiso(){
-  const cultivoId=document.getElementById('nl-cultivo').value;
-  const ubicacionId=document.getElementById('nl-ubicacion').value;
+  const nombre=document.getElementById('nl-cultivo')?.value.trim();
+  const ubicacionId=document.getElementById('nl-ubicacion')?.value;
   const hint=document.getElementById('nl-piso-hint');
+  if(!nombre||!ubicacionId||!LOCATIONS[ubicacionId]){if(hint)hint.textContent='Selecciona cultivo, país, región y ciudad.';return;}
+  const {data:crop}=cropDataPorNombre(nombre,document.getElementById('nl-variedad')?.value||'');
   const piso=pisoDeUbicacion(ubicacionId);
-  const crop=CROPS[cultivoId];
-  if(crop.pisos.includes(piso)){
-    hint.textContent=`✓ ${crop.label} se produce normalmente en piso ${piso.toLowerCase()}, como en esta ubicación.`;
-    hint.style.color='#2e7d32';
-  }else{
-    hint.textContent=`⚠ ${crop.label} no es un cultivo típico de piso ${piso.toLowerCase()} (usualmente se da en piso ${crop.pisos.join(' o ').toLowerCase()}). Puedes crear el lote igual si es un caso particular de tu finca.`;
-    hint.style.color='#c9a227';
-  }
+  hint.textContent=crop.pisos.includes(piso)?`✓ Compatible de forma general con piso ${piso.toLowerCase()}.`:`⚠ Revisa con un agrónomo la adaptación a piso ${piso.toLowerCase()}.`;
+  hint.style.color=crop.pisos.includes(piso)?'#2e7d32':'#c9a227';
 }
-
 async function crearLote(){
   const finca=document.getElementById('nl-finca').value.trim()||'Mi finca';
   const nombre=document.getElementById('nl-nombre').value.trim()||'Nuevo lote';
-  const cultivoId=document.getElementById('nl-cultivo').value;
-  const area=parseFloat(document.getElementById('nl-area').value)||1;
-  const fechaSiembra=document.getElementById('nl-fecha').value||isoDaysAgo(0);
-  const ubicacionId=document.getElementById('nl-ubicacion').value;
-  const piso=pisoDeUbicacion(ubicacionId);
-  const crop=CROPS[cultivoId];
-  if(!crop.pisos.includes(piso)){
-    const seguir=confirm(`${crop.label} no suele cultivarse en el piso térmico ${piso} de ${LOCATIONS[ubicacionId].label} (lo normal es piso ${crop.pisos.join(' o ')}). ¿Quieres crear el lote de todas formas?`);
-    if(!seguir)return;
-  }
+  const cultivoNombre=document.getElementById('nl-cultivo').value.trim();
+  const variedad=document.getElementById('nl-variedad').value.trim();
+  const area=parseFloat(document.getElementById('nl-area').value)||0;
+  const fechaSiembra=document.getElementById('nl-fecha').value;
+  const pais=paisApi(),region=document.getElementById('nl-region').value,ciudad=document.getElementById('nl-ciudad').value;
+  let ubicacionId=document.getElementById('nl-ubicacion').value;
+  if(!cultivoNombre||!area||!fechaSiembra||!region||!ciudad){alert('Completa cultivo, área, fecha, región y ciudad.');return;}
+  if(!ubicacionId){await resolverUbicacionSeleccionada();ubicacionId=document.getElementById('nl-ubicacion').value;}
+  const {id:cultivoId}=cropDataPorNombre(cultivoNombre,variedad);
   let id='lote'+(LOTES.length+1)+'_'+Date.now();
-
-  if(BACKEND_URL&&SESION.token){
-    try{
-      let fincaId=FINCA_IDS[finca];
-      if(!fincaId){
-        const fincaCreada=await apiFetch('/api/fincas',{method:'POST',body:JSON.stringify({nombre:finca,ubicacionId})});
-        fincaId=fincaCreada.id;
-        FINCA_IDS[finca]=fincaId;
-      }
-      const loteCreado=await apiFetch('/api/fincas/'+fincaId+'/lotes',{method:'POST',body:JSON.stringify({nombre,cultivoId,areaHa:area,fechaSiembra})});
-      id=loteCreado.id;
-    }catch(e){
-      console.warn('No se pudo crear el lote en el backend, queda solo local:',e.message);
-    }
-  }
-
-  LOTES.push({id,finca,nombre,cultivoId,area,fechaSiembra,ubicacionId,salud:90,aplicaciones:[],analisis:[],costosOperativos:[]});
-  guardarEstado();
-  document.getElementById('nl-finca').value='';
-  document.getElementById('nl-nombre').value='';
-  document.getElementById('nl-area').value='';
-  document.getElementById('nl-fecha').value='';
-  renderLotesList();
-  openLote(id);
+  if(BACKEND_URL&&SESION.token){try{let fincaId=FINCA_IDS[finca];if(!fincaId){const fc=await apiFetch('/api/fincas',{method:'POST',body:JSON.stringify({nombre,ubicacionId,pais,region,ciudad})});fincaId=fc.id;FINCA_IDS[finca]=fincaId;}const lc=await apiFetch('/api/fincas/'+fincaId+'/lotes',{method:'POST',body:JSON.stringify({nombre,cultivoId,cultivoNombre,variedad,areaHa:area,fechaSiembra})});id=lc.id;}catch(e){alert('No se pudo guardar: '+e.message);return;}}
+  LOTES.push({id,finca,nombre,cultivoId,cultivoNombre,variedad,area,fechaSiembra,ubicacionId,salud:90,aplicaciones:[],analisis:[],costosOperativos:[],observaciones:[]});guardarEstado();renderLotesList();openLote(id);
 }
+
+async function editarLoteActual(){const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;const nombre=prompt('Nombre del lote:',lote.nombre);if(!nombre)return;const area=Number(prompt('Área en hectáreas:',lote.area));if(!area)return;const cultivoNombre=prompt('Cultivo:',lote.cultivoNombre||CROPS[lote.cultivoId]?.label||lote.cultivoId)||'';const variedad=prompt('Variedad:',lote.variedad||'')||'';try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/lotes/'+lote.id,{method:'PATCH',body:JSON.stringify({nombre,areaHa:area,cultivoId:slugCultivo(cultivoNombre),cultivoNombre,variedad,fechaSiembra:lote.fechaSiembra})});Object.assign(lote,{nombre,area,cultivoId:slugCultivo(cultivoNombre),cultivoNombre,variedad});guardarEstado();openLote(lote.id);}catch(e){alert(e.message)}}
+async function eliminarLoteActual(){const lote=LOTES.find(l=>l.id===currentLote);if(!lote||!confirm('¿Eliminar este lote? Se ocultará junto con su historial.'))return;try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/lotes/'+lote.id,{method:'DELETE'});LOTES=LOTES.filter(x=>x.id!==lote.id);guardarEstado();renderLotesList();go('cultivo','cultivo');}catch(e){alert(e.message)}}
 
 function toggleAppForm(){
   const f=document.getElementById('ld-appform');
   f.style.display=f.style.display==='none'?'flex':'none';
 }
 
-function registrarAplicacion(){
-  const lote=LOTES.find(l=>l.id===currentLote);
-  if(!lote)return;
-  const tipo=document.getElementById('ap-tipo').value;
-  const fecha=document.getElementById('ap-fecha').value||isoDaysAgo(0);
-  const producto=document.getElementById('ap-producto').value.trim();
-  const cantidad=document.getElementById('ap-cantidad').value.trim()||'—';
-  const costo=parseFloat(document.getElementById('ap-costo').value)||0;
+async function registrarAplicacion(){
+  const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;
+  const tipo=document.getElementById('ap-tipo').value,fecha=document.getElementById('ap-fecha').value||isoDaysAgo(0),producto=document.getElementById('ap-producto').value.trim(),cantidad=document.getElementById('ap-cantidad').value.trim()||'—',costo=parseFloat(document.getElementById('ap-costo').value)||0;
   if(!producto)return;
-  lote.aplicaciones.push({tipo,fecha,producto,cantidad,costo});
-  if(BACKEND_URL&&SESION.token){
-    apiFetch('/api/fincas/lotes/'+lote.id+'/aplicaciones',{method:'POST',body:JSON.stringify({tipo,producto,fecha,cantidad,costoCop:costo})})
-      .catch(e=>console.warn('No se pudo sincronizar la aplicación con el backend:',e.message));
-  }
-  document.getElementById('ap-producto').value='';
-  document.getElementById('ap-cantidad').value='';
-  document.getElementById('ap-costo').value='';
-  renderAppLog(lote);
-  refrescarStatsLote(lote);
-  toggleAppForm();
+  try{let registro={id:'app_'+Date.now(),tipo,fecha,producto,cantidad,costo};if(BACKEND_URL&&SESION.token){const r=await apiFetch('/api/fincas/lotes/'+lote.id+'/aplicaciones',{method:'POST',body:JSON.stringify({tipo,producto,fecha,cantidad,costoCop:costo})});registro={...r,costo:r.costo_cop};}lote.aplicaciones.push(registro);guardarEstado();document.getElementById('ap-producto').value='';document.getElementById('ap-cantidad').value='';document.getElementById('ap-costo').value='';renderAppLog(lote);refrescarStatsLote(lote);toggleAppForm();}catch(e){alert(e.message)}
 }
 
 function refrescarStatsLote(lote){
@@ -2137,26 +2145,15 @@ function renderAnalisisLog(lote){
       <div style="flex:1">
         <div class="applog-name">${a.tipo}</div>
         <div class="applog-meta">${a.resultado} · ${new Date(a.fecha).toLocaleDateString('es-CO',{day:'numeric',month:'short'})}</div>
+        ${accionesRegistro('analisis',a.id)}
       </div>
     </div>`).join('') || '<div style="font-size:11px;color:var(--color-text-secondary);padding:6px 0">Aún no hay análisis registrados para este lote.</div>';
 }
 
-function registrarAnalisis(){
-  const lote=LOTES.find(l=>l.id===currentLote);
-  if(!lote)return;
-  const tipo=document.getElementById('an-tipo').value;
-  const fecha=document.getElementById('an-fecha').value||isoDaysAgo(0);
-  const resultado=document.getElementById('an-resultado').value.trim();
-  if(!resultado)return;
-  if(!lote.analisis)lote.analisis=[];
-  lote.analisis.push({tipo,fecha,resultado});
-  if(BACKEND_URL&&SESION.token){
-    apiFetch('/api/fincas/lotes/'+lote.id+'/analisis',{method:'POST',body:JSON.stringify({tipo,fecha,resultado})})
-      .catch(e=>console.warn('No se pudo sincronizar el análisis con el backend:',e.message));
-  }
-  document.getElementById('an-resultado').value='';
-  renderAnalisisLog(lote);
-  toggleAnalisisForm();
+async function registrarAnalisis(){
+  const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;
+  const tipo=document.getElementById('an-tipo').value,fecha=document.getElementById('an-fecha').value||isoDaysAgo(0),resultado=document.getElementById('an-resultado').value.trim();if(!resultado)return;
+  try{let registro={id:'an_'+Date.now(),tipo,fecha,resultado};if(BACKEND_URL&&SESION.token)registro=await apiFetch('/api/fincas/lotes/'+lote.id+'/analisis',{method:'POST',body:JSON.stringify({tipo,fecha,resultado})});lote.analisis=lote.analisis||[];lote.analisis.push(registro);guardarEstado();document.getElementById('an-resultado').value='';renderAnalisisLog(lote);toggleAnalisisForm();}catch(e){alert(e.message)}
 }
 
 function toggleCostoForm(){
@@ -2173,29 +2170,14 @@ function renderCostosLog(lote){
         <div class="applog-name">${c.descripcion}</div>
         <div class="applog-meta">${c.categoria} · ${new Date(c.fecha).toLocaleDateString('es-CO',{day:'numeric',month:'short'})}</div>
       </div>
-      <div class="applog-cost">${fmtCOP(c.costo)}</div>
+      <div class="applog-cost">${fmtCOP(c.costo)}</div>${accionesRegistro('costos',c.id)}
     </div>`).join('') || '<div style="font-size:11px;color:var(--color-text-secondary);padding:6px 0">Aún no hay costos operativos registrados.</div>';
 }
 
-function registrarCosto(){
-  const lote=LOTES.find(l=>l.id===currentLote);
-  if(!lote)return;
-  const categoria=document.getElementById('co-categoria').value;
-  const fecha=document.getElementById('co-fecha').value||isoDaysAgo(0);
-  const descripcion=document.getElementById('co-descripcion').value.trim();
-  const costo=parseFloat(document.getElementById('co-costo').value)||0;
-  if(!descripcion)return;
-  if(!lote.costosOperativos)lote.costosOperativos=[];
-  lote.costosOperativos.push({categoria,fecha,descripcion,costo});
-  if(BACKEND_URL&&SESION.token){
-    apiFetch('/api/fincas/lotes/'+lote.id+'/costos',{method:'POST',body:JSON.stringify({categoria,descripcion,fecha,costoCop:costo})})
-      .catch(e=>console.warn('No se pudo sincronizar el costo con el backend:',e.message));
-  }
-  document.getElementById('co-descripcion').value='';
-  document.getElementById('co-costo').value='';
-  renderCostosLog(lote);
-  refrescarStatsLote(lote);
-  toggleCostoForm();
+async function registrarCosto(){
+  const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;
+  const categoria=document.getElementById('co-categoria').value,fecha=document.getElementById('co-fecha').value||isoDaysAgo(0),descripcion=document.getElementById('co-descripcion').value.trim(),costo=parseFloat(document.getElementById('co-costo').value)||0;if(!descripcion||!costo)return;
+  try{let registro={id:'cost_'+Date.now(),categoria,fecha,descripcion,costo};if(BACKEND_URL&&SESION.token){const r=await apiFetch('/api/fincas/lotes/'+lote.id+'/costos',{method:'POST',body:JSON.stringify({categoria,descripcion,fecha,costoCop:costo})});registro={...r,costo:r.costo_cop};}lote.costosOperativos=lote.costosOperativos||[];lote.costosOperativos.push(registro);guardarEstado();document.getElementById('co-descripcion').value='';document.getElementById('co-costo').value='';renderCostosLog(lote);refrescarStatsLote(lote);toggleCostoForm();}catch(e){alert(e.message)}
 }
 
 function consultarLoteConAgro(){
@@ -3153,7 +3135,7 @@ async function doReg(){
         go('agronomo-pendiente','');
         return;
       }
-      SESION={autenticado:true,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,token:data.token};
+      SESION={autenticado:true,id:data.usuario.id,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,token:data.token};
       guardarEstado();
       actualizarUIsesion();
       cargarFincasDesdeBackend();
@@ -3201,7 +3183,7 @@ async function doLogin(){
     });
     const data=await resp.json();
     if(!resp.ok)throw new Error(data.error||'No se pudo iniciar sesión');
-    SESION={autenticado:true,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,token:data.token};
+    SESION={autenticado:true,id:data.usuario.id,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,token:data.token};
     guardarEstado();
     actualizarUIsesion();
     cargarFincasDesdeBackend();
@@ -3904,6 +3886,8 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+document.addEventListener('DOMContentLoaded',()=>{poblarCatalogoCultivos();cargarDepartamentos();});
 </script>
 </body>
 </html>
