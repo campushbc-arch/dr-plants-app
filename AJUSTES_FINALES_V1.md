@@ -21,3 +21,16 @@ DB_PATH=/home/u754460429/data/drplants/drplants.db
 UPLOADS_PATH=/home/u754460429/data/drplants/uploads
 
 No cambiar estas rutas en despliegues posteriores.
+
+## Visualización administrativa de documentos
+
+El panel de administración incluye ahora un expediente por usuario. Desde **Gestión de usuarios → Ver expediente y documentos**, el administrador puede:
+
+- consultar los datos básicos del usuario;
+- ver todos los archivos asociados a su cuenta;
+- visualizar imágenes JPG, PNG y WEBP dentro de la aplicación;
+- visualizar documentos PDF dentro de la aplicación;
+- descargar el archivo original;
+- revisar tanto los archivos aportados durante el registro como los cargados posteriormente desde el perfil.
+
+Las solicitudes pendientes de agrónomos conservan los botones **Ver identidad** y **Ver tarjeta**, que utilizan el mismo visor protegido. Los archivos solo pueden abrirse con una sesión válida de administrador.

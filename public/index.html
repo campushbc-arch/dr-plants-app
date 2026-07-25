@@ -954,6 +954,32 @@
   </div>
 </div>
 
+<div id="admin-expediente-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.62);padding:18px;overflow:auto">
+  <div style="max-width:820px;margin:20px auto;background:var(--color-background-primary);border-radius:16px;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--color-border-tertiary)">
+      <div>
+        <div id="admin-expediente-titulo" style="font-size:14px;font-weight:600;color:var(--color-text-primary)">Expediente del usuario</div>
+        <div style="font-size:10.5px;color:var(--color-text-secondary)">Documentos e imágenes compartidos durante el registro y desde el perfil.</div>
+      </div>
+      <button type="button" onclick="cerrarExpedienteAdmin()" aria-label="Cerrar" style="border:none;background:transparent;color:var(--color-text-primary);font-size:24px;cursor:pointer">×</button>
+    </div>
+    <div id="admin-expediente-contenido" style="padding:16px"></div>
+  </div>
+</div>
+
+<div id="admin-visor-modal" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.78);padding:14px">
+  <div style="height:100%;max-width:1000px;margin:auto;background:var(--color-background-primary);border-radius:14px;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--color-border-tertiary)">
+      <div id="admin-visor-titulo" style="font-size:12px;font-weight:600;color:var(--color-text-primary);overflow-wrap:anywhere">Documento</div>
+      <div style="display:flex;gap:8px">
+        <a id="admin-visor-descargar" href="#" download style="text-decoration:none;border-radius:8px;padding:7px 10px;background:#1b5e20;color:#fff;font-size:11px">Descargar</a>
+        <button type="button" onclick="cerrarVisorAdmin()" style="border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:7px 10px;background:var(--color-background-primary);color:var(--color-text-primary);font-size:11px;cursor:pointer">Cerrar</button>
+      </div>
+    </div>
+    <div id="admin-visor-contenido" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#202124;overflow:auto"></div>
+  </div>
+</div>
+
 <div id="s-panel-admin" class="screen">
   <div class="pg-hdr">
     <button class="back" onclick="go('perfil','')"><i class="ti ti-arrow-left"></i> Mi Perfil</button>
@@ -3215,6 +3241,7 @@ async function renderAdminUsuarios(){
           <div class="lab-desc" style="overflow-wrap:anywhere">${escapeHtml(u.email||'')} · ${escapeHtml(rol)}</div>
           <div class="lab-desc">${escapeHtml(u.telefono||'Sin teléfono')} · ${escapeHtml(u.pais||'')} ${u.region?'· '+escapeHtml(u.region):''}</div>
           ${!activo&&u.motivo_bloqueo?`<div class="lab-desc" style="color:#9B1C1C">Motivo: ${escapeHtml(u.motivo_bloqueo)}</div>`:''}
+          <button type="button" onclick="abrirExpedienteAdmin('${u.id}')" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;background:var(--color-background-primary);color:#1b5e20;border:0.5px solid #C0DD97">Ver expediente y documentos</button>
           <button type="button" onclick="cambiarAccesoUsuario('${u.id}',${activo?'false':'true'})" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;${activo?'background:var(--color-background-primary);color:#c62828;border:0.5px solid #F09595':'background:#1b5e20;color:#fff;border:none'}">${activo?'Bloquear acceso':'Desbloquear acceso'}</button>
         </div>
       </div>`;
@@ -3345,18 +3372,68 @@ async function actualizarSolicitud(tipo,id,estado){
 }
 
 
-async function descargarDocumentoAdmin(id,nombre){
+let ADMIN_VISOR_URL=null;
+
+function etiquetaTipoArchivo(tipo){
+  return ({foto_perfil:'Foto de perfil',documento_identidad:'Documento de identidad',tarjeta_profesional:'Tarjeta profesional',analisis_suelo:'Análisis de suelo',otro_pdf:'Otro documento'})[tipo]||String(tipo||'archivo').replaceAll('_',' ');
+}
+function formatoTamano(bytes){
+  const n=Number(bytes||0);if(n<1024)return n+' B';if(n<1024*1024)return (n/1024).toFixed(1)+' KB';return (n/1024/1024).toFixed(1)+' MB';
+}
+async function abrirExpedienteAdmin(id){
+  const modal=document.getElementById('admin-expediente-modal');
+  const cont=document.getElementById('admin-expediente-contenido');
+  modal.style.display='block';cont.innerHTML='<div style="font-size:12px;color:var(--color-text-secondary)">Cargando expediente...</div>';
+  try{
+    const data=await apiFetch('/api/admin/usuarios/'+encodeURIComponent(id)+'/expediente');
+    const u=data.usuario;document.getElementById('admin-expediente-titulo').textContent='Expediente de '+(u.nombre||'usuario');
+    const archivos=data.archivos||[];
+    cont.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:16px">
+        <div class="lab-card"><div><div class="lab-name">${escapeHtml(u.nombre||'')}</div><div class="lab-desc">${escapeHtml(u.email||'')}</div></div></div>
+        <div class="lab-card"><div><div class="lab-name">${escapeHtml((u.rol||'').replaceAll('_',' '))}</div><div class="lab-desc">${escapeHtml(u.telefono||'Sin teléfono')}</div></div></div>
+        <div class="lab-card"><div><div class="lab-name">${escapeHtml(u.pais||'')}</div><div class="lab-desc">${escapeHtml(u.region||'')}</div></div></div>
+        ${u.tarjeta_profesional?`<div class="lab-card"><div><div class="lab-name">Tarjeta profesional</div><div class="lab-desc">${escapeHtml(u.tarjeta_profesional)}</div></div></div>`:''}
+      </div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--color-text-primary)">Documentos e imágenes (${archivos.length})</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+        ${archivos.length?archivos.map(a=>`<div style="border:1px solid var(--color-border-tertiary);border-radius:12px;padding:10px;background:var(--color-background-secondary)">
+          <div style="font-size:11.5px;font-weight:600;color:var(--color-text-primary)">${escapeHtml(etiquetaTipoArchivo(a.tipo))}</div>
+          <div style="font-size:10px;color:var(--color-text-secondary);overflow-wrap:anywhere;margin-top:2px">${escapeHtml(a.nombre||'Archivo')} · ${formatoTamano(a.tamano_bytes)}</div>
+          <div style="font-size:9.5px;color:var(--color-text-secondary);margin-top:2px">${escapeHtml(a.mime_type||'')}</div>
+          <button type="button" data-id="${escapeHtml(a.id)}" data-name="${escapeHtml(a.nombre||'Archivo')}" data-mime="${escapeHtml(a.mime_type||'')}" class="admin-ver-archivo" style="width:100%;margin-top:8px;border:none;border-radius:8px;padding:8px;background:#1b5e20;color:#fff;font-size:11px;font-weight:500;cursor:pointer">Visualizar</button>
+        </div>`).join(''):'<div style="font-size:11px;color:var(--color-text-secondary)">Este usuario no ha cargado archivos.</div>'}
+      </div>`;
+    cont.querySelectorAll('.admin-ver-archivo').forEach(btn=>btn.addEventListener('click',()=>visualizarDocumentoAdmin(btn.dataset.id,btn.dataset.name,btn.dataset.mime)));
+  }catch(e){cont.innerHTML='<div style="color:#c62828;font-size:12px">No se pudo cargar el expediente: '+escapeHtml(e.message)+'</div>';}
+}
+function cerrarExpedienteAdmin(){document.getElementById('admin-expediente-modal').style.display='none';}
+async function visualizarDocumentoAdmin(id,nombre,mimeType){
   if(!id){alert('Este documento no está disponible.');return;}
   try{
     const token=obtenerTokenSesion();
     const resp=await fetch(BACKEND_URL+'/api/admin/archivos/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+token}});
     if(!resp.ok){const d=await resp.json().catch(()=>({}));throw new Error(d.error||'No se pudo abrir el documento');}
     const blob=await resp.blob();
-    const url=URL.createObjectURL(blob);
-    const win=window.open(url,'_blank');
-    if(!win){const a=document.createElement('a');a.href=url;a.download=nombre;a.click();}
-    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    if(ADMIN_VISOR_URL)URL.revokeObjectURL(ADMIN_VISOR_URL);
+    ADMIN_VISOR_URL=URL.createObjectURL(blob);
+    document.getElementById('admin-visor-titulo').textContent=nombre||'Documento';
+    const dl=document.getElementById('admin-visor-descargar');dl.href=ADMIN_VISOR_URL;dl.download=nombre||'documento';
+    const contenido=document.getElementById('admin-visor-contenido');
+    const tipo=mimeType||blob.type||'';
+    if(tipo.startsWith('image/')) contenido.innerHTML='<img src="'+ADMIN_VISOR_URL+'" alt="Documento" style="display:block;max-width:100%;max-height:100%;object-fit:contain">';
+    else if(tipo==='application/pdf') contenido.innerHTML='<iframe src="'+ADMIN_VISOR_URL+'" title="Documento PDF" style="width:100%;height:100%;border:0;background:#fff"></iframe>';
+    else contenido.innerHTML='<div style="color:#fff;padding:20px;text-align:center">No hay vista previa disponible. Usa el botón Descargar.</div>';
+    document.getElementById('admin-visor-modal').style.display='block';
   }catch(e){alert('No se pudo abrir el documento: '+e.message);}
+}
+async function descargarDocumentoAdmin(id,nombre){
+  return visualizarDocumentoAdmin(id,nombre,'');
+}
+function cerrarVisorAdmin(){
+  document.getElementById('admin-visor-modal').style.display='none';
+  document.getElementById('admin-visor-contenido').innerHTML='';
+  if(ADMIN_VISOR_URL){URL.revokeObjectURL(ADMIN_VISOR_URL);ADMIN_VISOR_URL=null;}
 }
 
 async function aprobarAgronomo(id){

@@ -53,6 +53,24 @@ router.get('/usuarios', (req, res) => {
   res.json(usuarios);
 });
 
+// GET /api/admin/usuarios/:id/expediente — datos y archivos cargados por el usuario
+router.get('/usuarios/:id/expediente', (req, res) => {
+  const usuario = db.prepare(`
+    SELECT id, nombre, email, telefono, rol, tipo_productor, pais, region,
+           tarjeta_profesional, especialidad, estado_agronomo, activo,
+           bloqueado_en, motivo_bloqueo, creado_en, foto_perfil
+    FROM usuarios WHERE id = ? AND rol <> 'admin'
+  `).get(req.params.id);
+  if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado.' });
+  const archivos = db.prepare(`
+    SELECT id, tipo, nombre_original AS nombre, mime_type, tamano_bytes, creado_en
+    FROM archivos_usuario
+    WHERE usuario_id = ?
+    ORDER BY creado_en DESC
+  `).all(usuario.id).map(a => ({ ...a, url: `/api/admin/archivos/${a.id}` }));
+  res.json({ usuario, archivos });
+});
+
 // PATCH /api/admin/usuarios/:id/acceso  { activo: true|false, motivo?: string }
 router.patch('/usuarios/:id/acceso', (req, res) => {
   const activo = req.body.activo;
