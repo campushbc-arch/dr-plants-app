@@ -2,6 +2,7 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 
 const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
@@ -37,6 +38,49 @@ app.use('/api', (req, res, next) => {
 
 app.get('/api/health', (req, res) => res.json({ ok: true, servicio: 'dr-plants-backend' }));
 
+function crearLimitador({ ventanaMs, maximo, mensaje }) {
+  const intentos = new Map();
+  const limpieza = setInterval(() => {
+    const ahora = Date.now();
+    for (const [clave, dato] of intentos) {
+      if (dato.reinicio <= ahora) intentos.delete(clave);
+    }
+  }, Math.min(ventanaMs, 60 * 1000));
+  limpieza.unref();
+
+  return (req, res, next) => {
+    const ahora = Date.now();
+    const clave = req.ip || req.socket.remoteAddress || 'desconocida';
+    let dato = intentos.get(clave);
+    if (!dato || dato.reinicio <= ahora) {
+      dato = { cantidad: 0, reinicio: ahora + ventanaMs };
+      intentos.set(clave, dato);
+    }
+    dato.cantidad += 1;
+    res.set('RateLimit-Limit', String(maximo));
+    res.set('RateLimit-Remaining', String(Math.max(0, maximo - dato.cantidad)));
+    res.set('RateLimit-Reset', String(Math.ceil(dato.reinicio / 1000)));
+    if (dato.cantidad > maximo) {
+      res.set('Retry-After', String(Math.ceil((dato.reinicio - ahora) / 1000)));
+      return res.status(429).json({ code: 'RATE_LIMITED', error: mensaje });
+    }
+    next();
+  };
+}
+
+const registroLimiter = crearLimitador({
+  ventanaMs: 15 * 60 * 1000,
+  maximo: 5,
+  mensaje: 'Demasiados intentos de registro. Intenta nuevamente en 15 minutos.'
+});
+const uploadsLimiter = crearLimitador({
+  ventanaMs: 15 * 60 * 1000,
+  maximo: 10,
+  mensaje: 'Demasiadas cargas de archivos. Intenta nuevamente en 15 minutos.'
+});
+app.use('/api/auth/register', registroLimiter);
+app.use('/api/archivos/subir', uploadsLimiter);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/fincas', fincasRoutes);
@@ -56,8 +100,11 @@ app.get(/^(?!\/api\/).*/, (req, res) => {
 });
 
 app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ code: err.code, error: 'La carga del archivo no pudo completarse: ' + err.message });
+  }
   console.error(err);
-  res.status(500).json({ error: 'Error interno del servidor.' });
+  return res.status(500).json({ error: 'Error interno del servidor.' });
 });
 
 // Siembra datos de ejemplo solo si la base de datos está vacía — así no hace falta

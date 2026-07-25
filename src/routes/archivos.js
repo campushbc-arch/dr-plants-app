@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
+const { multerFileFilter, safeDelete, uploadLimits, validateStoredFile } = require('../upload-security');
 
 const router = express.Router();
 router.use(requiereAuth);
@@ -18,32 +19,38 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    const ok = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype);
-    cb(ok ? null : new Error('Solo se permiten PDF, JPG, PNG o WEBP.'), ok);
-  }
+  limits: uploadLimits({ files: 1, fields: 3, parts: 4 }),
+  fileFilter: multerFileFilter
 });
 
-router.post('/subir', upload.single('archivo'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo.' });
-  const tipo = String(req.body.tipo || 'otro_pdf');
-  const permitidos = ['foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf'];
-  if (!permitidos.includes(tipo)) return res.status(400).json({ error: 'Tipo de archivo inválido.' });
-  if (['analisis_suelo','otro_pdf'].includes(tipo) && req.file.mimetype !== 'application/pdf') {
-    fs.unlinkSync(req.file.path);
-    return res.status(400).json({ error: 'Este documento debe estar en formato PDF.' });
-  }
-  if (tipo === 'foto_perfil' && !req.file.mimetype.startsWith('image/')) {
-    fs.unlinkSync(req.file.path);
-    return res.status(400).json({ error: 'La foto de perfil debe ser una imagen.' });
-  }
-  const id = nuevoId('arc');
-  db.prepare(`INSERT INTO archivos_usuario
-    (id, usuario_id, tipo, nombre_original, nombre_guardado, mime_type, tamano_bytes, ruta)
-    VALUES (?,?,?,?,?,?,?,?)`).run(id, req.usuario.id, tipo, req.file.originalname, req.file.filename, req.file.mimetype, req.file.size, req.file.path);
-  if (tipo === 'foto_perfil') db.prepare('UPDATE usuarios SET foto_perfil = ? WHERE id = ?').run(id, req.usuario.id);
-  res.status(201).json({ id, tipo, nombre: req.file.originalname, mime_type: req.file.mimetype, tamano_bytes: req.file.size, url: `/api/archivos/${id}` });
+router.post('/subir', (req, res) => {
+  upload.single('archivo')(req, res, (uploadError) => {
+    if (uploadError) return res.status(400).json({ code: uploadError.code || 'UPLOAD_ERROR', error: uploadError.message });
+    if (!req.file) return res.status(400).json({ error: 'No se recibió ningún archivo.' });
+
+    try {
+      validateStoredFile(req.file);
+      const tipo = String(req.body.tipo || 'otro_pdf');
+      const permitidos = ['foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf'];
+      if (!permitidos.includes(tipo)) throw new Error('Tipo de archivo inválido.');
+      if (['analisis_suelo','otro_pdf'].includes(tipo) && req.file.mimetype !== 'application/pdf') {
+        throw new Error('Este documento debe estar en formato PDF.');
+      }
+      if (tipo === 'foto_perfil' && !req.file.mimetype.startsWith('image/')) {
+        throw new Error('La foto de perfil debe ser una imagen.');
+      }
+
+      const id = nuevoId('arc');
+      db.prepare(`INSERT INTO archivos_usuario
+        (id, usuario_id, tipo, nombre_original, nombre_guardado, mime_type, tamano_bytes, ruta)
+        VALUES (?,?,?,?,?,?,?,?)`).run(id, req.usuario.id, tipo, req.file.originalname, req.file.filename, req.file.mimetype, req.file.size, req.file.path);
+      if (tipo === 'foto_perfil') db.prepare('UPDATE usuarios SET foto_perfil = ? WHERE id = ?').run(id, req.usuario.id);
+      return res.status(201).json({ id, tipo, nombre: req.file.originalname, mime_type: req.file.mimetype, tamano_bytes: req.file.size, url: `/api/archivos/${id}` });
+    } catch (error) {
+      safeDelete(req.file);
+      return res.status(400).json({ code: 'INVALID_FILE', error: error.message });
+    }
+  });
 });
 
 router.get('/', (req, res) => {

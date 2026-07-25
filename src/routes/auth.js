@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../db');
 const { nuevoId, firmarToken, requiereAuth } = require('../auth');
+const { flattenFiles, multerFileFilter, safeDeleteMany, uploadLimits, validateStoredFile } = require('../upload-security');
 
 const router = express.Router();
 const HOME_DIR = process.env.HOME || path.join(__dirname, '..', '..');
@@ -17,11 +18,8 @@ const storage = multer.diskStorage({
 });
 const uploadRegistro = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024, files: 2 },
-  fileFilter: (_req, file, cb) => {
-    const permitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-    cb(permitidos.includes(file.mimetype) ? null : new Error('Los documentos deben estar en PDF, JPG, PNG o WEBP.'), permitidos.includes(file.mimetype));
-  }
+  limits: uploadLimits({ files: 2, fields: 16, parts: 18 }),
+  fileFilter: multerFileFilter
 }).fields([
   { name: 'documentoIdentidad', maxCount: 1 },
   { name: 'tarjetaArchivo', maxCount: 1 }
@@ -30,8 +28,8 @@ const uploadRegistro = multer({
 router.post('/register', (req, res) => {
   uploadRegistro(req, res, (uploadError) => {
     if (uploadError) return res.status(400).json({ error: uploadError.message });
-    const archivosSubidos = Object.values(req.files || {}).flat();
-    const limpiar = () => archivosSubidos.forEach(f => { try { if (fs.existsSync(f.path)) fs.unlinkSync(f.path); } catch (_) {} });
+    const archivosSubidos = flattenFiles(req.files);
+    const limpiar = () => safeDeleteMany(archivosSubidos);
     try {
       const { nombre, email, telefono, password, rol, tipoProductor, pais, region, tarjetaProfesional, especialidad } = req.body;
       const emailNormalizado = String(email || '').trim().toLowerCase();
@@ -47,6 +45,7 @@ router.post('/register', (req, res) => {
 
       const documentoIdentidad = req.files?.documentoIdentidad?.[0];
       const tarjetaArchivo = req.files?.tarjetaArchivo?.[0];
+      for (const file of archivosSubidos) validateStoredFile(file);
       if (rolSolicitado === 'agronomo' && (!tarjetaProfesional || !especialidad || !documentoIdentidad || !tarjetaArchivo)) {
         limpiar();
         return res.status(400).json({ error: 'Para registrarte como agrónomo son obligatorios la especialidad, el número de tarjeta profesional, el documento de identidad y el archivo de la tarjeta profesional.' });
