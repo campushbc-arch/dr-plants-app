@@ -3708,23 +3708,64 @@ Reglas de respuesta:
 // para poder demostrar la funcionalidad — pero el diseño de datos ya está pensado por finca/lote
 // individual, listo para ese filtro cuando exista autenticación real.
 function loteContextoTexto(){
-  if(typeof LOTES==='undefined'||!LOTES||!LOTES.length){
-    return 'Contexto de la app: el usuario todavía no tiene lotes registrados en Mi Cultivo. No asumas ningún cultivo por defecto — si la pregunta lo requiere, pregúntale qué cultivo tiene o dale una respuesta general aplicable a cualquiera.';
-  }
-  const fincas=[...new Set(LOTES.map(l=>l.finca))];
-  const detalle=fincas.map(f=>{
-    const lotesFinca=LOTES.filter(l=>l.finca===f);
-    const lotesTxt=lotesFinca.map(l=>{
-      const crop=CROPS[l.cultivoId];
-      const week=weekOf(l);
-      const ultimasApps=l.aplicaciones.slice(-2).map(a=>`${a.producto} (${a.tipo}, ${a.fecha})`).join('; ')||'sin aplicaciones aún';
-      const ultimoAnalisis=(l.analisis&&l.analisis.length)?l.analisis[l.analisis.length-1]:null;
-      const analisisTxt=ultimoAnalisis?`Último análisis: ${ultimoAnalisis.tipo} (${ultimoAnalisis.fecha}) → ${ultimoAnalisis.resultado}.`:'Sin análisis de laboratorio registrados.';
-      return `  · "${l.nombre}": ${crop.label}, ${l.area} ha, ${LOCATIONS[l.ubicacionId].label}, semana ${week}/${crop.ciclo}, salud ${l.salud}%. Costo acumulado: ${fmtCOP(costoAcum(l))}. Últimas aplicaciones: ${ultimasApps}. ${analisisTxt}`;
+  try{
+    if(typeof LOTES==='undefined'||!Array.isArray(LOTES)||!LOTES.length){
+      return 'Contexto de la app: el usuario todavía no tiene lotes registrados en Mi Cultivo. No asumas ningún cultivo por defecto — si la pregunta lo requiere, pregúntale qué cultivo tiene o dale una respuesta general aplicable a cualquiera.';
+    }
+
+    const valorTexto=(valor,alternativa='no especificado')=>{
+      if(valor===null||valor===undefined||valor==='')return alternativa;
+      if(typeof valor==='object')return valor.label||valor.nombre||valor.name||alternativa;
+      return String(valor);
+    };
+
+    const nombreFinca=l=>valorTexto(l?.finca_nombre||l?.fincaNombre||l?.finca,'Finca sin nombre');
+    const fincas=[...new Set(LOTES.map(nombreFinca))];
+
+    const detalle=fincas.map(f=>{
+      const lotesFinca=LOTES.filter(l=>nombreFinca(l)===f);
+      const lotesTxt=lotesFinca.map(l=>{
+        const crop=(typeof CROPS!=='undefined'&&CROPS)?CROPS[l?.cultivoId]:null;
+        const cultivo=valorTexto(crop||l?.cultivo_nombre||l?.cultivoNombre||l?.cultivo,'cultivo no especificado');
+        const ciclo=Number(crop?.ciclo||l?.ciclo||0);
+
+        let semana='no calculada';
+        try{ semana=typeof weekOf==='function'?weekOf(l):semana; }catch(_e){}
+
+        const aplicaciones=Array.isArray(l?.aplicaciones)?l.aplicaciones:[];
+        const ultimasApps=aplicaciones.slice(-2).map(a=>{
+          const producto=valorTexto(a?.producto||a?.producto_nombre,'producto');
+          const tipo=valorTexto(a?.tipo,'aplicación');
+          const fecha=valorTexto(a?.fecha,'sin fecha');
+          return `${producto} (${tipo}, ${fecha})`;
+        }).join('; ')||'sin aplicaciones aún';
+
+        const analisis=Array.isArray(l?.analisis)?l.analisis:[];
+        const ultimoAnalisis=analisis.length?analisis[analisis.length-1]:null;
+        const analisisTxt=ultimoAnalisis
+          ?`Último análisis: ${valorTexto(ultimoAnalisis.tipo,'análisis')} (${valorTexto(ultimoAnalisis.fecha,'sin fecha')}) → ${valorTexto(ultimoAnalisis.resultado,'resultado pendiente')}.`
+          :'Sin análisis de laboratorio registrados.';
+
+        const ubicacionCatalogo=(typeof LOCATIONS!=='undefined'&&LOCATIONS)?LOCATIONS[l?.ubicacionId]:null;
+        const ubicacion=valorTexto(ubicacionCatalogo||l?.ubicacion_nombre||l?.ubicacionNombre||l?.ubicacion||l?.municipio||l?.ciudad,'ubicación no especificada');
+
+        let costo='no calculado';
+        try{ costo=typeof costoAcum==='function'&&typeof fmtCOP==='function'?fmtCOP(costoAcum(l)):costo; }catch(_e){}
+
+        const nombre=valorTexto(l?.nombre||l?.lote_nombre||l?.loteNombre,'Lote sin nombre');
+        const area=valorTexto(l?.area||l?.hectareas,'área no especificada');
+        const salud=valorTexto(l?.salud,'sin dato');
+        const cicloTxt=ciclo?`/${ciclo}`:'';
+        return `  · "${nombre}": ${cultivo}, ${area} ha, ${ubicacion}, semana ${semana}${cicloTxt}, salud ${salud}%. Costo acumulado: ${costo}. Últimas aplicaciones: ${ultimasApps}. ${analisisTxt}`;
+      }).join('\n');
+      return `Finca "${f}":\n${lotesTxt}`;
     }).join('\n');
-    return `Finca "${f}":\n${lotesTxt}`;
-  }).join('\n');
-  return `Contexto de la app (datos reales registrados por el productor en Mi Cultivo — solo visibles para él y su agrónomo asignado; úsalos si la pregunta se relaciona con su(s) cultivo(s), y da seguimiento genuino a las aplicaciones y análisis que ya tiene registrados en vez de repetir información genérica; si pregunta algo general de otro cultivo, respóndele igual con la misma profundidad):\n${detalle}`;
+
+    return `Contexto de la app (datos registrados por el productor en Mi Cultivo; úsalos solo cuando sean pertinentes y no inventes campos faltantes):\n${detalle}`;
+  }catch(error){
+    console.warn('No fue posible construir el contexto de lotes para Dr. Agro:',error);
+    return 'Contexto de la app: no fue posible leer en este momento los lotes registrados. Responde de forma general y solicita al usuario los datos del cultivo necesarios para precisar la recomendación.';
+  }
 }
 
 let drAgroHistory = [];
