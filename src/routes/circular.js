@@ -173,12 +173,22 @@ router.post('/solicitudes-recoleccion', requiereAuth, (req, res) => {
     return res.status(400).json({ error: 'País, región, ciudad, tipo, cantidad y dirección son obligatorios.' });
   }
   const id = nuevoId('recol');
-  db.prepare(`INSERT INTO solicitudes_recoleccion_circular
-    (id,usuario_id,pais,region,ciudad,tipo_residuo,cantidad,direccion,observaciones)
-    VALUES (?,?,?,?,?,?,?,?,?)`).run(id, req.usuario.id, pais, region, ciudad, tipo, cantidad, direccion, observaciones || null);
-  crearNotificacionAdmin({ tipo:'solicitud_recoleccion', titulo:'Nueva solicitud de recolección circular', mensaje:`${req.usuario.nombre || 'Un usuario'} solicita recolección de ${tipo} en ${ciudad}, ${region}. Cantidad: ${cantidad}.`, usuarioId:req.usuario.id, entidadTipo:'solicitud_recoleccion', entidadId:id, prioridad:'alta' });
-  crearNotificacionUsuario({ usuarioId:req.usuario.id, tipo:'solicitud_recoleccion', titulo:'Solicitud de recolección recibida', mensaje:`Registramos tu solicitud para ${cantidad} de ${tipo} en ${ciudad}. Te notificaremos cuando haya un gestor disponible.`, entidadTipo:'solicitud_recoleccion', entidadId:id, urlDestino:'rec-puntos' });
-  res.status(201).json(db.prepare('SELECT * FROM solicitudes_recoleccion_circular WHERE id=?').get(id));
+  const etiquetas = { general:'reciclables en general', agroquimicos:'envases agroquímicos', empaques:'empaques, sacos, plástico y papel', vegetales:'residuos vegetales', organicos:'cáscaras, pulpa y residuos orgánicos' };
+  const usuarioCompleto = db.prepare('SELECT id,nombre,email,telefono FROM usuarios WHERE id=?').get(req.usuario.id) || req.usuario;
+  const guardar = db.transaction(() => {
+    db.prepare(`INSERT INTO solicitudes_recoleccion_circular
+      (id,usuario_id,pais,region,ciudad,tipo_residuo,cantidad,direccion,observaciones)
+      VALUES (?,?,?,?,?,?,?,?,?)`).run(id, req.usuario.id, pais, region, ciudad, tipo, cantidad, direccion, observaciones || null);
+    crearNotificacionAdmin({
+      tipo:'solicitud_recoleccion',
+      titulo:'Nueva solicitud de recolección circular',
+      mensaje:`Productor: ${usuarioCompleto.nombre || 'Sin nombre'} | Correo: ${usuarioCompleto.email || 'Sin correo'} | Teléfono: ${usuarioCompleto.telefono || 'Sin teléfono'} | Material: ${etiquetas[tipo] || tipo} | Cantidad: ${cantidad} | Ubicación: ${ciudad}, ${region}, ${pais} | Dirección: ${direccion} | Observaciones: ${observaciones || 'Sin observaciones'}`,
+      usuarioId:req.usuario.id, entidadTipo:'solicitud_recoleccion', entidadId:id, prioridad:'alta'
+    });
+    crearNotificacionUsuario({ usuarioId:req.usuario.id, tipo:'solicitud_recoleccion', titulo:'Solicitud de recolección recibida', mensaje:`Registramos tu solicitud para ${cantidad} de ${etiquetas[tipo] || tipo} en ${ciudad}. Te notificaremos cuando el equipo responda o asigne un gestor.`, entidadTipo:'solicitud_recoleccion', entidadId:id, urlDestino:'rec-puntos' });
+  });
+  guardar();
+  res.status(201).json(db.prepare(`SELECT s.*,u.nombre usuario_nombre,u.email usuario_email,u.telefono usuario_telefono FROM solicitudes_recoleccion_circular s JOIN usuarios u ON u.id=s.usuario_id WHERE s.id=?`).get(id));
 });
 
 router.get('/mis-solicitudes', requiereAuth, (req, res) => {

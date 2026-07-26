@@ -439,6 +439,13 @@ router.get('/circular/solicitudes', (req, res) => {
     ORDER BY s.creada_en DESC`).all(...params));
 });
 
+router.get('/circular/solicitudes/:id', (req, res) => {
+  const fila = db.prepare(`SELECT s.*,u.nombre usuario_nombre,u.email usuario_email,u.telefono usuario_telefono,u.pais usuario_pais,u.region usuario_region
+    FROM solicitudes_recoleccion_circular s JOIN usuarios u ON u.id=s.usuario_id WHERE s.id=?`).get(req.params.id);
+  if(!fila) return res.status(404).json({error:'Solicitud no encontrada.'});
+  res.json(fila);
+});
+
 router.patch('/circular/solicitudes/:id', (req, res) => {
   const estados=['pendiente','contactando_gestor','programada','recolectada','cancelada'];
   const actual=db.prepare('SELECT * FROM solicitudes_recoleccion_circular WHERE id=?').get(req.params.id);
@@ -450,7 +457,7 @@ router.patch('/circular/solicitudes/:id', (req, res) => {
     .run(estado,b.gestorAsignado??actual.gestor_asignado,b.fechaProgramada??actual.fecha_programada,b.retroalimentacion??actual.retroalimentacion,actual.id);
   const detalle=[b.gestorAsignado?`Gestor: ${b.gestorAsignado}.`:'',b.fechaProgramada?`Fecha: ${b.fechaProgramada}.`:'',b.retroalimentacion||''].filter(Boolean).join(' ');
   crearNotificacionUsuario({usuarioId:actual.usuario_id,tipo:'estado_recoleccion',titulo:`Recolección circular: ${estado.replaceAll('_',' ')}`,mensaje:`Tu solicitud cambió a ${estado.replaceAll('_',' ')}. ${detalle}`.trim(),entidadTipo:'solicitud_recoleccion',entidadId:actual.id,urlDestino:'rec-puntos',prioridad:estado==='programada'?'alta':'normal'});
-  res.json(db.prepare('SELECT * FROM solicitudes_recoleccion_circular WHERE id=?').get(actual.id));
+  res.json(db.prepare(`SELECT s.*,u.nombre usuario_nombre,u.email usuario_email,u.telefono usuario_telefono FROM solicitudes_recoleccion_circular s JOIN usuarios u ON u.id=s.usuario_id WHERE s.id=?`).get(actual.id));
 });
 
 module.exports = router;

@@ -875,10 +875,10 @@
   </div>
   <div style="padding:12px 14px 6px"><div class="sec-lbl">Tipos de residuos</div></div>
   <div class="wlist">
-    <div class="wc" onclick="openReg()"><div class="wico"><i class="ti ti-plant"></i></div><div style="flex:1"><div class="wn">Residuos vegetales</div><div class="wd">Tallos, hojas, rastrojos</div></div><div><div class="wpts">+50 pts</div><div class="wptsl">por 100kg</div></div></div>
-    <div class="wc" onclick="openReg()"><div class="wico"><i class="ti ti-bottle"></i></div><div style="flex:1"><div class="wn">Envases agroquímicos</div><div class="wd">Triple lavado certificado</div></div><div><div class="wpts">+80 pts</div><div class="wptsl">por unidad</div></div></div>
-    <div class="wc" onclick="openReg()"><div class="wico"><i class="ti ti-box"></i></div><div style="flex:1"><div class="wn">Empaques y sacos</div><div class="wd">Plástico, fibra y papel</div></div><div><div class="wpts">+30 pts</div><div class="wptsl">por kg</div></div></div>
-    <div class="wc" onclick="openReg()"><div class="wico"><i class="ti ti-recycle"></i></div><div style="flex:1"><div class="wn">Cáscaras y pulpa</div><div class="wd">Compostaje y biogás</div></div><div><div class="wpts">+45 pts</div><div class="wptsl">por 50kg</div></div></div>
+    <div class="wc" onclick="abrirTipoCircular('vegetales')"><div class="wico"><i class="ti ti-plant"></i></div><div style="flex:1"><div class="wn">Residuos vegetales</div><div class="wd">Tallos, hojas, rastrojos</div></div><div><div class="wpts">+50 pts</div><div class="wptsl">por 100kg</div></div></div>
+    <div class="wc" onclick="abrirTipoCircular('agroquimicos')"><div class="wico"><i class="ti ti-bottle"></i></div><div style="flex:1"><div class="wn">Envases agroquímicos</div><div class="wd">Triple lavado certificado</div></div><div><div class="wpts">+80 pts</div><div class="wptsl">por unidad</div></div></div>
+    <div class="wc" onclick="abrirTipoCircular('empaques')"><div class="wico"><i class="ti ti-box"></i></div><div style="flex:1"><div class="wn">Empaques y sacos</div><div class="wd">Plástico, fibra y papel</div></div><div><div class="wpts">+30 pts</div><div class="wptsl">por kg</div></div></div>
+    <div class="wc" onclick="abrirTipoCircular('organicos')"><div class="wico"><i class="ti ti-recycle"></i></div><div style="flex:1"><div class="wn">Cáscaras y pulpa</div><div class="wd">Compostaje y biogás</div></div><div><div class="wpts">+45 pts</div><div class="wptsl">por 50kg</div></div></div>
   </div>
   <button class="cta-btn" onclick="go('rec-puntos','reciclaje')"><i class="ti ti-map-pin" aria-hidden="true"></i> Puntos de recolección cercanos</button>
 </div>
@@ -1004,6 +1004,18 @@
     <button onclick="marcarTodasNotificacionesLeidas()" style="border:none;background:transparent;color:#1b5e20;font-size:10px;cursor:pointer">Marcar todas leídas</button>
   </div>
   <div id="admin-notificaciones-list" style="padding:8px 14px 8px;display:flex;flex-direction:column;gap:7px"></div>
+
+  <div class="phdr-card" style="margin-top:12px">
+    <div class="phdr-t">Solicitudes de recolección circular</div>
+    <div class="phdr-s">Consulta todos los datos enviados por el productor, responde, asigna gestor y programa la recolección.</div>
+  </div>
+  <div style="padding:0 14px 8px;display:flex;gap:7px;align-items:center">
+    <select id="admin-circular-filtro" onchange="renderAdminSolicitudesCircular()" style="flex:1;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:9px 10px;font-size:11px">
+      <option value="todos">Todas</option><option value="pendiente">Pendientes</option><option value="contactando_gestor">Contactando gestor</option><option value="programada">Programadas</option><option value="recolectada">Recolectadas</option><option value="cancelada">Canceladas</option>
+    </select>
+    <button class="mini-btn" onclick="renderAdminSolicitudesCircular()">Actualizar</button>
+  </div>
+  <div id="admin-circular-solicitudes-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div class="phdr-card">
     <div class="phdr-t">Gestión de usuarios</div>
@@ -2278,6 +2290,11 @@ async function cargarRecCiudades(){
   try{const d=await fetchJsonConTimeout(GEO_API+'/state/cities',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:pais,state:region})});const ciudades=(d.data||[]).sort((a,b)=>a.localeCompare(b,'es'));if(!ciudades.length)throw new Error('sin ciudades');ciudad.innerHTML='<option value="">Selecciona…</option>'+ciudades.map(x=>`<option>${x}</option>`).join('');}
   catch(e){const ciudades=GEO_FALLBACK[pais]?.[region]||[];ciudad.innerHTML='<option value="">Selecciona…</option>'+ciudades.map(x=>`<option>${x}</option>`).join('')+'<option value="__otra__">Otra ubicación…</option>';}
 }
+function abrirTipoCircular(tipo){
+  const sel=document.getElementById('rec-tipo');
+  if(sel)sel.value=tipo;
+  go('rec-puntos','reciclaje');
+}
 async function buscarPuntosCirculares(){
   let pais=document.getElementById('rec-pais').value,region=document.getElementById('rec-region').value,ciudad=document.getElementById('rec-ciudad').value,tipo=document.getElementById('rec-tipo').value;if(ciudad==='__otra__')ciudad=prompt('Escribe la ciudad, municipio o comuna:')||'';if(!pais||!region||!ciudad){alert('Selecciona país, departamento/región y ciudad.');return;}
   const wrap=document.getElementById('rec-points-list'),estado=document.getElementById('rec-estado');wrap.innerHTML='<div style="padding:20px;text-align:center">Buscando puntos de economía circular…</div>';
@@ -2304,6 +2321,11 @@ function renderRecPoints(){const pais=SESION.pais==='Peru'?'Peru':(SESION.pais==
 </script>
 <script>
 
+let adminCircularInterval=null;
+function iniciarActualizacionAdminCircular(){
+  if(adminCircularInterval)return;
+  adminCircularInterval=setInterval(()=>{if(document.getElementById('s-panel-admin')?.classList.contains('on')){renderAdminNotificaciones();renderAdminSolicitudesCircular();renderAdminDashboard();}},30000);
+}
 async function go(sid,nid){
   const pantallasPublicas=['splash','reg'];
   if(!SESION.autenticado && !pantallasPublicas.includes(sid)){const haySesion=await obtenerSesionValida()||await renovarTokenSesion();if(!haySesion){regModo='login';sid='reg';nid='';}}
@@ -2322,7 +2344,7 @@ async function go(sid,nid){
   if(sid==='formacion')renderFormacionList();
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
-  if(sid==='panel-admin')renderAdminSolicitudes();
+  if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
   if(sid==='lote-nuevo')actualizarHintPiso();
   if(sid==='home')renderHomeStats();
 }
@@ -3215,11 +3237,31 @@ async function renderAdminDashboard(){
 async function renderAdminNotificaciones(){
   const wrap=document.getElementById('admin-notificaciones-list');if(!wrap)return;
   try{const ns=await apiFetch('/api/admin/notificaciones');if(!ns.length){wrap.innerHTML='<div class="lab-desc">No hay notificaciones.</div>';return;}
-    wrap.innerHTML=ns.slice(0,20).map(n=>`<div class="lab-card" style="align-items:flex-start;opacity:${n.leida?'.7':'1'}"><div class="lab-ico"><i class="ti ti-bell${n.leida?'-check':''}"></i></div><div style="flex:1"><div class="lab-name">${escapeHtml(n.titulo)}</div><div class="lab-desc">${escapeHtml(n.mensaje)}</div><div class="lab-desc">${escapeHtml(n.creada_en||'')} · correo: ${escapeHtml(n.email_estado||'')}</div>${!n.leida?`<button onclick="marcarNotificacionLeida('${n.id}')" class="mini-btn" style="margin-top:5px">Marcar leída</button>`:''}</div></div>`).join('');
+    wrap.innerHTML=ns.slice(0,30).map(n=>`<div class="lab-card" style="align-items:flex-start;opacity:${n.leida?'.7':'1'}"><div class="lab-ico"><i class="ti ti-bell${n.leida?'-check':''}"></i></div><div style="flex:1"><div class="lab-name">${escapeHtml(n.titulo)}</div><div class="lab-desc">${escapeHtml(n.mensaje)}</div><div class="lab-desc">${escapeHtml(n.creada_en||'')} · correo: ${escapeHtml(n.email_estado||'')}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">${n.entidad_tipo==='solicitud_recoleccion'?`<button onclick="abrirSolicitudCircularAdmin('${n.entidad_id}')" class="mini-btn">Ver solicitud y responder</button>`:''}${!n.leida?`<button onclick="marcarNotificacionLeida('${n.id}')" class="mini-btn">Marcar leída</button>`:''}</div></div></div>`).join('');
   }catch(e){mensajeSinBackend('admin-notificaciones-list','No se pudieron cargar las notificaciones: '+e.message);}
 }
 async function marcarNotificacionLeida(id){await apiFetch('/api/admin/notificaciones/'+encodeURIComponent(id)+'/leida',{method:'PATCH',body:JSON.stringify({leida:true})});renderAdminNotificaciones();renderAdminDashboard();}
 async function marcarTodasNotificacionesLeidas(){await apiFetch('/api/admin/notificaciones-leer-todas',{method:'PATCH',body:'{}'});renderAdminNotificaciones();renderAdminDashboard();}
+function etiquetaResiduoCircular(tipo){return ({general:'Reciclables en general',agroquimicos:'Envases agroquímicos',empaques:'Empaques, sacos, plástico y papel',vegetales:'Residuos vegetales',organicos:'Cáscaras, pulpa y residuos orgánicos'})[tipo]||tipo||'Sin especificar';}
+async function renderAdminSolicitudesCircular(){
+  const wrap=document.getElementById('admin-circular-solicitudes-list');if(!wrap)return;
+  const estado=document.getElementById('admin-circular-filtro')?.value||'todos';
+  wrap.innerHTML='<div class="lab-desc">Cargando solicitudes de recolección…</div>';
+  try{const filas=await apiFetch('/api/admin/circular/solicitudes?estado='+encodeURIComponent(estado));
+    if(!filas.length){wrap.innerHTML='<div class="lab-desc">No hay solicitudes con este filtro.</div>';return;}
+    wrap.innerHTML=filas.map(x=>`<div class="lab-card" id="circular-admin-${x.id}" style="align-items:flex-start"><div class="lab-ico"><i class="ti ti-truck"></i></div><div style="flex:1;min-width:0"><div class="lab-name">${escapeHtml(etiquetaResiduoCircular(x.tipo_residuo))} · ${escapeHtml(x.cantidad||'Cantidad no indicada')}</div><div class="lab-desc"><b>Productor:</b> ${escapeHtml(x.usuario_nombre||'')} · ${escapeHtml(x.usuario_email||'')} · ${escapeHtml(x.usuario_telefono||'Sin teléfono')}</div><div class="lab-desc"><b>Ubicación:</b> ${escapeHtml(x.ciudad||'')}, ${escapeHtml(x.region||'')}, ${escapeHtml(x.pais||'')}</div><div class="lab-desc"><b>Dirección:</b> ${escapeHtml(x.direccion||'')}</div><div class="lab-desc"><b>Observaciones:</b> ${escapeHtml(x.observaciones||'Sin observaciones')}</div><div class="lab-desc"><b>Estado:</b> ${escapeHtml((x.estado||'pendiente').replaceAll('_',' '))}${x.gestor_asignado?' · Gestor: '+escapeHtml(x.gestor_asignado):''}${x.fecha_programada?' · Fecha: '+escapeHtml(x.fecha_programada):''}</div>${x.retroalimentacion?`<div class="lab-desc"><b>Última respuesta:</b> ${escapeHtml(x.retroalimentacion)}</div>`:''}<div class="lab-desc">${escapeHtml(x.creada_en||'')}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><button class="mini-btn" onclick="responderSolicitudCircularAdmin('${x.id}')">Responder / actualizar</button><a class="mini-btn" href="mailto:${escapeHtml(x.usuario_email||'')}" style="text-decoration:none">Correo</a>${x.usuario_telefono?`<a class="mini-btn" href="tel:${escapeHtml(x.usuario_telefono)}" style="text-decoration:none">Llamar</a>`:''}</div></div></div>`).join('');
+  }catch(e){wrap.innerHTML='<div class="lab-desc">No se pudieron cargar las solicitudes: '+escapeHtml(e.message)+'</div>';}
+}
+async function abrirSolicitudCircularAdmin(id){await marcarNotificacionRelacionadaCircular(id);await renderAdminSolicitudesCircular();const el=document.getElementById('circular-admin-'+id);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
+async function marcarNotificacionRelacionadaCircular(id){try{const ns=await apiFetch('/api/admin/notificaciones');const n=ns.find(x=>x.entidad_tipo==='solicitud_recoleccion'&&x.entidad_id===id&&!x.leida);if(n)await apiFetch('/api/admin/notificaciones/'+encodeURIComponent(n.id)+'/leida',{method:'PATCH',body:JSON.stringify({leida:true})});}catch(_e){}}
+async function responderSolicitudCircularAdmin(id){
+  const estado=prompt('Estado: pendiente, contactando_gestor, programada, recolectada o cancelada','contactando_gestor');if(!estado)return;
+  const gestorAsignado=prompt('Gestor o responsable asignado (opcional):','')||'';
+  const fechaProgramada=prompt('Fecha y hora programada (opcional, ej. 2026-08-02 09:00):','')||'';
+  const retroalimentacion=prompt('Escribe la respuesta o indicaciones que recibirá el usuario:','')||'';
+  if(!retroalimentacion && !confirm('No escribiste una respuesta. ¿Deseas actualizar solo el estado?'))return;
+  try{await apiFetch('/api/admin/circular/solicitudes/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify({estado,gestorAsignado,fechaProgramada,retroalimentacion})});alert('Solicitud actualizada y usuario notificado.');renderAdminSolicitudesCircular();renderAdminNotificaciones();renderAdminDashboard();}catch(e){alert(e.message||'No se pudo actualizar la solicitud.');}
+}
 async function renderAdminAuditoriaIA(){
   const wrap=document.getElementById('admin-auditoria-ia-list');if(!wrap)return;
   try{const filas=await apiFetch('/api/admin/auditoria-ia');if(!filas.length){wrap.innerHTML='<div class="lab-desc">Todavía no hay interacciones auditadas.</div>';return;}
@@ -3319,7 +3361,7 @@ async function renderAdminSolicitudes(){
         </div>
       </div>`).join('');
   }catch(e){mensajeSinBackend('admin-solicitudes-list','No se pudieron cargar las solicitudes: '+e.message);}
-  renderAdminDashboard();renderAdminNotificaciones();renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminConversacionesLab();renderAdminPagos();renderAdminSolTele();renderAdminAuditoriaIA();
+  renderAdminDashboard();renderAdminNotificaciones();renderAdminSolicitudesCircular();renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminConversacionesLab();renderAdminPagos();renderAdminSolTele();renderAdminAuditoriaIA();
 }
 
 function mensajeSinBackend(id,texto){
