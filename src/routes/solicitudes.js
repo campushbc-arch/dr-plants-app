@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
+const { crearNotificacionAdmin } = require('../notificaciones');
 
 const router = express.Router();
 router.use(requiereAuth);
@@ -14,6 +15,7 @@ router.post('/laboratorio', (req, res) => {
   const id = nuevoId('sollab');
   db.prepare('INSERT INTO solicitudes_laboratorio (id, usuario_id, lote_id, tipo_analisis, notas) VALUES (?,?,?,?,?)')
     .run(id, req.usuario.id, loteId || null, tipoAnalisis, notas || null);
+  crearNotificacionAdmin({ tipo:'solicitud_laboratorio', titulo:'Nueva solicitud de laboratorio', mensaje:`${req.usuario.nombre || req.usuario.email} solicitó: ${tipoAnalisis}.`, usuarioId:req.usuario.id, entidadTipo:'solicitud_laboratorio', entidadId:id, prioridad:'alta' });
   res.status(201).json(db.prepare('SELECT * FROM solicitudes_laboratorio WHERE id = ?').get(id));
 });
 
@@ -31,6 +33,7 @@ router.post('/teleconsulta', (req, res) => {
   const id = nuevoId('soltele');
   db.prepare('INSERT INTO solicitudes_teleconsulta (id, usuario_id, lote_id, motivo, fecha_preferida) VALUES (?,?,?,?,?)')
     .run(id, req.usuario.id, loteId || null, motivo, fechaPreferida || null);
+  crearNotificacionAdmin({ tipo:'teleconsulta', titulo:'Nueva consulta personalizada', mensaje:`${req.usuario.nombre || req.usuario.email} solicitó una consulta: ${motivo}.`, usuarioId:req.usuario.id, entidadTipo:'teleconsulta', entidadId:id, prioridad:'alta' });
   res.status(201).json(db.prepare('SELECT * FROM solicitudes_teleconsulta WHERE id = ?').get(id));
 });
 

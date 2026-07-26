@@ -982,6 +982,18 @@
     <span class="pg-title">Panel de Administrador</span>
   </div>
   <div class="phdr-card">
+    <div class="phdr-t">Panel ejecutivo</div>
+    <div class="phdr-s">Indicadores en tiempo real de ventas, usuarios, laboratorio, consultas y documentos.</div>
+  </div>
+  <div id="admin-dashboard" style="padding:0 14px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px"></div>
+
+  <div style="padding:18px 14px 0;display:flex;justify-content:space-between;align-items:center">
+    <div class="sec-lbl" style="padding:0">Notificaciones automáticas</div>
+    <button onclick="marcarTodasNotificacionesLeidas()" style="border:none;background:transparent;color:#1b5e20;font-size:10px;cursor:pointer">Marcar todas leídas</button>
+  </div>
+  <div id="admin-notificaciones-list" style="padding:8px 14px 8px;display:flex;flex-direction:column;gap:7px"></div>
+
+  <div class="phdr-card">
     <div class="phdr-t">Gestión de usuarios</div>
     <div class="phdr-s">Consulta las cuentas registradas y controla quién puede acceder a los contenidos y herramientas.</div>
   </div>
@@ -1024,6 +1036,11 @@
     <div class="sec-lbl" style="padding:0">Solicitudes de teleconsulta</div>
   </div>
   <div id="admin-soltele-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+
+  <div style="padding:20px 14px 0">
+    <div class="sec-lbl" style="padding:0">Trazabilidad de inteligencia artificial</div>
+  </div>
+  <div id="admin-auditoria-ia-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
 
   <div style="padding:20px 14px 0;display:flex;justify-content:space-between;align-items:center">
     <div class="sec-lbl" style="padding:0">Catálogo de AgroTienda</div>
@@ -3233,6 +3250,45 @@ async function doLogin(){
   }
 }
 
+
+async function renderAdminDashboard(){
+  const wrap=document.getElementById('admin-dashboard');if(!wrap)return;
+  try{const d=await apiFetch('/api/admin/dashboard');const i=d.indicadores||{};
+    const cards=[['Ventas del mes',fmtCOP(i.ventasMes||0),'ti-cash'],['Usuarios',i.usuarios||0,'ti-users'],['Pagos pendientes',i.pagosPendientes||0,'ti-credit-card'],['Pedidos pendientes',i.pedidosPendientes||0,'ti-shopping-cart'],['Análisis activos',i.analisisPendientes||0,'ti-flask'],['Consultas activas',i.consultasPendientes||0,'ti-headset'],['Documentos por verificar',i.documentosPendientes||0,'ti-file-check'],['Alertas no leídas',i.notificacionesNoLeidas||0,'ti-bell']];
+    wrap.innerHTML=cards.map(c=>`<div style="border:1px solid var(--color-border-tertiary);border-radius:12px;padding:11px;background:var(--color-background-secondary)"><i class="ti ${c[2]}" style="font-size:18px;color:#1b5e20"></i><div style="font-size:16px;font-weight:700;margin-top:5px">${c[1]}</div><div style="font-size:9.5px;color:var(--color-text-secondary)">${c[0]}</div></div>`).join('');
+  }catch(e){wrap.innerHTML='<div class="lab-desc">No se pudo cargar el panel: '+escapeHtml(e.message)+'</div>';}
+}
+async function renderAdminNotificaciones(){
+  const wrap=document.getElementById('admin-notificaciones-list');if(!wrap)return;
+  try{const ns=await apiFetch('/api/admin/notificaciones');if(!ns.length){wrap.innerHTML='<div class="lab-desc">No hay notificaciones.</div>';return;}
+    wrap.innerHTML=ns.slice(0,20).map(n=>`<div class="lab-card" style="align-items:flex-start;opacity:${n.leida?'.7':'1'}"><div class="lab-ico"><i class="ti ti-bell${n.leida?'-check':''}"></i></div><div style="flex:1"><div class="lab-name">${escapeHtml(n.titulo)}</div><div class="lab-desc">${escapeHtml(n.mensaje)}</div><div class="lab-desc">${escapeHtml(n.creada_en||'')} · correo: ${escapeHtml(n.email_estado||'')}</div>${!n.leida?`<button onclick="marcarNotificacionLeida('${n.id}')" class="mini-btn" style="margin-top:5px">Marcar leída</button>`:''}</div></div>`).join('');
+  }catch(e){mensajeSinBackend('admin-notificaciones-list','No se pudieron cargar las notificaciones: '+e.message);}
+}
+async function marcarNotificacionLeida(id){await apiFetch('/api/admin/notificaciones/'+encodeURIComponent(id)+'/leida',{method:'PATCH',body:JSON.stringify({leida:true})});renderAdminNotificaciones();renderAdminDashboard();}
+async function marcarTodasNotificacionesLeidas(){await apiFetch('/api/admin/notificaciones-leer-todas',{method:'PATCH',body:'{}'});renderAdminNotificaciones();renderAdminDashboard();}
+async function renderAdminAuditoriaIA(){
+  const wrap=document.getElementById('admin-auditoria-ia-list');if(!wrap)return;
+  try{const filas=await apiFetch('/api/admin/auditoria-ia');if(!filas.length){wrap.innerHTML='<div class="lab-desc">Todavía no hay interacciones auditadas.</div>';return;}
+    wrap.innerHTML=filas.slice(0,30).map(a=>`<div class="lab-card" style="align-items:flex-start"><div class="lab-ico"><i class="ti ti-brain"></i></div><div style="flex:1;min-width:0"><div class="lab-name">${escapeHtml(a.usuario_nombre)} · ${escapeHtml(a.modulo)}</div><div class="lab-desc"><b>Pregunta:</b> ${escapeHtml((a.pregunta||'').slice(0,180))}</div><div class="lab-desc"><b>Respuesta:</b> ${escapeHtml((a.respuesta||'').slice(0,220))}</div><div class="lab-desc">${a.tokens_entrada||0} entrada · ${a.tokens_salida||0} salida · ${a.duracion_ms||0} ms · ${escapeHtml(a.creado_en||'')}</div></div></div>`).join('');
+  }catch(e){mensajeSinBackend('admin-auditoria-ia-list','No se pudo cargar la trazabilidad IA: '+e.message);}
+}
+function bloqueHistorial(titulo,items,render){return `<div style="margin-top:14px"><div style="font-size:12px;font-weight:700;margin-bottom:7px">${titulo} (${items.length})</div>${items.length?items.map(render).join(''):'<div class="lab-desc">Sin registros.</div>'}</div>`;}
+async function abrirHistorialIntegralAdmin(id){
+  const modal=document.getElementById('admin-expediente-modal'),cont=document.getElementById('admin-expediente-contenido');modal.style.display='block';cont.innerHTML='Cargando historial integral...';
+  try{const d=await apiFetch('/api/admin/usuarios/'+encodeURIComponent(id)+'/historial-integral');const u=d.usuario;document.getElementById('admin-expediente-titulo').textContent='Historial integral · '+u.nombre;
+    const row=x=>`<div style="padding:8px;margin:5px 0;border:1px solid var(--color-border-tertiary);border-radius:8px;font-size:10.5px">${x}</div>`;
+    cont.innerHTML=`<div class="lab-card"><div><div class="lab-name">${escapeHtml(u.nombre)}</div><div class="lab-desc">${escapeHtml(u.email)} · ${escapeHtml(u.telefono||'')} · ${escapeHtml(u.pais||'')} ${escapeHtml(u.region||'')}</div></div></div>`+
+      bloqueHistorial('Fincas',d.fincas||[],x=>row(`<b>${escapeHtml(x.nombre)}</b> · ${escapeHtml(x.ciudad||x.ubicacion_id||'')}`))+
+      bloqueHistorial('Lotes y cultivos',d.lotes||[],x=>row(`<b>${escapeHtml(x.nombre)}</b> · ${escapeHtml(x.cultivo_nombre||x.cultivo_id||'')} · ${escapeHtml(x.variedad||'')}`))+
+      bloqueHistorial('Solicitudes de laboratorio',d.solicitudesLaboratorio||[],x=>row(`${escapeHtml(x.tipo_analisis)} · ${escapeHtml(x.estado)} · ${escapeHtml(x.fecha)}`))+
+      bloqueHistorial('Consultas',d.consultas||[],x=>row(`${escapeHtml(x.motivo)} · ${escapeHtml(x.estado)} · ${escapeHtml(x.fecha_solicitud)}`))+
+      bloqueHistorial('Pedidos',d.pedidos||[],x=>row(`<b>${escapeHtml(x.numero)}</b> · ${fmtCOP(x.total_cop)} · ${escapeHtml(x.estado)}<br>${(x.items||[]).map(i=>escapeHtml(i.producto_nombre)+' x '+i.cantidad).join(', ')}`))+
+      bloqueHistorial('Pagos',d.pagos||[],x=>row(`${escapeHtml(x.descripcion||x.tipo)} · ${fmtCOP(x.monto_cop)} · <b>${escapeHtml(x.estado)}</b>`))+
+      bloqueHistorial('Documentos',d.archivos||[],x=>row(`${escapeHtml(x.nombre)} · ${escapeHtml(x.tipo)} · ${escapeHtml(x.estado_verificacion)}`))+
+      bloqueHistorial('Interacciones con IA',d.auditoriaIA||[],x=>row(`<b>${escapeHtml(x.modulo)}</b> · ${escapeHtml((x.pregunta||'').slice(0,160))}<br><span class="lab-desc">${escapeHtml(x.creado_en||'')}</span>`));
+  }catch(e){cont.innerHTML='<div style="color:#c62828">'+escapeHtml(e.message)+'</div>';}
+}
+
 async function renderAdminUsuarios(){
   const wrap=document.getElementById('admin-usuarios-list');
   if(!wrap)return;
@@ -3259,6 +3315,7 @@ async function renderAdminUsuarios(){
           <div class="lab-desc">${escapeHtml(u.telefono||'Sin teléfono')} · ${escapeHtml(u.pais||'')} ${u.region?'· '+escapeHtml(u.region):''}</div>
           ${!activo&&u.motivo_bloqueo?`<div class="lab-desc" style="color:#9B1C1C">Motivo: ${escapeHtml(u.motivo_bloqueo)}</div>`:''}
           <button type="button" onclick="abrirExpedienteAdmin('${u.id}')" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;background:var(--color-background-primary);color:#1b5e20;border:0.5px solid #C0DD97">Ver expediente y documentos</button>
+          <button type="button" onclick="abrirHistorialIntegralAdmin('${u.id}')" style="margin-top:6px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;background:#1b5e20;color:#fff;border:none">Ver historial integral</button>
           <button type="button" onclick="cambiarAccesoUsuario('${u.id}',${activo?'false':'true'})" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;${activo?'background:var(--color-background-primary);color:#c62828;border:0.5px solid #F09595':'background:#1b5e20;color:#fff;border:none'}">${activo?'Bloquear acceso':'Desbloquear acceso'}</button>
         </div>
       </div>`;
@@ -3308,7 +3365,7 @@ async function renderAdminSolicitudes(){
         </div>
       </div>`).join('');
   }catch(e){mensajeSinBackend('admin-solicitudes-list','No se pudieron cargar las solicitudes: '+e.message);}
-  renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminConversacionesLab();renderAdminPagos();renderAdminSolTele();
+  renderAdminDashboard();renderAdminNotificaciones();renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminConversacionesLab();renderAdminPagos();renderAdminSolTele();renderAdminAuditoriaIA();
 }
 
 function mensajeSinBackend(id,texto){

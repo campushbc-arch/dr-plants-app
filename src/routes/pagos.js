@@ -2,6 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
+const { crearNotificacionAdmin } = require('../notificaciones');
 
 const router = express.Router();
 
@@ -145,6 +146,9 @@ router.post('/wompi/eventos', (req, res) => {
         if (pago.tipo === 'productos') db.prepare("UPDATE pedidos SET estado='pagado' WHERE id=?").run(pago.entidad_id);
         if (pago.tipo === 'analisis_laboratorio') db.prepare("UPDATE solicitudes_laboratorio SET estado='en_proceso' WHERE id=?").run(pago.entidad_id);
         if (pago.tipo === 'consulta_personalizada') db.prepare("UPDATE solicitudes_teleconsulta SET estado='pendiente' WHERE id=?").run(pago.entidad_id);
+        crearNotificacionAdmin({ tipo:'pago_aprobado', titulo:'Pago aprobado', mensaje:`Pago aprobado por $${Number(pago.monto_cop).toLocaleString('es-CO')} COP: ${pago.descripcion || pago.tipo}.`, usuarioId:pago.usuario_id, entidadTipo:'pago', entidadId:pago.id, prioridad:'alta' });
+      } else if (['DECLINED','ERROR','VOIDED'].includes(estado)) {
+        crearNotificacionAdmin({ tipo:'pago_no_aprobado', titulo:'Pago no aprobado', mensaje:`La transacción ${pago.referencia} quedó en estado ${estado}.`, usuarioId:pago.usuario_id, entidadTipo:'pago', entidadId:pago.id, prioridad:'normal' });
       }
     }
   }

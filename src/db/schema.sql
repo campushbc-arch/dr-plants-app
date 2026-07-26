@@ -239,3 +239,41 @@ CREATE TABLE IF NOT EXISTS archivo_verificaciones (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_verificaciones_archivo ON archivo_verificaciones(archivo_id, creado_en);
+
+
+-- Centro de notificaciones administrativas y trazabilidad avanzada
+CREATE TABLE IF NOT EXISTS notificaciones_admin (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL,
+  titulo TEXT NOT NULL,
+  mensaje TEXT NOT NULL,
+  usuario_id TEXT REFERENCES usuarios(id) ON DELETE SET NULL,
+  entidad_tipo TEXT DEFAULT NULL,
+  entidad_id TEXT DEFAULT NULL,
+  prioridad TEXT NOT NULL DEFAULT 'normal' CHECK(prioridad IN ('normal','alta','critica')),
+  leida INTEGER NOT NULL DEFAULT 0 CHECK(leida IN (0,1)),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  leida_en TEXT DEFAULT NULL,
+  email_estado TEXT NOT NULL DEFAULT 'no_configurado',
+  email_enviado_en TEXT DEFAULT NULL,
+  email_error TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notificaciones_admin ON notificaciones_admin(leida, creada_en);
+
+CREATE TABLE IF NOT EXISTS auditoria_ia (
+  id TEXT PRIMARY KEY,
+  conversacion_id TEXT NOT NULL REFERENCES conversaciones_ia(id) ON DELETE CASCADE,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  modulo TEXT NOT NULL,
+  pregunta TEXT,
+  respuesta TEXT,
+  archivo_ids_json TEXT DEFAULT '[]',
+  modelo TEXT DEFAULT NULL,
+  tokens_entrada INTEGER DEFAULT NULL,
+  tokens_salida INTEGER DEFAULT NULL,
+  duracion_ms INTEGER DEFAULT NULL,
+  estado TEXT NOT NULL DEFAULT 'completado',
+  error TEXT DEFAULT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_auditoria_ia_usuario ON auditoria_ia(usuario_id, creado_en);

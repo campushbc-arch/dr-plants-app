@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
+const { crearNotificacionAdmin } = require('../notificaciones');
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.post('/', requiereAuth, async (req, res) => {
     return res.status(500).json({ error: 'El servidor no tiene configurada ANTHROPIC_API_KEY. Revisa el .env.' });
   }
 
+  const inicioMs = Date.now();
   try {
     let mensajesProveedor = messages;
     if (Array.isArray(archivoIds) && archivoIds.length) {
@@ -73,7 +75,7 @@ router.post('/', requiereAuth, async (req, res) => {
 
     // Guarda el historial real en la base de datos, asociado al usuario autenticado.
     if (modulo && ['dr_agro', 'soporte', 'laboratorio'].includes(modulo)) {
-      guardarEnHistorial(req.usuario.id, modulo, messages, data, archivoIds);
+      guardarEnHistorial(req.usuario.id, modulo, messages, data, archivoIds, Date.now()-inicioMs);
     }
 
     res.json(data);
@@ -83,7 +85,7 @@ router.post('/', requiereAuth, async (req, res) => {
   }
 });
 
-function guardarEnHistorial(usuarioId, modulo, messages, data, archivoIds = []) {
+function guardarEnHistorial(usuarioId, modulo, messages, data, archivoIds = [], duracionMs = null) {
   let conv = db.prepare(
     'SELECT * FROM conversaciones_ia WHERE usuario_id = ? AND modulo = ? ORDER BY creado_en DESC LIMIT 1'
   ).get(usuarioId, modulo);
@@ -112,6 +114,20 @@ function guardarEnHistorial(usuarioId, modulo, messages, data, archivoIds = []) 
   if (textoRespuesta) {
     db.prepare('INSERT INTO mensajes (id, conversacion_id, rol, contenido) VALUES (?, ?, ?, ?)')
       .run(nuevoId('msg'), conv.id, 'assistant', textoRespuesta);
+  }
+
+  const pregunta = ultimoMensajeUsuario?.role === 'user'
+    ? (typeof ultimoMensajeUsuario.content === 'string' ? ultimoMensajeUsuario.content : JSON.stringify(ultimoMensajeUsuario.content))
+    : '';
+  db.prepare(`INSERT INTO auditoria_ia
+    (id,conversacion_id,usuario_id,modulo,pregunta,respuesta,archivo_ids_json,modelo,tokens_entrada,tokens_salida,duracion_ms,estado)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,'completado')`).run(
+      nuevoId('aia'), conv.id, usuarioId, modulo, pregunta, textoRespuesta,
+      JSON.stringify(Array.isArray(archivoIds)?archivoIds:[]), data.model || 'claude-sonnet-4-6',
+      data.usage?.input_tokens ?? null, data.usage?.output_tokens ?? null, duracionMs
+    );
+  if (modulo === 'laboratorio') {
+    crearNotificacionAdmin({ tipo:'analisis_ia_laboratorio', titulo:'Nuevo análisis en Laboratorio', mensaje:`Un usuario realizó una consulta de laboratorio con IA${archivoIds?.length ? ` y adjuntó ${archivoIds.length} archivo(s)` : ''}.`, usuarioId, entidadTipo:'conversacion_ia', entidadId:conv.id, prioridad:'alta' });
   }
 }
 

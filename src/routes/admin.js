@@ -296,4 +296,73 @@ router.patch('/archivos/:id/verificacion', (req, res) => {
   res.status(201).json(db.prepare('SELECT * FROM archivo_verificaciones WHERE id=?').get(id));
 });
 
+
+// --- Panel ejecutivo, notificaciones e historial integral del productor ---
+router.get('/dashboard', (req, res) => {
+  const uno = (sql, ...params) => Number(db.prepare(sql).get(...params)?.total || 0);
+  const ventasMes = Number(db.prepare(`SELECT COALESCE(SUM(monto_cop),0) AS total FROM pagos WHERE estado='APPROVED' AND creado_en >= datetime('now','start of month')`).get().total || 0);
+  const indicadores = {
+    usuarios: uno("SELECT COUNT(*) total FROM usuarios WHERE rol<>'admin'"),
+    usuariosActivos: uno("SELECT COUNT(*) total FROM usuarios WHERE rol<>'admin' AND activo=1"),
+    ventasMes,
+    pagosPendientes: uno("SELECT COUNT(*) total FROM pagos WHERE estado='PENDING'"),
+    pedidosPendientes: uno("SELECT COUNT(*) total FROM pedidos WHERE estado IN ('recibido','pendiente_pago')"),
+    analisisPendientes: uno("SELECT COUNT(*) total FROM solicitudes_laboratorio WHERE estado IN ('pendiente','en_proceso')"),
+    consultasPendientes: uno("SELECT COUNT(*) total FROM solicitudes_teleconsulta WHERE estado IN ('pendiente','agendada')"),
+    documentosPendientes: uno(`SELECT COUNT(*) total FROM archivos_usuario a WHERE COALESCE((SELECT v.estado FROM archivo_verificaciones v WHERE v.archivo_id=a.id ORDER BY v.creado_en DESC LIMIT 1),'pendiente')='pendiente'`),
+    conversacionesIA: uno("SELECT COUNT(*) total FROM conversaciones_ia"),
+    notificacionesNoLeidas: uno("SELECT COUNT(*) total FROM notificaciones_admin WHERE leida=0")
+  };
+  const productosTop = db.prepare(`SELECT pr.nombre, SUM(pi.cantidad) cantidad, SUM(pi.cantidad*pi.precio_unitario_cop) total_cop
+    FROM pedido_items pi JOIN productos pr ON pr.id=pi.producto_id JOIN pedidos p ON p.id=pi.pedido_id
+    WHERE p.estado='pagado' GROUP BY pr.id,pr.nombre ORDER BY cantidad DESC LIMIT 5`).all();
+  const usuariosPorPais = db.prepare(`SELECT COALESCE(NULLIF(pais,''),'Sin registrar') pais, COUNT(*) total FROM usuarios WHERE rol<>'admin' GROUP BY pais ORDER BY total DESC LIMIT 8`).all();
+  const actividad = db.prepare(`SELECT tipo,titulo,mensaje,prioridad,leida,creada_en FROM notificaciones_admin ORDER BY creada_en DESC LIMIT 8`).all();
+  res.json({ indicadores, productosTop, usuariosPorPais, actividad });
+});
+
+router.get('/notificaciones', (req, res) => {
+  const soloNoLeidas = String(req.query.noLeidas || 'false') === 'true';
+  res.json(db.prepare(`SELECT n.*,u.nombre usuario_nombre,u.email usuario_email FROM notificaciones_admin n
+    LEFT JOIN usuarios u ON u.id=n.usuario_id ${soloNoLeidas ? 'WHERE n.leida=0' : ''} ORDER BY n.creada_en DESC LIMIT 100`).all());
+});
+router.patch('/notificaciones/:id/leida', (req, res) => {
+  const leida = req.body?.leida !== false;
+  db.prepare(`UPDATE notificaciones_admin SET leida=?, leida_en=CASE WHEN ?=1 THEN datetime('now') ELSE NULL END WHERE id=?`).run(leida?1:0, leida?1:0, req.params.id);
+  res.json(db.prepare('SELECT * FROM notificaciones_admin WHERE id=?').get(req.params.id));
+});
+router.patch('/notificaciones-leer-todas', (_req, res) => {
+  db.prepare("UPDATE notificaciones_admin SET leida=1, leida_en=datetime('now') WHERE leida=0").run();
+  res.json({ ok:true });
+});
+
+router.get('/usuarios/:id/historial-integral', (req, res) => {
+  const usuario = db.prepare(`SELECT id,nombre,email,telefono,rol,tipo_productor,pais,region,tarjeta_profesional,especialidad,estado_agronomo,activo,creado_en FROM usuarios WHERE id=? AND rol<>'admin'`).get(req.params.id);
+  if (!usuario) return res.status(404).json({ error:'Usuario no encontrado.' });
+  const fincas = db.prepare(`SELECT * FROM fincas WHERE productor_id=? AND eliminado_en IS NULL ORDER BY creado_en DESC`).all(usuario.id);
+  const lotes = fincas.flatMap(f => db.prepare(`SELECT * FROM lotes WHERE finca_id=? AND eliminado_en IS NULL ORDER BY creado_en DESC`).all(f.id));
+  const loteIds = lotes.map(x=>x.id);
+  const porLotes = (sql) => loteIds.length ? db.prepare(sql.replace(':ids', loteIds.map(()=>'?').join(','))).all(...loteIds) : [];
+  const aplicaciones = porLotes(`SELECT * FROM aplicaciones WHERE lote_id IN (:ids) AND eliminado_en IS NULL ORDER BY fecha DESC`);
+  const analisisCultivo = porLotes(`SELECT * FROM analisis_laboratorio WHERE lote_id IN (:ids) AND eliminado_en IS NULL ORDER BY fecha DESC`);
+  const costos = porLotes(`SELECT * FROM costos_operativos WHERE lote_id IN (:ids) AND eliminado_en IS NULL ORDER BY fecha DESC`);
+  const archivos = db.prepare(`SELECT a.id,a.tipo,a.nombre_original nombre,a.mime_type,a.tamano_bytes,a.creado_en,
+    COALESCE((SELECT v.estado FROM archivo_verificaciones v WHERE v.archivo_id=a.id ORDER BY v.creado_en DESC LIMIT 1),'pendiente') estado_verificacion
+    FROM archivos_usuario a WHERE a.usuario_id=? ORDER BY a.creado_en DESC`).all(usuario.id);
+  const pedidos = db.prepare(`SELECT * FROM pedidos WHERE usuario_id=? ORDER BY fecha DESC`).all(usuario.id).map(p=>({...p,items:db.prepare(`SELECT pi.*,pr.nombre producto_nombre FROM pedido_items pi JOIN productos pr ON pr.id=pi.producto_id WHERE pi.pedido_id=?`).all(p.id)}));
+  const pagos = db.prepare(`SELECT * FROM pagos WHERE usuario_id=? ORDER BY creado_en DESC`).all(usuario.id);
+  const solicitudesLaboratorio = db.prepare(`SELECT * FROM solicitudes_laboratorio WHERE usuario_id=? ORDER BY fecha DESC`).all(usuario.id);
+  const consultas = db.prepare(`SELECT * FROM solicitudes_teleconsulta WHERE usuario_id=? ORDER BY fecha_solicitud DESC`).all(usuario.id);
+  const conversaciones = db.prepare(`SELECT c.*,COUNT(m.id) total_mensajes,MAX(m.creado_en) ultima_actividad FROM conversaciones_ia c LEFT JOIN mensajes m ON m.conversacion_id=c.id WHERE c.usuario_id=? GROUP BY c.id ORDER BY c.creado_en DESC`).all(usuario.id);
+  const auditoriaIA = db.prepare(`SELECT id,modulo,pregunta,respuesta,archivo_ids_json,modelo,tokens_entrada,tokens_salida,duracion_ms,estado,error,creado_en FROM auditoria_ia WHERE usuario_id=? ORDER BY creado_en DESC LIMIT 100`).all(usuario.id);
+  res.json({ usuario,fincas,lotes,aplicaciones,analisisCultivo,costos,archivos,pedidos,pagos,solicitudesLaboratorio,consultas,conversaciones,auditoriaIA });
+});
+
+router.get('/auditoria-ia', (req, res) => {
+  const modulo = String(req.query.modulo || 'todos');
+  const where = modulo==='todos' ? '' : 'WHERE a.modulo=?';
+  const params = modulo==='todos' ? [] : [modulo];
+  res.json(db.prepare(`SELECT a.*,u.nombre usuario_nombre,u.email usuario_email FROM auditoria_ia a JOIN usuarios u ON u.id=a.usuario_id ${where} ORDER BY a.creado_en DESC LIMIT 200`).all(...params));
+});
+
 module.exports = router;

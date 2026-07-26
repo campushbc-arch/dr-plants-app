@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
+const { crearNotificacionAdmin } = require('../notificaciones');
 
 const router = express.Router();
 router.use(requiereAuth);
@@ -35,6 +36,7 @@ router.post('/', (req, res) => {
     for (const it of normalizados) ins.run(nuevoId('pi'), id, it.producto.id, it.cantidad, it.producto.precio_cop);
   });
   crear();
+  crearNotificacionAdmin({ tipo:'nuevo_pedido', titulo:'Nuevo pedido en AgroTienda', mensaje:`${req.usuario.nombre || req.usuario.email} creó el pedido ${numero} por $${total.toLocaleString('es-CO')} COP.`, usuarioId:req.usuario.id, entidadTipo:'pedido', entidadId:id, prioridad:'alta' });
   res.status(201).json({ ...db.prepare('SELECT * FROM pedidos WHERE id=?').get(id), items: normalizados.map(x => ({ productoId:x.producto.id, nombre:x.producto.nombre, cantidad:x.cantidad, precioUnitarioCop:x.producto.precio_cop })) });
 });
 

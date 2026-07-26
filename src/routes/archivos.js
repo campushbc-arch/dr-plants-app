@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
+const { crearNotificacionAdmin } = require('../notificaciones');
 const { multerFileFilter, safeDelete, uploadLimits, validateStoredFile } = require('../upload-security');
 
 const router = express.Router();
@@ -45,6 +46,7 @@ router.post('/subir', (req, res) => {
         (id, usuario_id, tipo, nombre_original, nombre_guardado, mime_type, tamano_bytes, ruta)
         VALUES (?,?,?,?,?,?,?,?)`).run(id, req.usuario.id, tipo, req.file.originalname, req.file.filename, req.file.mimetype, req.file.size, req.file.path);
       if (tipo === 'foto_perfil') db.prepare('UPDATE usuarios SET foto_perfil = ? WHERE id = ?').run(id, req.usuario.id);
+      crearNotificacionAdmin({ tipo:'archivo_cargado', titulo:'Nuevo documento para revisar', mensaje:`${req.usuario.nombre || req.usuario.email} cargó ${req.file.originalname} (${tipo}).`, usuarioId:req.usuario.id, entidadTipo:'archivo', entidadId:id, prioridad: tipo==='foto_perfil' ? 'normal' : 'alta' });
       return res.status(201).json({ id, tipo, nombre: req.file.originalname, mime_type: req.file.mimetype, tamano_bytes: req.file.size, url: `/api/archivos/${id}` });
     } catch (error) {
       safeDelete(req.file);
