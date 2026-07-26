@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-shell-v6-3-dr-agro-context-safe';
+const CACHE_NAME = 'dr-plants-v7-futurista';
 const APP_SHELL = [
   '/',
   '/manifest.json',

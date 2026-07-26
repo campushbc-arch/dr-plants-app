@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dr Plants — Agro Campus HBC</title>
 <meta name="description" content="Ecosistema agro de Campus HBC: agrónomo con IA, laboratorio de diagnóstico, seguimiento de cultivo, tienda y formación tecnológica.">
 <meta name="theme-color" content="#1b5e20">
@@ -332,6 +332,58 @@
 .cta-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 28px);margin:0 14px 16px;background:#1b5e20;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
 .cta-btn.gold{background:#c9a227}
 </style>
+
+<style id="drplants-v7-design">
+:root{
+  --v7-green:#0f6b3f;--v7-green-2:#16a05d;--v7-lime:#9ee37d;--v7-gold:#d4ad32;
+  --v7-bg:#f3f7f4;--v7-surface:rgba(255,255,255,.88);--v7-shadow:0 18px 55px rgba(8,53,31,.12);
+  --v7-border:rgba(15,107,63,.12);--v7-radius:22px;--v7-blur:blur(18px)
+}
+html{font-size:16px;scroll-behavior:smooth;background:radial-gradient(circle at 15% 0,#dff7e8 0,transparent 34%),linear-gradient(135deg,#edf7f0,#f7f7f2 55%,#edf4ef)}
+body{min-height:100vh;background:transparent;color:var(--color-text-primary);font-size:1rem;line-height:1.55}
+.app-wrap{width:100%;max-width:1440px;min-height:100vh;margin:0 auto;padding:clamp(0px,1.4vw,22px);background:transparent;border-radius:0}
+.phone{width:100%;max-width:1180px;min-height:calc(100vh - 44px);margin:0 auto;border:1px solid rgba(255,255,255,.72);border-radius:30px;background:var(--v7-surface);box-shadow:var(--v7-shadow);backdrop-filter:var(--v7-blur);-webkit-backdrop-filter:var(--v7-blur);position:relative}
+.hdr{position:sticky;top:0;z-index:50;padding:15px clamp(16px,2.5vw,30px);background:linear-gradient(120deg,rgba(10,83,47,.97),rgba(20,126,71,.94));box-shadow:0 8px 28px rgba(5,48,27,.18);backdrop-filter:blur(18px)}
+.hdr-name{font-size:1.08rem;font-weight:750}.hdr-sub{font-size:.68rem}.hdr-leaf{width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.hdr-btn{width:40px;height:40px;border-radius:13px;transition:.22s ease}.hdr-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.18)}
+.hero{padding:clamp(24px,4vw,50px);background:radial-gradient(circle at 85% 10%,rgba(158,227,125,.22),transparent 28%),linear-gradient(135deg,#0b5632,#117546 58%,#159257);position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;width:260px;height:260px;border:1px solid rgba(255,255,255,.12);border-radius:50%;right:-100px;bottom:-150px;box-shadow:0 0 0 34px rgba(255,255,255,.035),0 0 0 68px rgba(255,255,255,.025)}
+.hero-h{font-size:clamp(1.65rem,3vw,2.75rem);font-weight:780;letter-spacing:-.035em}.hero-p{font-size:clamp(.95rem,1.3vw,1.08rem);max-width:720px}.hero-tag,.sec-lbl{font-size:.72rem;font-weight:700}
+.body{padding:clamp(16px,2.8vw,34px);gap:18px}
+.main-svc,.svc,.card,.panel,.msg,.cin,input,select,textarea,button{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease}
+.main-svc{border-radius:var(--v7-radius);padding:clamp(18px,2.5vw,30px);background:linear-gradient(135deg,#0d6139,#158d52);box-shadow:0 15px 35px rgba(12,102,58,.22);overflow:hidden}
+.main-svc:hover,.svc:hover{transform:translateY(-3px);box-shadow:0 18px 42px rgba(9,77,44,.16)}
+.ms-title{font-size:clamp(1.25rem,2vw,1.7rem);font-weight:750}.ms-desc{font-size:.95rem;max-width:650px}.ms-cta{min-height:44px;border-radius:13px;font-size:.95rem;padding:10px 17px}
+.grid2{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.svc{padding:18px;border:1px solid var(--v7-border);border-radius:20px;box-shadow:0 8px 24px rgba(16,60,38,.055);background:rgba(255,255,255,.78)}
+.svc-name{font-size:1rem;font-weight:700}.svc-mini{font-size:.9rem}.svc-ico{width:42px;height:42px;border-radius:13px}.svc-ico i{font-size:21px}
+input,select,textarea,.cin{font:inherit;font-size:1rem!important;min-height:48px;border-radius:14px!important;border:1px solid rgba(18,83,52,.14)!important;background:rgba(255,255,255,.88)!important;padding:12px 14px!important;outline:none}
+input:focus,select:focus,textarea:focus,.cin:focus{border-color:#21a366!important;box-shadow:0 0 0 4px rgba(33,163,102,.12)!important}
+button,[role="button"]{font-family:inherit}button:focus-visible,[role="button"]:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(42,181,105,.35);outline-offset:2px}
+.msg{font-size:.98rem;line-height:1.6;border-radius:18px!important}.msgs{gap:12px}
+.bnav{position:sticky;bottom:0;z-index:45;padding:9px max(8px,env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));background:rgba(255,255,255,.9);backdrop-filter:blur(18px);border-top:1px solid rgba(20,92,55,.1);box-shadow:0 -10px 30px rgba(13,70,43,.08)}
+.ni{min-height:54px;border-radius:14px;justify-content:center}.ni:hover{background:rgba(23,139,81,.07)}.ni i{font-size:22px}.ni span{font-size:.72rem;font-weight:650}.ni.on{background:rgba(27,139,81,.1)}
+.screen.on{animation:v7In .28s ease both}@keyframes v7In{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.v7-theme-toggle{position:fixed;right:18px;bottom:92px;z-index:80;width:48px;height:48px;border:0;border-radius:16px;background:linear-gradient(135deg,#0e6940,#18a760);color:white;box-shadow:0 12px 30px rgba(8,80,43,.28);cursor:pointer;font-size:20px}
+.v7-theme-toggle:hover{transform:translateY(-3px)}
+html[data-theme="dark"]{--color-background-primary:#102019;--color-background-secondary:#0a1510;--color-text-primary:#eef8f1;--color-text-secondary:#b6c9bd;--color-text-tertiary:#82988a;--color-border-secondary:#294238;--color-border-tertiary:#20372d;--v7-surface:rgba(13,29,21,.92);--v7-bg:#09130e;background:radial-gradient(circle at 12% 0,#173e2b 0,transparent 36%),#08110c}
+html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc,html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea,html[data-theme="dark"] .cin{background:rgba(20,39,29,.9)!important;color:#eef8f1}html[data-theme="dark"] .bnav{background:rgba(11,25,17,.94)}html[data-theme="dark"] .phone{border-color:rgba(119,205,152,.1)}
+@media(min-width:900px){
+  .phone{display:grid;grid-template-columns:108px minmax(0,1fr);grid-template-rows:auto 1fr;overflow:visible}
+  .hdr{grid-column:1/-1;border-radius:29px 29px 0 0}
+  .screen{grid-column:2;grid-row:2;min-width:0}.screen.on{display:block}
+  .bnav{grid-column:1;grid-row:2;position:sticky;top:70px;bottom:auto;height:calc(100vh - 110px);align-self:start;display:flex;flex-direction:column;gap:8px;padding:18px 10px;background:rgba(255,255,255,.72);border-top:0;border-right:1px solid var(--v7-border);box-shadow:none;border-radius:0 0 0 29px}
+  html[data-theme="dark"] .bnav{background:rgba(13,29,21,.72)}
+  .ni{flex:0 0 auto;min-height:68px;padding:9px 4px;gap:5px}.ni span{font-size:.7rem;text-align:center}.ni i{font-size:23px}
+  .body .grid2{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .v7-theme-toggle{bottom:24px}
+}
+@media(max-width:560px){
+  html{font-size:15px}.app-wrap{padding:0}.phone{min-height:100vh;border:0;border-radius:0;box-shadow:none}.hdr{border-radius:0}.hero{padding:24px 18px}.body{padding:14px}.grid2{grid-template-columns:1fr 1fr;gap:10px}.svc{padding:14px}.v7-theme-toggle{right:12px;bottom:84px;width:44px;height:44px;border-radius:14px}
+}
+@media(max-width:380px){.grid2{grid-template-columns:1fr}.hdr-sub{letter-spacing:.8px}.ni span{font-size:.64rem}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+
 </head>
 <body>
 
@@ -4099,5 +4151,28 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(drAgroInput)drAgroInput.disabled=false;
 });
 </script>
+
+<script id="drplants-v7-ui">
+(function(){
+  const root=document.documentElement;
+  const saved=localStorage.getItem('drplants_theme');
+  const preferred=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+  root.dataset.theme=saved||preferred;
+  function updateThemeMeta(){
+    const meta=document.querySelector('meta[name="theme-color"]');
+    if(meta)meta.setAttribute('content',root.dataset.theme==='dark'?'#0b1d13':'#0f6b3f');
+  }
+  function addThemeButton(){
+    if(document.querySelector('.v7-theme-toggle'))return;
+    const b=document.createElement('button');
+    b.type='button';b.className='v7-theme-toggle';b.setAttribute('aria-label','Cambiar tema visual');
+    const paint=()=>{b.textContent=root.dataset.theme==='dark'?'☀':'◐';b.title=root.dataset.theme==='dark'?'Usar modo claro':'Usar modo oscuro';updateThemeMeta()};
+    b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';localStorage.setItem('drplants_theme',root.dataset.theme);paint()});
+    document.body.appendChild(b);paint();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addThemeButton);else addThemeButton();
+})();
+</script>
+
 </body>
 </html>
