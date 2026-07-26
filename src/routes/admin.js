@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { nuevoId, requiereAuth, requiereRol } = require('../auth');
+const { crearNotificacionUsuario } = require('../notificaciones');
 
 const router = express.Router();
 router.use(requiereAuth, requiereRol('admin'));
@@ -132,6 +133,7 @@ router.patch('/agronomos/:id', (req, res) => {
     aprobado_en = CASE WHEN ? = 'aprobado' THEN datetime('now') ELSE aprobado_en END,
     rechazado_en = CASE WHEN ? = 'rechazado' THEN datetime('now') ELSE rechazado_en END
     WHERE id = ?`).run(nuevoEstado, nuevoRol, nuevoEstado, nuevoEstado, usuario.id);
+  crearNotificacionUsuario({ usuarioId:usuario.id, tipo:'estado_agronomo', titulo:accion==='aprobar'?'Perfil profesional aprobado':'Perfil profesional rechazado', mensaje:accion==='aprobar'?'Tu perfil de agrónomo fue aprobado. Ya puedes acceder a las funciones profesionales habilitadas.':'Tu solicitud de agrónomo fue rechazada. Revisa tus documentos o comunícate con soporte.', entidadTipo:'usuario', entidadId:usuario.id, urlDestino:'perfil', prioridad:'alta' });
   res.json(db.prepare('SELECT id, nombre, rol, estado_agronomo FROM usuarios WHERE id = ?').get(usuario.id));
 });
 
@@ -229,12 +231,15 @@ router.get('/solicitudes/laboratorio', (req, res) => {
 
 // PATCH /api/admin/solicitudes/laboratorio/:id  { estado }
 router.patch('/solicitudes/laboratorio/:id', (req, res) => {
-  const { estado } = req.body;
-  if (!['pendiente', 'en_proceso', 'completado', 'cancelado'].includes(estado)) {
-    return res.status(400).json({ error: 'estado inválido.' });
-  }
-  db.prepare('UPDATE solicitudes_laboratorio SET estado = ? WHERE id = ?').run(estado, req.params.id);
-  res.json(db.prepare('SELECT * FROM solicitudes_laboratorio WHERE id = ?').get(req.params.id));
+  const { estado, retroalimentacion } = req.body || {};
+  if (!['pendiente', 'en_proceso', 'completado', 'cancelado'].includes(estado)) return res.status(400).json({ error: 'estado inválido.' });
+  const solicitud = db.prepare('SELECT * FROM solicitudes_laboratorio WHERE id=?').get(req.params.id);
+  if (!solicitud) return res.status(404).json({ error:'Solicitud no encontrada.' });
+  db.prepare('UPDATE solicitudes_laboratorio SET estado=?, retroalimentacion=COALESCE(?,retroalimentacion) WHERE id=?').run(estado, String(retroalimentacion||'').trim()||null, solicitud.id);
+  const etiquetas={pendiente:'Pendiente',en_proceso:'En proceso',completado:'Completado',cancelado:'Cancelado'};
+  const extra=String(retroalimentacion||'').trim();
+  crearNotificacionUsuario({ usuarioId:solicitud.usuario_id, tipo:'estado_laboratorio', titulo:`Laboratorio: ${etiquetas[estado]}`, mensaje:`Tu solicitud de ${solicitud.tipo_analisis} cambió a ${etiquetas[estado]}.${extra?' Retroalimentación: '+extra:''}`, entidadTipo:'solicitud_laboratorio', entidadId:solicitud.id, urlDestino:'laboratorio', prioridad:estado==='completado'?'alta':'normal' });
+  res.json(db.prepare('SELECT * FROM solicitudes_laboratorio WHERE id = ?').get(solicitud.id));
 });
 
 // GET /api/admin/solicitudes/teleconsulta — todas las solicitudes de teleconsulta pendientes
@@ -249,12 +254,18 @@ router.get('/solicitudes/teleconsulta', (req, res) => {
 
 // PATCH /api/admin/solicitudes/teleconsulta/:id  { estado }
 router.patch('/solicitudes/teleconsulta/:id', (req, res) => {
-  const { estado } = req.body;
-  if (!['pendiente', 'agendada', 'atendida', 'cancelada'].includes(estado)) {
-    return res.status(400).json({ error: 'estado inválido.' });
-  }
-  db.prepare('UPDATE solicitudes_teleconsulta SET estado = ? WHERE id = ?').run(estado, req.params.id);
-  res.json(db.prepare('SELECT * FROM solicitudes_teleconsulta WHERE id = ?').get(req.params.id));
+  const { estado, fechaCita, horaCita, enlaceCita, profesionalAsignado, retroalimentacion } = req.body || {};
+  if (!['pendiente', 'agendada', 'atendida', 'cancelada'].includes(estado)) return res.status(400).json({ error: 'estado inválido.' });
+  const solicitud = db.prepare('SELECT * FROM solicitudes_teleconsulta WHERE id=?').get(req.params.id);
+  if (!solicitud) return res.status(404).json({ error:'Solicitud no encontrada.' });
+  if (estado==='agendada' && (!fechaCita || !horaCita)) return res.status(400).json({ error:'Para agendar debes indicar fecha y hora.' });
+  db.prepare(`UPDATE solicitudes_teleconsulta SET estado=?, fecha_cita=COALESCE(?,fecha_cita), hora_cita=COALESCE(?,hora_cita), enlace_cita=COALESCE(?,enlace_cita), profesional_asignado=COALESCE(?,profesional_asignado), retroalimentacion=COALESCE(?,retroalimentacion) WHERE id=?`)
+    .run(estado, fechaCita||null, horaCita||null, enlaceCita||null, profesionalAsignado||null, String(retroalimentacion||'').trim()||null, solicitud.id);
+  let mensaje=`Tu consulta cambió a estado ${estado}.`;
+  if(estado==='agendada') mensaje=`Tu consulta fue agendada para el ${fechaCita} a las ${horaCita}.${profesionalAsignado?' Profesional: '+profesionalAsignado+'.':''}${enlaceCita?' Enlace: '+enlaceCita:''}`;
+  if(retroalimentacion) mensaje += ` Retroalimentación: ${String(retroalimentacion).trim()}`;
+  crearNotificacionUsuario({ usuarioId:solicitud.usuario_id, tipo:'estado_teleconsulta', titulo:estado==='agendada'?'Consulta agendada':`Consulta ${estado}`, mensaje, entidadTipo:'teleconsulta', entidadId:solicitud.id, urlDestino:'teleconsulta', prioridad:estado==='agendada'?'alta':'normal' });
+  res.json(db.prepare('SELECT * FROM solicitudes_teleconsulta WHERE id = ?').get(solicitud.id));
 });
 
 // --- Auditoría completa para el administrador ---
@@ -293,6 +304,8 @@ router.patch('/archivos/:id/verificacion', (req, res) => {
   const id = nuevoId('ver');
   db.prepare('INSERT INTO archivo_verificaciones (id,archivo_id,administrador_id,estado,observacion) VALUES (?,?,?,?,?)')
     .run(id, archivo.id, req.usuario.id, estado, String(observacion||'').trim() || null);
+  const detalle=db.prepare('SELECT usuario_id,nombre_original,tipo FROM archivos_usuario WHERE id=?').get(archivo.id);
+  crearNotificacionUsuario({ usuarioId:detalle.usuario_id, tipo:'verificacion_documento', titulo:estado==='verificado'?'Documento aprobado':estado==='rechazado'?'Documento rechazado':'Documento en revisión', mensaje:`El documento ${detalle.nombre_original} fue marcado como ${estado}.${observacion?' Observación: '+String(observacion).trim():''}`, entidadTipo:'archivo', entidadId:archivo.id, urlDestino:'perfil', prioridad:estado==='rechazado'?'alta':'normal' });
   res.status(201).json(db.prepare('SELECT * FROM archivo_verificaciones WHERE id=?').get(id));
 });
 

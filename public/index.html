@@ -353,7 +353,7 @@
       <i class="ti ti-shopping-cart"></i>
       <span id="cart-badge" style="display:none;position:absolute;top:-3px;right:-3px;background:#c9a227;color:#1b5e20;font-size:9px;font-weight:700;border-radius:8px;min-width:15px;height:15px;line-height:15px;text-align:center;padding:0 3px">0</span>
     </button>
-    <button class="hdr-btn" onclick="go('notif','')" aria-label="Notificaciones"><i class="ti ti-bell"></i></button>
+    <button class="hdr-btn" onclick="go('notif','');renderNotificacionesUsuario()" aria-label="Notificaciones"><i class="ti ti-bell"></i></button>
     <button class="hdr-btn" onclick="go('perfil','')" aria-label="Perfil"><i class="ti ti-user-circle"></i></button>
   </div>
 </div>
@@ -932,11 +932,8 @@
     <button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button>
     <span class="pg-title">Notificaciones</span>
   </div>
-  <div style="padding:40px 24px;text-align:center">
-    <div style="width:56px;height:56px;background:var(--color-background-secondary);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:#3B6D11"><i class="ti ti-bell" style="font-size:26px"></i></div>
-    <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px">Sin notificaciones nuevas</div>
-    <div style="font-size:11px;color:var(--color-text-secondary)">Cuando tengas alertas de clima, recomendaciones de Dr. Agro o novedades de tus pedidos, aparecerán aquí.</div>
-  </div>
+  <div style="padding:10px 14px;display:flex;justify-content:flex-end"><button onclick="marcarTodasNotificacionesUsuario()" style="border:none;background:transparent;color:#1b5e20;font-size:11px">Marcar todas como leídas</button></div>
+  <div id="usuario-notificaciones-list" style="padding:0 14px 24px;display:flex;flex-direction:column;gap:8px"></div>
 </div>
 
 <div id="s-agronomo-pendiente" class="screen">
@@ -3466,11 +3463,40 @@ async function renderAdminSolTele(){
 
 async function actualizarSolicitud(tipo,id,estado){
   try{
-    await apiFetch('/api/admin/solicitudes/'+tipo+'/'+id,{method:'PATCH',body:JSON.stringify({estado})});
+    const payload={estado};
+    if(tipo==='teleconsulta'&&estado==='agendada'){
+      payload.fechaCita=prompt('Fecha de la cita (AAAA-MM-DD):','')||'';
+      if(!payload.fechaCita)return;
+      payload.horaCita=prompt('Hora de la cita (HH:MM):','')||'';
+      if(!payload.horaCita)return;
+      payload.profesionalAsignado=prompt('Profesional asignado:','')||'';
+      payload.enlaceCita=prompt('Enlace de videollamada o ubicación (opcional):','')||'';
+      payload.retroalimentacion=prompt('Mensaje adicional para el usuario (opcional):','')||'';
+    }else{
+      payload.retroalimentacion=prompt('Retroalimentación para el usuario (opcional):','')||'';
+    }
+    await apiFetch('/api/admin/solicitudes/'+tipo+'/'+id,{method:'PATCH',body:JSON.stringify(payload)});
+    alert('Actualización guardada y notificación enviada al usuario.');
     if(tipo==='laboratorio')renderAdminSolLab();else renderAdminSolTele();
   }catch(e){alert('No se pudo actualizar: '+e.message);}
 }
 
+
+async function renderNotificacionesUsuario(){
+  const wrap=document.getElementById('usuario-notificaciones-list');if(!wrap)return;
+  if(!SESION.autenticado){wrap.innerHTML='<div class="lab-desc" style="text-align:center;padding:30px">Inicia sesión para ver tus notificaciones.</div>';return;}
+  try{
+    const ns=await apiFetch('/api/solicitudes/notificaciones');
+    if(!ns.length){wrap.innerHTML='<div style="padding:40px 24px;text-align:center"><i class="ti ti-bell" style="font-size:28px;color:#3B6D11"></i><div class="lab-name" style="margin-top:10px">Sin notificaciones</div><div class="lab-desc">Aquí aparecerán aprobaciones, respuestas, citas y estados de tus solicitudes.</div></div>';return;}
+    wrap.innerHTML=ns.map(n=>`<button onclick="abrirNotificacionUsuario('${n.id}','${escapeHtml(n.url_destino||'')}')" style="width:100%;text-align:left;border:${n.leida?'1px solid var(--color-border-tertiary)':'1px solid #97C459'};background:${n.leida?'var(--color-background-primary)':'#F3F8EA'};border-radius:12px;padding:11px;cursor:pointer"><div style="display:flex;justify-content:space-between;gap:8px"><div class="lab-name">${escapeHtml(n.titulo)}</div>${n.leida?'':'<span style="font-size:9px;background:#1b5e20;color:white;border-radius:10px;padding:2px 6px">Nueva</span>'}</div><div class="lab-desc" style="margin-top:4px">${escapeHtml(n.mensaje)}</div><div style="font-size:9px;color:var(--color-text-secondary);margin-top:6px">${new Date(n.creada_en+'Z').toLocaleString('es-CO')}</div></button>`).join('');
+  }catch(e){wrap.innerHTML='<div class="lab-desc">No se pudieron cargar las notificaciones: '+escapeHtml(e.message)+'</div>';}
+}
+async function abrirNotificacionUsuario(id,destino){
+  try{await apiFetch('/api/solicitudes/notificaciones/'+encodeURIComponent(id)+'/leida',{method:'PATCH',body:'{}'});}catch(e){}
+  renderNotificacionesUsuario();
+  if(destino&&document.getElementById('s-'+destino))go(destino,'');
+}
+async function marcarTodasNotificacionesUsuario(){try{await apiFetch('/api/solicitudes/notificaciones-leer-todas',{method:'PATCH',body:'{}'});renderNotificacionesUsuario();}catch(e){alert(e.message);}}
 
 let ADMIN_VISOR_URL=null;
 

@@ -3,7 +3,7 @@ const { nuevoId } = require('./auth');
 
 let transporter = null;
 function smtpDisponible() {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD && process.env.ADMIN_NOTIFICATION_EMAIL);
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD);
 }
 function getTransporter() {
   if (!smtpDisponible()) return null;
@@ -26,7 +26,7 @@ function crearNotificacionAdmin({ tipo, titulo, mensaje, usuarioId = null, entid
     VALUES (?,?,?,?,?,?,?,?)`).run(id, tipo, titulo, mensaje, usuarioId, entidadTipo, entidadId, prioridad);
 
   const tx = getTransporter();
-  if (tx) {
+  if (tx && process.env.ADMIN_NOTIFICATION_EMAIL) {
     Promise.resolve(tx.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: process.env.ADMIN_NOTIFICATION_EMAIL,
@@ -42,4 +42,28 @@ function crearNotificacionAdmin({ tipo, titulo, mensaje, usuarioId = null, entid
   return id;
 }
 
-module.exports = { crearNotificacionAdmin, smtpDisponible };
+function crearNotificacionUsuario({ usuarioId, tipo, titulo, mensaje, entidadTipo = null, entidadId = null, urlDestino = null, prioridad = 'normal', enviarEmail = true }) {
+  if (!usuarioId) return null;
+  const usuario = db.prepare('SELECT id,nombre,email FROM usuarios WHERE id=?').get(usuarioId);
+  if (!usuario) return null;
+  const id = nuevoId('notu');
+  db.prepare(`INSERT INTO notificaciones_usuario
+    (id,usuario_id,tipo,titulo,mensaje,entidad_tipo,entidad_id,url_destino,prioridad)
+    VALUES (?,?,?,?,?,?,?,?,?)`).run(id, usuarioId, tipo, titulo, mensaje, entidadTipo, entidadId, urlDestino, prioridad);
+  const tx = getTransporter();
+  if (tx && enviarEmail && usuario.email) {
+    Promise.resolve(tx.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: usuario.email,
+      subject: `[Dr. Plants] ${titulo}`,
+      text: `Hola ${usuario.nombre || ''},\n\n${mensaje}\n\nIngresa a Dr. Plants para consultar el detalle.`
+    })).then(() => {
+      db.prepare("UPDATE notificaciones_usuario SET email_estado='enviado', email_enviado_en=datetime('now') WHERE id=?").run(id);
+    }).catch((error) => {
+      db.prepare("UPDATE notificaciones_usuario SET email_estado='error', email_error=? WHERE id=?").run(String(error.message).slice(0,500), id);
+    });
+  }
+  return id;
+}
+
+module.exports = { crearNotificacionAdmin, crearNotificacionUsuario, smtpDisponible };

@@ -260,6 +260,26 @@ CREATE TABLE IF NOT EXISTS notificaciones_admin (
 );
 CREATE INDEX IF NOT EXISTS idx_notificaciones_admin ON notificaciones_admin(leida, creada_en);
 
+
+CREATE TABLE IF NOT EXISTS notificaciones_usuario (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL,
+  titulo TEXT NOT NULL,
+  mensaje TEXT NOT NULL,
+  entidad_tipo TEXT DEFAULT NULL,
+  entidad_id TEXT DEFAULT NULL,
+  url_destino TEXT DEFAULT NULL,
+  prioridad TEXT NOT NULL DEFAULT 'normal' CHECK(prioridad IN ('normal','alta','critica')),
+  leida INTEGER NOT NULL DEFAULT 0 CHECK(leida IN (0,1)),
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  leida_en TEXT DEFAULT NULL,
+  email_estado TEXT NOT NULL DEFAULT 'no_configurado',
+  email_enviado_en TEXT DEFAULT NULL,
+  email_error TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario ON notificaciones_usuario(usuario_id, leida, creada_en);
+
 CREATE TABLE IF NOT EXISTS auditoria_ia (
   id TEXT PRIMARY KEY,
   conversacion_id TEXT NOT NULL REFERENCES conversaciones_ia(id) ON DELETE CASCADE,

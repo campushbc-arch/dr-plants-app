@@ -55,7 +55,11 @@ migrarColumnas('lotes', {
 });
 migrarColumnas('pedidos', { pago_id: "TEXT DEFAULT NULL" });
 migrarColumnas('solicitudes_laboratorio', { pago_id: "TEXT DEFAULT NULL" });
-migrarColumnas('solicitudes_teleconsulta', { pago_id: "TEXT DEFAULT NULL" });
+migrarColumnas('solicitudes_teleconsulta', {
+  pago_id: "TEXT DEFAULT NULL", fecha_cita: "TEXT DEFAULT NULL", hora_cita: "TEXT DEFAULT NULL",
+  enlace_cita: "TEXT DEFAULT NULL", profesional_asignado: "TEXT DEFAULT NULL", retroalimentacion: "TEXT DEFAULT NULL"
+});
+migrarColumnas('solicitudes_laboratorio', { retroalimentacion: "TEXT DEFAULT NULL" });
 
 for (const tabla of ['aplicaciones','analisis_laboratorio','costos_operativos']) {
   migrarColumnas(tabla, {
