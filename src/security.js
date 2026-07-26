@@ -1,5 +1,6 @@
 const crypto = require('crypto');
-const rateLimit = require('express-rate-limit');
+const rateLimitPackage = require('express-rate-limit');
+const rateLimit = rateLimitPackage.rateLimit || rateLimitPackage;
 
 function allowedOrigins() {
   const values = [process.env.APP_URL, process.env.CORS_ORIGIN]
@@ -49,7 +50,9 @@ function limiter({ windowMs, limit, message, skipSuccessfulRequests = false }) {
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     skipSuccessfulRequests,
-    keyGenerator: req => req.ip,
+    // express-rate-limit v8 ya usa internamente ipKeyGenerator para IPv4/IPv6.
+    // No se define un keyGenerator personalizado para evitar ERR_ERL_KEY_GEN_IPV6
+    // y conservar la protección correcta detrás del proxy de Hostinger.
     handler: (_req, res) => res.status(429).json({ code: 'RATE_LIMITED', error: message })
   });
 }
