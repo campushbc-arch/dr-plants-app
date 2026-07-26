@@ -6,6 +6,19 @@ const { crearNotificacionAdmin } = require('../notificaciones');
 
 const router = express.Router();
 
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514';
+const WEB_SEARCH_ENABLED = String(process.env.ANTHROPIC_WEB_SEARCH_ENABLED || 'false').toLowerCase() === 'true';
+const AI_TIMEOUT_MS = Math.max(10000, Number(process.env.AI_TIMEOUT_MS) || 45000);
+
+router.get('/status', requiereAuth, (req, res) => {
+  res.json({
+    ok: Boolean(process.env.ANTHROPIC_API_KEY),
+    provider: 'anthropic',
+    model: ANTHROPIC_MODEL,
+    webSearch: WEB_SEARCH_ENABLED
+  });
+});
+
 // POST /api/chat
 // Esta es la ruta que resuelve el hueco de seguridad del prototipo: en el HTML, Dr. Agro,
 // Soporte y Laboratorio llamaban DIRECTO a api.anthropic.com sin ninguna llave — algo que
@@ -38,21 +51,34 @@ router.post('/', requiereAuth, async (req, res) => {
       }
       mensajesProveedor = [...messages.slice(0, -1), { role: 'user', content: bloques }];
     }
-    const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 600,
-        system,
-        messages: mensajesProveedor,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
-      })
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+    const requestBody = {
+      model: ANTHROPIC_MODEL,
+      max_tokens: 600,
+      system: typeof system === 'string' ? system.slice(0, 30000) : '',
+      messages: mensajesProveedor
+    };
+    // La búsqueda web es opcional: puede generar cargos adicionales y respuestas pause_turn.
+    if (WEB_SEARCH_ENABLED) {
+      requestBody.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }];
+    }
+
+    let respuesta;
+    try {
+      respuesta = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify(requestBody)
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const data = await respuesta.json().catch(() => ({}));
 
@@ -81,7 +107,11 @@ router.post('/', requiereAuth, async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('Error llamando a la API de Claude:', err);
-    res.status(502).json({ error: 'No se pudo contactar a la API de Claude en este momento.' });
+    const timeout = err?.name === 'AbortError';
+    res.status(timeout ? 504 : 502).json({
+      code: timeout ? 'AI_TIMEOUT' : 'AI_CONNECTION_ERROR',
+      error: timeout ? 'Dr. Plants tardó demasiado en responder. Intenta nuevamente.' : 'No se pudo contactar al asistente de IA en este momento.'
+    });
   }
 });
 
@@ -123,7 +153,7 @@ function guardarEnHistorial(usuarioId, modulo, messages, data, archivoIds = [], 
     (id,conversacion_id,usuario_id,modulo,pregunta,respuesta,archivo_ids_json,modelo,tokens_entrada,tokens_salida,duracion_ms,estado)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,'completado')`).run(
       nuevoId('aia'), conv.id, usuarioId, modulo, pregunta, textoRespuesta,
-      JSON.stringify(Array.isArray(archivoIds)?archivoIds:[]), data.model || 'claude-sonnet-4-6',
+      JSON.stringify(Array.isArray(archivoIds)?archivoIds:[]), data.model || ANTHROPIC_MODEL,
       data.usage?.input_tokens ?? null, data.usage?.output_tokens ?? null, duracionMs
     );
   if (modulo === 'laboratorio') {

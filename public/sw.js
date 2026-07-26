@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-shell-v5-circular-gratis';
+const CACHE_NAME = 'dr-plants-shell-v5-2-circular-gratis';
 const APP_SHELL = [
   '/',
   '/manifest.json',

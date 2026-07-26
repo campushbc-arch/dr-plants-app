@@ -3821,12 +3821,9 @@ async function enviarMensajeIA(cfg){
       throw Object.assign(new Error('AUTH_REQUIRED'),{authRequired:true});
     }
     const payloadIA={
-      model:"claude-sonnet-4-6",
-      max_tokens:600,
       system:cfg.system,
       messages:cfg.history,
       modulo:cfg.chatId==='chat'?'dr_agro':(cfg.chatId==='soporte-chat'?'soporte':'laboratorio'),
-      tools:[{type:"web_search_20250305",name:"web_search"}],
       archivoIds:cfg.chatId==='chat'&&DR_AGRO_ARCHIVO_ID?[DR_AGRO_ARCHIVO_ID]:[]
     };
     let response=await llamarClaudeAPI(payloadIA,tokenActual);
@@ -3887,7 +3884,7 @@ async function enviarMensajeIA(cfg){
       c.innerHTML+='<div class="mb"><div class="mb-lbl">'+cfg.label+'</div>No encuentro una sesión activa en este dispositivo. <span class="gold-t" onclick="openReg()" style="cursor:pointer">Iniciar sesión</span></div>';
       cfg.history.pop();
     }else{
-      c.innerHTML+='<div class="mb"><div class="mb-lbl">'+cfg.label+'</div>Tuve un problema de conexión analizando tu consulta. Por favor intenta de nuevo en unos segundos.</div>';
+      c.innerHTML+='<div class="mb"><div class="mb-lbl">'+cfg.label+'</div>'+escapeHtml(err?.message||'Tuve un problema de conexión. Intenta nuevamente en unos segundos.')+'</div>';
     }
   }finally{
     inp.disabled=false;
