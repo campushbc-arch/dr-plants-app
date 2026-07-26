@@ -2959,7 +2959,7 @@ async function cargarEstado(){
     if(!resp.ok)throw new Error('Sesión inválida');
     const usuario=await resp.json();
     SESION={
-      autenticado:true,nombre:usuario.nombre,email:usuario.email,
+      autenticado:true,id:usuario.id,nombre:usuario.nombre,email:usuario.email,
       telefono:usuario.telefono,tipoProductor:usuario.tipo_productor,
       pais:usuario.pais,region:usuario.region,rol:usuario.rol,token
     };
@@ -2972,6 +2972,21 @@ async function cargarEstado(){
     actualizarUIsesion();
     return false;
   }
+}
+
+let restaurandoSesionPromise=null;
+async function obtenerSesionValida(){
+  let token=localStorage.getItem('drplants_token')||SESION.token||'';
+  if(token&&SESION.autenticado){
+    if(SESION.token!==token)SESION.token=token;
+    return token;
+  }
+  if(!token)return '';
+  if(!restaurandoSesionPromise){
+    restaurandoSesionPromise=cargarEstado().finally(()=>{restaurandoSesionPromise=null;});
+  }
+  const restaurada=await restaurandoSesionPromise;
+  return restaurada?(localStorage.getItem('drplants_token')||SESION.token||''):'';
 }
 
 function actualizarUIsesion(){
@@ -3630,16 +3645,16 @@ function typingBubble(show,chatId,label){
 // esté configurado arriba, esta función llama al backend real; si no, sigue llamando
 // directo a Anthropic (funciona solo dentro de la vista previa de Claude.ai, como antes),
 // para que la demo nunca se rompa mientras el backend no esté desplegado todavía.
-async function llamarClaudeAPI(payload){
+async function llamarClaudeAPI(payload,tokenForzado=''){
   if(BACKEND_URL){
-    // La fuente de verdad del token es localStorage. Esto evita que Dr. Agro
-    // pierda la sesión aunque la interfaz haya sido redibujada o la PWA conserve
-    // una instancia antigua del objeto SESION en memoria.
-    const token=localStorage.getItem('drplants_token')||SESION.token||'';
-    if(token && SESION.token!==token) SESION.token=token;
+    const token=tokenForzado||await obtenerSesionValida();
+    if(!token){
+      return new Response(JSON.stringify({code:'AUTH_REQUIRED',error:'Debes iniciar sesión para usar el asistente.'}),{status:401,headers:{'Content-Type':'application/json'}});
+    }
     return fetch(BACKEND_URL+"/api/chat",{
       method:"POST",
       cache:"no-store",
+      credentials:'same-origin',
       headers:{
         "Content-Type":"application/json",
         "Authorization":"Bearer "+token
@@ -3672,15 +3687,11 @@ async function enviarMensajeIA(cfg){
   try{
     // Verifica y restaura la sesión justo antes de consultar a la IA.
     // Así no dependemos únicamente del estado visual de la pantalla.
-    let tokenActual=localStorage.getItem('drplants_token')||SESION.token;
+    let tokenActual=await obtenerSesionValida();
     if(!tokenActual){
-      const restaurada=await cargarEstado();
-      tokenActual=localStorage.getItem('drplants_token')||SESION.token;
-      if(!restaurada||!tokenActual){
-        throw Object.assign(new Error('AUTH_REQUIRED'),{authRequired:true});
-      }
+      throw Object.assign(new Error('AUTH_REQUIRED'),{authRequired:true});
     }
-    const response=await llamarClaudeAPI({
+    const payloadIA={
       model:"claude-sonnet-4-6",
       max_tokens:600,
       system:cfg.system,
@@ -3688,7 +3699,18 @@ async function enviarMensajeIA(cfg){
       modulo:cfg.chatId==='chat'?'dr_agro':(cfg.chatId==='soporte-chat'?'soporte':'laboratorio'),
       tools:[{type:"web_search_20250305",name:"web_search"}],
       archivoIds:cfg.chatId==='chat'&&DR_AGRO_ARCHIVO_ID?[DR_AGRO_ARCHIVO_ID]:[]
-    });
+    };
+    let response=await llamarClaudeAPI(payloadIA,tokenActual);
+    if(response.status===401){
+      // Una PWA puede conservar temporalmente estado antiguo en memoria. Antes de
+      // cerrar la sesión, validamos una vez el token persistido y reintentamos.
+      const tokenPersistido=localStorage.getItem('drplants_token')||'';
+      if(tokenPersistido&&tokenPersistido!==tokenActual){
+        tokenActual=tokenPersistido;
+        SESION.token=tokenPersistido;
+        response=await llamarClaudeAPI(payloadIA,tokenPersistido);
+      }
+    }
     if(response.status===401){
       let detalle='La sesión expiró o el servidor no reconoció el token.';
       let codigo='AUTH_REQUIRED';
@@ -3732,7 +3754,12 @@ async function enviarMensajeIA(cfg){
     c.innerHTML+='<div class="mb"><div class="mb-lbl">'+cfg.label+'</div>'+escapeHtml(reply).replace(/\n/g,'<br>')+badge+'</div>';
   }catch(err){
     typingBubble(false,cfg.chatId);
-    c.innerHTML+='<div class="mb"><div class="mb-lbl">'+cfg.label+'</div>Tuve un problema de conexión analizando tu consulta. Por favor intenta de nuevo en unos segundos.</div>';
+    if(err&&err.authRequired){
+      c.innerHTML+='<div class="mb"><div class="mb-lbl">'+cfg.label+'</div>No encuentro una sesión activa en este dispositivo. <span class="gold-t" onclick="openReg()" style="cursor:pointer">Iniciar sesión</span></div>';
+      cfg.history.pop();
+    }else{
+      c.innerHTML+='<div class="mb"><div class="mb-lbl">'+cfg.label+'</div>Tuve un problema de conexión analizando tu consulta. Por favor intenta de nuevo en unos segundos.</div>';
+    }
   }finally{
     inp.disabled=false;
     if(btn)btn.disabled=false;
@@ -3789,7 +3816,8 @@ async function solicitarAnalisisLab(){
   const tipoAnalisis=document.getElementById('lab-sol-tipo').value;
   const notas=document.getElementById('lab-sol-notas').value.trim()||null;
   const msg=document.getElementById('lab-sol-msg');
-  if(!BACKEND_URL||!SESION.token){
+  const tokenSesion=await obtenerSesionValida();
+  if(!BACKEND_URL||!tokenSesion){
     msg.textContent='Necesitas iniciar sesión para que tu solicitud llegue al equipo de Campus HBC.';
     msg.style.display='block';
     msg.style.background='#FCEBEB';msg.style.color='#c62828';
@@ -3887,7 +3915,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-document.addEventListener('DOMContentLoaded',()=>{poblarCatalogoCultivos();cargarDepartamentos();});
+document.addEventListener('DOMContentLoaded',async()=>{poblarCatalogoCultivos();cargarDepartamentos();await cargarEstado();});
 </script>
 </body>
 </html>

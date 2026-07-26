@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-shell-v2-authfix';
+const CACHE_NAME = 'dr-plants-shell-v3-laboratorio-authfix';
 const APP_SHELL = [
   '/',
   '/manifest.json',
