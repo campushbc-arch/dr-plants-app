@@ -893,9 +893,20 @@
     <div class="phdr-s">Datos reales de asociaciones de reciclaje y puntos de acopio, vía Google Places.</div>
   </div>
   <div style="padding:0 14px 10px">
-    <div class="fgrp" style="margin:0"><label>Ver puntos cerca de</label>
-      <select id="rec-finca-select" onchange="cambiarRecUbicacion(this.value)"></select>
+    <div class="fgrp" style="margin:0 0 8px"><label>País</label>
+      <select id="rec-pais" onchange="cargarRecRegiones()"><option>Colombia</option><option value="Peru">Perú</option><option>Chile</option></select>
     </div>
+    <div class="fgrp" style="margin:0 0 8px"><label id="rec-region-label">Departamento</label>
+      <select id="rec-region" onchange="cargarRecCiudades()"><option value="">Selecciona…</option></select>
+    </div>
+    <div class="fgrp" style="margin:0 0 8px"><label>Ciudad / municipio / comuna</label>
+      <select id="rec-ciudad"><option value="">Selecciona primero la región</option></select>
+    </div>
+    <div class="fgrp" style="margin:0 0 8px"><label>Producto o residuo a entregar</label>
+      <select id="rec-tipo"><option value="general">Reciclables en general</option><option value="agroquimicos">Envases agroquímicos</option><option value="empaques">Empaques, sacos, plástico y papel</option><option value="vegetales">Residuos vegetales</option><option value="organicos">Cáscaras, pulpa y residuos orgánicos</option></select>
+    </div>
+    <button class="cta-btn" onclick="buscarPuntosCirculares()"><i class="ti ti-search"></i> Buscar sitios y empresas</button>
+    <div id="rec-estado" style="font-size:10px;color:var(--color-text-secondary);margin-top:8px"></div>
   </div>
   <div id="rec-points-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
 </div>
@@ -1640,14 +1651,9 @@ function isoDaysAgo(n){return new Date(Date.now()-n*86400000).toISOString().slic
 // del backend en vez de solo guardar en memoria del navegador.
 let FINCA_IDS={}; // nombre de finca (como lo ve el usuario) -> id real en el backend
 
-async function apiFetch(path,opciones={}){
-  const headers=Object.assign({'Content-Type':'application/json'},opciones.headers||{});
-  if(SESION.token)headers['Authorization']='Bearer '+SESION.token;
-  const resp=await fetch(BACKEND_URL+path,Object.assign({},opciones,{headers}));
-  const data=await resp.json().catch(()=>null);
-  if(!resp.ok)throw new Error((data&&data.error)||('Error '+resp.status));
-  return data;
-}
+let renovandoTokenPromise=null;
+async function renovarTokenSesion(){if(!renovandoTokenPromise)renovandoTokenPromise=fetch(BACKEND_URL+'/api/auth/refresh',{method:'POST',credentials:'include'}).then(async r=>{if(!r.ok)return null;const d=await r.json();SESION={...SESION,autenticado:true,id:d.usuario.id,nombre:d.usuario.nombre,email:d.usuario.email,telefono:d.usuario.telefono,tipoProductor:d.usuario.tipo_productor,pais:d.usuario.pais,region:d.usuario.region,rol:d.usuario.rol,token:d.token};guardarEstado();actualizarUIsesion();return d.token;}).finally(()=>renovandoTokenPromise=null);return renovandoTokenPromise;}
+async function apiFetch(path,opciones={},reintento=true){let token=await obtenerSesionValida();const headers=Object.assign({'Content-Type':'application/json'},opciones.headers||{});if(token)headers['Authorization']='Bearer '+token;const resp=await fetch(BACKEND_URL+path,Object.assign({credentials:'include'},opciones,{headers}));if(resp.status===401&&reintento){const nuevo=await renovarTokenSesion();if(nuevo)return apiFetch(path,opciones,false);}const data=await resp.json().catch(()=>null);if(!resp.ok)throw new Error((data&&data.error)||('Error '+resp.status));return data;}
 
 // Se llama justo después de un login/registro exitoso contra el backend real. Reemplaza
 // los datos de demo por las fincas y lotes reales del usuario autenticado.
@@ -2253,104 +2259,34 @@ renderLotesList();
 renderMarketList();
 renderHomeStats();
 
-// Puntos de recolección/reciclaje reales verificados vía Google Places, organizados por
-// ubicación — antes esto estaba fijo solo a Ibagué sin importar dónde tuviera la finca el
-// agricultor; ahora cubre las ubicaciones donde puede haber una finca en la demo.
-// No existe una API pública gratuita con CORS para "puntos de acopio agro" (ni Campo Limpio/CropLife
-// exponen una así), así que estos datos se obtuvieron directamente de una fuente confiable (Google Places)
-// en vez de simularse. Para producción real, esto debería refrescarse periódicamente o moverse a un
-// backend propio que consulte la Places API con una llave (no se puede exponer esa llave en el navegador).
-const REC_POINTS_POR_UBICACION={
-  ibague:[
-    {nombre:'Punto Verde Multicentro',direccion:'Cl. 61 #6-24, Ibagué, Tolima',lat:4.4376172,lon:-75.2017619,tipo:'Punto verde',horario:null,tel:null},
-    {nombre:'Asociación Corporativa Recicladores de Ibagué',direccion:'Cra. 2 Sur #20-18, Ibagué, Tolima',lat:4.4356395,lon:-75.2368626,tipo:'Asociación de recicladores',horario:'Lun-Vie 7:30am-5:30pm · Sáb 7:30am-3:30pm',tel:'+57 312 3054277'},
-    {nombre:'Asociación de Recicladores de Oficio de Ibagué',direccion:'Cra. 3A #19-71, Barrio La Estación, Ibagué, Tolima',lat:4.444676,lon:-75.242438,tipo:'Asociación de recicladores',horario:'Lun-Vie 8am-12m, 2pm-6pm · Sáb 8am-1pm',tel:'+57 315 8513838'},
-    {nombre:'Chatarrería y Depósito de Reciclaje Cano',direccion:'Cl. 20 #2-79, La Estación, Ibagué, Tolima',lat:4.4387358,lon:-75.2343094,tipo:'Centro de acopio de reciclables',horario:'Lun-Vie 7:30am-6pm · Sáb 8am-12m',tel:'+57 312 5464402'}
-  ],
-  pasto:[
-    {nombre:'Centro de Acopio Catambuco',direccion:'Corregimiento Catambuco, Pasto, Nariño',lat:1.1490749,lon:-77.3055058,tipo:'Centro de acopio',horario:null,tel:null},
-    {nombre:'Coemprender ESP',direccion:'Cl. 19 #15A-13, Pasto, Nariño',lat:1.2060067,lon:-77.274101,tipo:'Asociación de recicladores',horario:'Lun-Vie 8am-12m, 2pm-6pm · Sáb 8am-1pm',tel:'+57 315 4862018'}
-  ],
-  medellin:[
-    {nombre:'Asociación de Recicladores de Antioquia (ARRECICLAR)',direccion:'Cl. 26 #44-27, El Poblado, Medellín, Antioquia',lat:6.2272961,lon:-75.5731302,tipo:'Asociación de recicladores',horario:'Lun-Vie 7am-4pm · Sáb 9am-1pm',tel:'+57 604 232 1644'},
-    {nombre:'Punto Naranja - Laureles',direccion:'Cl. 39D #73-126, Laureles, Medellín, Antioquia',lat:6.2460877,lon:-75.5929143,tipo:'Punto de reciclaje',horario:'Lun-Vie 6am-2pm · Sáb 6am-1pm',tel:null},
-    {nombre:'Punto Naranja - Belén',direccion:'Cra. 66B #30B-59, Belén, Medellín, Antioquia',lat:6.233232,lon:-75.5874778,tipo:'Punto de reciclaje',horario:'Lun-Sáb 8am-4pm',tel:null}
-  ],
-  espinal:[
-    {nombre:'Punto de Acopio Campo Limpio - ORF',direccion:'Vía Espinal-Girardot, El Espinal, Tolima',lat:4.171509,lon:-74.872062,tipo:'Centro de acopio (envases agroquímicos)',horario:null,tel:null},
-    {nombre:'AROES - Asociación de Recicladores de Oficio del Espinal',direccion:'Cra. 4 #19-38, El Espinal, Tolima',lat:4.1493064,lon:-74.8941659,tipo:'Asociación de recicladores',horario:'Lun-Vie 7am-12m, 2pm-5pm · Sáb 7am-12m',tel:null},
-    {nombre:'Asociación de Recicladores Espinal Limpio',direccion:'Cra. 5 #15-45, El Espinal, Tolima',lat:4.1494757,lon:-74.8903947,tipo:'Asociación de recicladores',horario:null,tel:null}
-  ],
-  cartagena:[
-    {nombre:'Punto Ecológico del Caribe SAS',direccion:'Cl. 10 #56B-179, Vista Hermosa, Cartagena, Bolívar',lat:10.3794458,lon:-75.5013051,tipo:'Centro de acopio de reciclables',horario:'Lun-Vie 7am-5pm · Sáb 7am-12:30pm',tel:'+57 607 667 0517'}
-  ]
-};
-
-function haversineKm(lat1,lon1,lat2,lon2){
-  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+// === AGROCIRCULAR DINÁMICO: COLOMBIA, PERÚ Y CHILE ===
+let REC_GEO_CACHE=null;
+async function cargarRecRegiones(){
+  const pais=document.getElementById('rec-pais').value;
+  const region=document.getElementById('rec-region'), ciudad=document.getElementById('rec-ciudad');
+  document.getElementById('rec-region-label').textContent=pais==='Chile'?'Región':pais==='Peru'?'Departamento / región':'Departamento';
+  region.innerHTML='<option>Cargando…</option>'; ciudad.innerHTML='<option>Selecciona primero la región</option>';
+  try{if(!REC_GEO_CACHE){const d=await fetchJsonConTimeout(GEO_API+'/states');REC_GEO_CACHE=d.data||[];}const rec=REC_GEO_CACHE.find(x=>x.name===pais);const estados=(rec?.states||[]).map(x=>x.name).sort((a,b)=>a.localeCompare(b,'es'));if(!estados.length)throw new Error('sin datos');region.innerHTML='<option value="">Selecciona…</option>'+estados.map(x=>`<option>${x}</option>`).join('');document.getElementById('rec-estado').textContent='Catálogo territorial cargado.';}
+  catch(e){const estados=Object.keys(GEO_FALLBACK[pais]||{});region.innerHTML='<option value="">Selecciona…</option>'+estados.map(x=>`<option>${x}</option>`).join('');document.getElementById('rec-estado').textContent='Modo alternativo: se muestran las principales regiones.';}
 }
-
-let recUbicacionActual=null;
-
-function renderRecSelector(){
-  const sel=document.getElementById('rec-finca-select');
-  if(!sel)return;
-  const fincas=[...new Set(LOTES.map(l=>l.finca))];
-  sel.innerHTML=fincas.map(f=>{
-    const ubicacionId=LOTES.find(l=>l.finca===f).ubicacionId;
-    return `<option value="${ubicacionId}">${f} (${LOCATIONS[ubicacionId].label})</option>`;
-  }).join('');
-  if(!recUbicacionActual)recUbicacionActual=LOTES.find(l=>l.finca===fincas[0]).ubicacionId;
-  sel.value=recUbicacionActual;
+async function cargarRecCiudades(){
+  const pais=document.getElementById('rec-pais').value,region=document.getElementById('rec-region').value,ciudad=document.getElementById('rec-ciudad');if(!region)return;ciudad.innerHTML='<option>Cargando…</option>';
+  try{const d=await fetchJsonConTimeout(GEO_API+'/state/cities',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:pais,state:region})});const ciudades=(d.data||[]).sort((a,b)=>a.localeCompare(b,'es'));if(!ciudades.length)throw new Error('sin ciudades');ciudad.innerHTML='<option value="">Selecciona…</option>'+ciudades.map(x=>`<option>${x}</option>`).join('');}
+  catch(e){const ciudades=GEO_FALLBACK[pais]?.[region]||[];ciudad.innerHTML='<option value="">Selecciona…</option>'+ciudades.map(x=>`<option>${x}</option>`).join('')+'<option value="__otra__">Otra ubicación…</option>';}
 }
-
-function cambiarRecUbicacion(ubicacionId){
-  recUbicacionActual=ubicacionId;
-  renderRecPoints();
+async function buscarPuntosCirculares(){
+  let pais=document.getElementById('rec-pais').value,region=document.getElementById('rec-region').value,ciudad=document.getElementById('rec-ciudad').value,tipo=document.getElementById('rec-tipo').value;if(ciudad==='__otra__')ciudad=prompt('Escribe la ciudad, municipio o comuna:')||'';if(!pais||!region||!ciudad){alert('Selecciona país, departamento/región y ciudad.');return;}
+  const wrap=document.getElementById('rec-points-list'),estado=document.getElementById('rec-estado');wrap.innerHTML='<div style="padding:20px;text-align:center">Buscando puntos de economía circular…</div>';
+  try{const q=new URLSearchParams({pais,region,ciudad,tipo});const data=await apiFetch('/api/circular/puntos?'+q.toString());estado.textContent=`${data.puntos.length} resultados encontrados mediante ${data.proveedor}. Confirma por teléfono qué materiales reciben antes de desplazarte.`;if(!data.puntos.length){wrap.innerHTML='<div style="padding:18px;text-align:center">No se encontraron sitios con esos criterios. Prueba “Reciclables en general” o una ciudad cercana.</div>';return;}wrap.innerHTML=data.puntos.map(p=>`<div class="rp-card"><div class="rp-top"><div><div class="rp-name">${escapeHtml(p.nombre)}</div><div class="rp-addr">${escapeHtml(p.direccion||'')}</div></div></div><div class="rp-meta"><span>${escapeHtml(p.tipo||'Economía circular')}</span>${p.telefono?`<span> · ${escapeHtml(p.telefono)}</span>`:''}<span> · Fuente: ${escapeHtml(p.fuente||data.proveedor)}</span></div>${p.horario?.length?`<div class="rp-meta">${escapeHtml(p.horario.slice(0,2).join(' · '))}</div>`:''}<a class="rp-link" href="${p.mapsUrl||('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.nombre+' '+p.direccion))}" target="_blank" rel="noopener"><i class="ti ti-map-pin"></i> Ver mapa y cómo llegar</a></div>`).join('');}
+  catch(e){wrap.innerHTML=`<div style="padding:18px;text-align:center">${escapeHtml(e.message)}</div>`;estado.textContent='No se pudo completar la búsqueda.';}
 }
-
-function renderRecPoints(){
-  const wrap=document.getElementById('rec-points-list');
-  if(!wrap)return;
-  renderRecSelector();
-  const origin=LOCATIONS[recUbicacionActual];
-  const puntos=REC_POINTS_POR_UBICACION[recUbicacionActual]||[];
-  if(!puntos.length){
-    wrap.innerHTML=`<div style="font-size:11px;color:var(--color-text-secondary);padding:16px 0;text-align:center">Aún no tenemos puntos verificados cerca de ${origin.label}. Escríbenos por WhatsApp y te ayudamos a ubicar el más cercano.</div>`;
-    return;
-  }
-  const sorted=puntos.map(p=>({...p,dist:haversineKm(origin.lat,origin.lon,p.lat,p.lon)})).sort((a,b)=>a.dist-b.dist);
-  wrap.innerHTML=sorted.map(p=>`
-    <div class="rp-card">
-      <div class="rp-top">
-        <div>
-          <div class="rp-name">${p.nombre}</div>
-          <div class="rp-addr">${p.direccion}</div>
-        </div>
-        <div class="rp-dist">${p.dist.toFixed(1)} km</div>
-      </div>
-      <div class="rp-meta">
-        <span>${p.tipo}</span>
-        ${p.horario?`<span>· ${p.horario}</span>`:''}
-        ${p.tel?`<span>· ${p.tel}</span>`:''}
-      </div>
-      <a class="rp-link" href="https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}" target="_blank" rel="noopener">
-        <i class="ti ti-map-pin" aria-hidden="true"></i> Cómo llegar
-      </a>
-    </div>`).join('');
-}
+function renderRecPoints(){const pais=SESION.pais==='Peru'?'Peru':(SESION.pais==='Chile'?'Chile':'Colombia');const el=document.getElementById('rec-pais');if(el)el.value=pais;cargarRecRegiones().then(()=>{if(SESION.region){const r=document.getElementById('rec-region');if([...r.options].some(o=>o.value===SESION.region)){r.value=SESION.region;cargarRecCiudades();}}});}
 </script>
 <script>
 
-function go(sid,nid){
+async function go(sid,nid){
   const pantallasPublicas=['splash','reg'];
-  if(!SESION.autenticado && !pantallasPublicas.includes(sid)){
-    regModo='registro';
-    sid='reg';
-    nid='';
-  }
+  if(!SESION.autenticado && !pantallasPublicas.includes(sid)){const haySesion=await obtenerSesionValida()||await renovarTokenSesion();if(!haySesion){regModo='login';sid='reg';nid='';}}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById('s-'+sid).classList.add('on');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
@@ -3047,7 +2983,8 @@ function actualizarUIsesion(){
   }
 }
 
-function cerrarSesion(){
+async function cerrarSesion(){
+  try{await fetch(BACKEND_URL+'/api/auth/logout',{method:'POST',credentials:'include'});}catch(_e){}
   SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',token:null};
   guardarEstado();
   actualizarUIsesion();

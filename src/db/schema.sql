@@ -314,3 +314,15 @@ CREATE TABLE IF NOT EXISTS auditoria_seguridad (
 );
 CREATE INDEX IF NOT EXISTS idx_auditoria_seguridad_fecha ON auditoria_seguridad(creado_en);
 CREATE INDEX IF NOT EXISTS idx_auditoria_seguridad_usuario ON auditoria_seguridad(usuario_id, creado_en);
+
+-- Sesiones renovables: evita pedir inicio de sesión en cada petición.
+CREATE TABLE IF NOT EXISTS sesiones_refresh (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expira_en TEXT NOT NULL,
+  revocado_en TEXT DEFAULT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  ultimo_uso_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sesiones_refresh_usuario ON sesiones_refresh(usuario_id, expira_en);

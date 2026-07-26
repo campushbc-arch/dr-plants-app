@@ -8,8 +8,27 @@ const { nuevoId, firmarToken, requiereAuth } = require('../auth');
 const { flattenFiles, multerFileFilter, safeDeleteMany, uploadLimits, validateStoredFile } = require('../upload-security');
 const { cleanString, email: validarEmail, phone: validarTelefono, strongPassword } = require('../validation');
 const { audit } = require('../audit');
+const crypto = require('crypto');
 
 const router = express.Router();
+function parseCookies(req) {
+  return Object.fromEntries(String(req.headers.cookie || '').split(';').map(v => v.trim()).filter(Boolean).map(v => { const i=v.indexOf('='); return [decodeURIComponent(i<0?v:v.slice(0,i)), decodeURIComponent(i<0?'':v.slice(i+1))]; }));
+}
+function hashToken(token) { return crypto.createHash('sha256').update(token).digest('hex'); }
+function emitirRefresh(req, res, usuarioId) {
+  const raw = crypto.randomBytes(48).toString('base64url');
+  const id = nuevoId('ses');
+  const dias = Number(process.env.REFRESH_TOKEN_DAYS || 30);
+  db.prepare(`INSERT INTO sesiones_refresh (id,usuario_id,token_hash,expira_en) VALUES (?,?,?,datetime('now',?))`)
+    .run(id, usuarioId, hashToken(raw), `+${dias} days`);
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `drplants_refresh=${encodeURIComponent(raw)}; HttpOnly; Path=/api/auth; SameSite=Lax; Max-Age=${dias*86400}${secure}`);
+}
+function revocarRefresh(req) {
+  const raw = parseCookies(req).drplants_refresh;
+  if (raw) db.prepare(`UPDATE sesiones_refresh SET revocado_en=datetime('now') WHERE token_hash=?`).run(hashToken(raw));
+}
+
 const HOME_DIR = process.env.HOME || path.join(__dirname, '..', '..');
 const UPLOADS_PATH = process.env.UPLOADS_PATH || path.join(HOME_DIR, 'data', 'drplants', 'uploads');
 fs.mkdirSync(UPLOADS_PATH, { recursive: true });
@@ -80,6 +99,7 @@ router.post('/register', (req, res) => {
         return res.status(201).json({ pendienteAprobacion: true, usuario: sinPassword(usuario), mensaje: 'Registro recibido. El administrador debe verificar tu identidad y tarjeta profesional antes de aprobar el acceso.' });
       }
       const token = firmarToken(usuario);
+      emitirRefresh(req, res, usuario.id);
       audit({ req, action: 'registro_usuario', entityType: 'usuario', entityId: id });
       return res.status(201).json({ token, usuario: sinPassword(usuario) });
     } catch (error) {
@@ -100,7 +120,26 @@ router.post('/login', (req, res) => {
   if (usuario.estado_agronomo === 'rechazado') return res.status(403).json({ code: 'REJECTED', error: 'Tu solicitud como agrónomo fue rechazada. Comunícate con el administrador.' });
   if (usuario.activo === 0) return res.status(403).json({ error: 'Tu cuenta está bloqueada. Comunícate con el administrador.' });
   audit({ req, action: 'login', entityType: 'usuario', entityId: usuario.id });
+  emitirRefresh(req, res, usuario.id);
   res.json({ token: firmarToken(usuario), usuario: sinPassword(usuario) });
+});
+
+router.post('/refresh', (req, res) => {
+  const raw = parseCookies(req).drplants_refresh;
+  if (!raw) return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'No hay una sesión renovable.' });
+  const sesion = db.prepare(`SELECT s.*,u.* FROM sesiones_refresh s JOIN usuarios u ON u.id=s.usuario_id WHERE s.token_hash=? AND s.revocado_en IS NULL AND datetime(s.expira_en)>datetime('now')`).get(hashToken(raw));
+  if (!sesion || sesion.activo === 0) return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'La sesión renovable expiró.' });
+  db.prepare(`UPDATE sesiones_refresh SET revocado_en=datetime('now'), ultimo_uso_en=datetime('now') WHERE id=?`).run(sesion.id);
+  emitirRefresh(req, res, sesion.usuario_id);
+  const usuario = db.prepare('SELECT * FROM usuarios WHERE id=?').get(sesion.usuario_id);
+  return res.json({ token: firmarToken(usuario), usuario: sinPassword(usuario) });
+});
+
+router.post('/logout', (req, res) => {
+  revocarRefresh(req);
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `drplants_refresh=; HttpOnly; Path=/api/auth; SameSite=Lax; Max-Age=0${secure}`);
+  res.json({ ok: true });
 });
 
 router.get('/me', requiereAuth, (req, res) => {

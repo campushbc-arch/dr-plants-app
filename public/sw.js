@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-shell-v4-admin-wompi';
+const CACHE_NAME = 'dr-plants-shell-v5-agrocircular';
 const APP_SHELL = [
   '/',
   '/manifest.json',

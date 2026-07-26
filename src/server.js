@@ -15,6 +15,7 @@ const pedidosRoutes = require('./routes/pedidos');
 const solicitudesRoutes = require('./routes/solicitudes');
 const archivosRoutes = require('./routes/archivos');
 const pagosRoutes = require('./routes/pagos');
+const circularRoutes = require('./routes/circular');
 const { seedSiVacio } = require('./db/seed');
 const { corsOptions, requestId, originGuard, globalLimiter, loginLimiter, registerLimiter, uploadLimiter, paymentLimiter, webhookLimiter } = require('./security');
 const { sanitizeRequest } = require('./validation');
@@ -73,6 +74,7 @@ app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/solicitudes', solicitudesRoutes);
 app.use('/api/archivos', archivosRoutes);
 app.use('/api/pagos', pagosRoutes);
+app.use('/api/circular', circularRoutes);
 
 // Sirve la app (dr_plants_v4.html renombrado a public/index.html) desde el mismo dominio
 // y puerto que la API — así todo vive en drplants.campushbc.com sin necesidad de CORS

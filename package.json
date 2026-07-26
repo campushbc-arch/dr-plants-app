@@ -1,6 +1,6 @@
 {
   "name": "dr-plants-backend",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Dr Plants / Campus HBC — app completa (frontend + API) para desplegar como Node.js Web App en Hostinger",
   "main": "app.js",
   "type": "commonjs",
