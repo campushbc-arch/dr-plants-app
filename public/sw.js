@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-shell-v6-1-stable-responsive';
+const CACHE_NAME = 'dr-plants-shell-v6-2-dr-agro-button';
 const APP_SHELL = [
   '/',
   '/manifest.json',
