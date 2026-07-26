@@ -890,7 +890,7 @@
   </div>
   <div class="phdr-card">
     <div class="phdr-t">Puntos verificados cerca de tu finca</div>
-    <div class="phdr-s">Datos reales de asociaciones de reciclaje y puntos de acopio, vía Google Places.</div>
+    <div class="phdr-s">Directorio propio de Dr. Plants y datos geográficos abiertos de OpenStreetMap, sin APIs comerciales.</div>
   </div>
   <div style="padding:0 14px 10px">
     <div class="fgrp" style="margin:0 0 8px"><label>País</label>
@@ -909,6 +909,10 @@
     <div id="rec-estado" style="font-size:10px;color:var(--color-text-secondary);margin-top:8px"></div>
   </div>
   <div id="rec-points-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
+  <div style="padding:12px 14px 24px">
+    <button class="cta-btn gold" onclick="solicitarRecoleccionCircular()"><i class="ti ti-truck"></i> No encontré un punto: solicitar recolección</button>
+    <div style="font-size:10px;color:var(--color-text-secondary);margin-top:7px">La solicitud será revisada por el equipo de Dr. Plants y podrás recibir actualizaciones en la campana de notificaciones.</div>
+  </div>
 </div>
 
 <div id="s-formacion" class="screen">
@@ -2277,9 +2281,25 @@ async function cargarRecCiudades(){
 async function buscarPuntosCirculares(){
   let pais=document.getElementById('rec-pais').value,region=document.getElementById('rec-region').value,ciudad=document.getElementById('rec-ciudad').value,tipo=document.getElementById('rec-tipo').value;if(ciudad==='__otra__')ciudad=prompt('Escribe la ciudad, municipio o comuna:')||'';if(!pais||!region||!ciudad){alert('Selecciona país, departamento/región y ciudad.');return;}
   const wrap=document.getElementById('rec-points-list'),estado=document.getElementById('rec-estado');wrap.innerHTML='<div style="padding:20px;text-align:center">Buscando puntos de economía circular…</div>';
-  try{const q=new URLSearchParams({pais,region,ciudad,tipo});const data=await apiFetch('/api/circular/puntos?'+q.toString());estado.textContent=`${data.puntos.length} resultados encontrados mediante ${data.proveedor}. Confirma por teléfono qué materiales reciben antes de desplazarte.`;if(!data.puntos.length){wrap.innerHTML='<div style="padding:18px;text-align:center">No se encontraron sitios con esos criterios. Prueba “Reciclables en general” o una ciudad cercana.</div>';return;}wrap.innerHTML=data.puntos.map(p=>`<div class="rp-card"><div class="rp-top"><div><div class="rp-name">${escapeHtml(p.nombre)}</div><div class="rp-addr">${escapeHtml(p.direccion||'')}</div></div></div><div class="rp-meta"><span>${escapeHtml(p.tipo||'Economía circular')}</span>${p.telefono?`<span> · ${escapeHtml(p.telefono)}</span>`:''}<span> · Fuente: ${escapeHtml(p.fuente||data.proveedor)}</span></div>${p.horario?.length?`<div class="rp-meta">${escapeHtml(p.horario.slice(0,2).join(' · '))}</div>`:''}<a class="rp-link" href="${p.mapsUrl||('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.nombre+' '+p.direccion))}" target="_blank" rel="noopener"><i class="ti ti-map-pin"></i> Ver mapa y cómo llegar</a></div>`).join('');}
+  try{const q=new URLSearchParams({pais,region,ciudad,tipo});const data=await apiFetch('/api/circular/puntos?'+q.toString());estado.textContent=`${data.puntos.length} resultados encontrados mediante ${data.proveedor}.${data.aviso?' '+data.aviso:''} Confirma por teléfono qué materiales reciben antes de desplazarte.`;if(!data.puntos.length){wrap.innerHTML='<div style="padding:18px;text-align:center">No se encontraron sitios con esos criterios. Puedes probar una ciudad cercana o solicitar recolección.</div>';return;}wrap.innerHTML=data.puntos.map(p=>`<div class="rp-card"><div class="rp-top"><div><div class="rp-name">${escapeHtml(p.nombre)} ${p.verificado?'✓':''}</div><div class="rp-addr">${escapeHtml(p.direccion||'')}</div></div></div><div class="rp-meta"><span>${escapeHtml(p.tipo||'Economía circular')}</span>${p.telefono?`<span> · ${escapeHtml(p.telefono)}</span>`:''}<span> · Fuente: ${escapeHtml(p.fuente||data.proveedor)}</span></div>${p.materiales?`<div class="rp-meta"><b>Materiales:</b> ${escapeHtml(p.materiales)}</div>`:''}${p.horario?.length?`<div class="rp-meta">${escapeHtml(p.horario.slice(0,2).join(' · '))}</div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${p.mapsUrl?`<a class="rp-link" href="${p.mapsUrl}" target="_blank" rel="noopener"><i class="ti ti-map-pin"></i> Ver mapa</a>`:''}${p.sitioWeb?`<a class="rp-link" href="${p.sitioWeb}" target="_blank" rel="noopener"><i class="ti ti-world"></i> Sitio web</a>`:''}${p.telefono?`<a class="rp-link" href="tel:${escapeHtml(p.telefono)}"><i class="ti ti-phone"></i> Llamar</a>`:''}</div></div>`).join('');}
   catch(e){wrap.innerHTML=`<div style="padding:18px;text-align:center">${escapeHtml(e.message)}</div>`;estado.textContent='No se pudo completar la búsqueda.';}
 }
+
+async function solicitarRecoleccionCircular(){
+  let pais=document.getElementById('rec-pais').value,region=document.getElementById('rec-region').value,ciudad=document.getElementById('rec-ciudad').value,tipo=document.getElementById('rec-tipo').value;
+  if(ciudad==='__otra__')ciudad=prompt('Escribe la ciudad, municipio o comuna:')||'';
+  if(!pais||!region||!ciudad){alert('Selecciona primero país, departamento/región y ciudad.');return;}
+  const cantidad=prompt('¿Qué cantidad aproximada deseas entregar? Ejemplo: 25 kg, 10 envases o 3 sacos.');
+  if(!cantidad)return;
+  const direccion=prompt('Escribe la dirección o referencia para la recolección:');
+  if(!direccion)return;
+  const observaciones=prompt('Observaciones adicionales (opcional):')||'';
+  try{
+    await apiFetch('/api/circular/solicitudes-recoleccion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pais,region,ciudad,tipo,cantidad,direccion,observaciones})});
+    alert('Solicitud registrada. Recibirás las actualizaciones en la campana de notificaciones.');
+  }catch(e){alert(e.message||'No se pudo registrar la solicitud.');}
+}
+
 function renderRecPoints(){const pais=SESION.pais==='Peru'?'Peru':(SESION.pais==='Chile'?'Chile':'Colombia');const el=document.getElementById('rec-pais');if(el)el.value=pais;cargarRecRegiones().then(()=>{if(SESION.region){const r=document.getElementById('rec-region');if([...r.options].some(o=>o.value===SESION.region)){r.value=SESION.region;cargarRecCiudades();}}});}
 </script>
 <script>

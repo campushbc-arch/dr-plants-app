@@ -390,4 +390,67 @@ router.get('/auditoria-seguridad', (req, res) => {
   res.json(rows);
 });
 
+
+// --- AgroCircular: directorio propio y solicitudes de recolección ---
+router.get('/circular/puntos', (req, res) => {
+  const activo = String(req.query.activo || 'todos');
+  const where = activo === 'todos' ? '' : 'WHERE activo=?';
+  const params = activo === 'todos' ? [] : [activo === '1' ? 1 : 0];
+  res.json(db.prepare(`SELECT * FROM puntos_circulares ${where} ORDER BY pais,region,ciudad,nombre`).all(...params));
+});
+
+router.post('/circular/puntos', (req, res) => {
+  const b = req.body || {};
+  if (!b.nombre || !b.pais) return res.status(400).json({ error:'Nombre y país son obligatorios.' });
+  const id = nuevoId('pcirc');
+  db.prepare(`INSERT INTO puntos_circulares
+    (id,nombre,pais,region,ciudad,direccion,lat,lon,tipo_entidad,tipos_residuo,materiales,telefono,email,sitio_web,horario,maps_url,fuente,verificado,activo)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+      id,String(b.nombre).trim(),String(b.pais).trim().toLowerCase(),String(b.region||'').trim().toLowerCase()||null,
+      String(b.ciudad||'').trim().toLowerCase()||null,String(b.direccion||'').trim()||null,b.lat??null,b.lon??null,
+      String(b.tipoEntidad||'Gestor de economía circular').trim(),String(b.tiposResiduo||'general').trim(),String(b.materiales||'').trim()||null,
+      String(b.telefono||'').trim()||null,String(b.email||'').trim()||null,String(b.sitioWeb||'').trim()||null,
+      String(b.horario||'').trim()||null,String(b.mapsUrl||'').trim()||null,String(b.fuente||'Directorio Dr. Plants').trim(),b.verificado?1:0,b.activo===false?0:1
+    );
+  res.status(201).json(db.prepare('SELECT * FROM puntos_circulares WHERE id=?').get(id));
+});
+
+router.patch('/circular/puntos/:id', (req, res) => {
+  const actual = db.prepare('SELECT * FROM puntos_circulares WHERE id=?').get(req.params.id);
+  if (!actual) return res.status(404).json({ error:'Punto no encontrado.' });
+  const b=req.body||{};
+  db.prepare(`UPDATE puntos_circulares SET
+    nombre=?,pais=?,region=?,ciudad=?,direccion=?,lat=?,lon=?,tipo_entidad=?,tipos_residuo=?,materiales=?,telefono=?,email=?,sitio_web=?,horario=?,maps_url=?,fuente=?,verificado=?,activo=?,actualizado_en=datetime('now')
+    WHERE id=?`).run(
+      b.nombre??actual.nombre,String(b.pais??actual.pais).toLowerCase(),String(b.region??actual.region??'').toLowerCase()||null,String(b.ciudad??actual.ciudad??'').toLowerCase()||null,
+      b.direccion??actual.direccion,b.lat??actual.lat,b.lon??actual.lon,b.tipoEntidad??actual.tipo_entidad,b.tiposResiduo??actual.tipos_residuo,
+      b.materiales??actual.materiales,b.telefono??actual.telefono,b.email??actual.email,b.sitioWeb??actual.sitio_web,b.horario??actual.horario,
+      b.mapsUrl??actual.maps_url,b.fuente??actual.fuente,b.verificado==null?actual.verificado:(b.verificado?1:0),b.activo==null?actual.activo:(b.activo?1:0),actual.id
+    );
+  res.json(db.prepare('SELECT * FROM puntos_circulares WHERE id=?').get(actual.id));
+});
+
+router.get('/circular/solicitudes', (req, res) => {
+  const estado=String(req.query.estado||'todos');
+  const where=estado==='todos'?'':'WHERE s.estado=?';
+  const params=estado==='todos'?[]:[estado];
+  res.json(db.prepare(`SELECT s.*,u.nombre usuario_nombre,u.email usuario_email,u.telefono usuario_telefono
+    FROM solicitudes_recoleccion_circular s JOIN usuarios u ON u.id=s.usuario_id ${where}
+    ORDER BY s.creada_en DESC`).all(...params));
+});
+
+router.patch('/circular/solicitudes/:id', (req, res) => {
+  const estados=['pendiente','contactando_gestor','programada','recolectada','cancelada'];
+  const actual=db.prepare('SELECT * FROM solicitudes_recoleccion_circular WHERE id=?').get(req.params.id);
+  if(!actual) return res.status(404).json({error:'Solicitud no encontrada.'});
+  const b=req.body||{};
+  const estado=b.estado||actual.estado;
+  if(!estados.includes(estado)) return res.status(400).json({error:'Estado inválido.'});
+  db.prepare(`UPDATE solicitudes_recoleccion_circular SET estado=?,gestor_asignado=?,fecha_programada=?,retroalimentacion=?,actualizada_en=datetime('now') WHERE id=?`)
+    .run(estado,b.gestorAsignado??actual.gestor_asignado,b.fechaProgramada??actual.fecha_programada,b.retroalimentacion??actual.retroalimentacion,actual.id);
+  const detalle=[b.gestorAsignado?`Gestor: ${b.gestorAsignado}.`:'',b.fechaProgramada?`Fecha: ${b.fechaProgramada}.`:'',b.retroalimentacion||''].filter(Boolean).join(' ');
+  crearNotificacionUsuario({usuarioId:actual.usuario_id,tipo:'estado_recoleccion',titulo:`Recolección circular: ${estado.replaceAll('_',' ')}`,mensaje:`Tu solicitud cambió a ${estado.replaceAll('_',' ')}. ${detalle}`.trim(),entidadTipo:'solicitud_recoleccion',entidadId:actual.id,urlDestino:'rec-puntos',prioridad:estado==='programada'?'alta':'normal'});
+  res.json(db.prepare('SELECT * FROM solicitudes_recoleccion_circular WHERE id=?').get(actual.id));
+});
+
 module.exports = router;

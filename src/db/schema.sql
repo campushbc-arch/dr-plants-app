@@ -326,3 +326,48 @@ CREATE TABLE IF NOT EXISTS sesiones_refresh (
   ultimo_uso_en TEXT DEFAULT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_sesiones_refresh_usuario ON sesiones_refresh(usuario_id, expira_en);
+
+-- AgroCircular V5: directorio propio y solicitudes de recolección sin APIs comerciales
+CREATE TABLE IF NOT EXISTS puntos_circulares (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  pais TEXT NOT NULL,
+  region TEXT,
+  ciudad TEXT,
+  direccion TEXT,
+  lat REAL,
+  lon REAL,
+  tipo_entidad TEXT,
+  tipos_residuo TEXT NOT NULL DEFAULT 'general',
+  materiales TEXT,
+  telefono TEXT,
+  email TEXT,
+  sitio_web TEXT,
+  horario TEXT,
+  maps_url TEXT,
+  fuente TEXT DEFAULT 'Directorio Dr. Plants',
+  verificado INTEGER NOT NULL DEFAULT 0 CHECK(verificado IN (0,1)),
+  activo INTEGER NOT NULL DEFAULT 1 CHECK(activo IN (0,1)),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_puntos_circulares_ubicacion ON puntos_circulares(pais,region,ciudad,activo);
+
+CREATE TABLE IF NOT EXISTS solicitudes_recoleccion_circular (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  pais TEXT NOT NULL,
+  region TEXT NOT NULL,
+  ciudad TEXT NOT NULL,
+  tipo_residuo TEXT NOT NULL,
+  cantidad TEXT NOT NULL,
+  direccion TEXT NOT NULL,
+  observaciones TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK(estado IN ('pendiente','contactando_gestor','programada','recolectada','cancelada')),
+  gestor_asignado TEXT,
+  fecha_programada TEXT,
+  retroalimentacion TEXT,
+  creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizada_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_solicitudes_recoleccion_estado ON solicitudes_recoleccion_circular(estado,creada_en);
