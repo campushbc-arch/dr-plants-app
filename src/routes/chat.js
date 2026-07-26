@@ -73,7 +73,7 @@ router.post('/', requiereAuth, async (req, res) => {
 
     // Guarda el historial real en la base de datos, asociado al usuario autenticado.
     if (modulo && ['dr_agro', 'soporte', 'laboratorio'].includes(modulo)) {
-      guardarEnHistorial(req.usuario.id, modulo, messages, data);
+      guardarEnHistorial(req.usuario.id, modulo, messages, data, archivoIds);
     }
 
     res.json(data);
@@ -83,7 +83,7 @@ router.post('/', requiereAuth, async (req, res) => {
   }
 });
 
-function guardarEnHistorial(usuarioId, modulo, messages, data) {
+function guardarEnHistorial(usuarioId, modulo, messages, data, archivoIds = []) {
   let conv = db.prepare(
     'SELECT * FROM conversaciones_ia WHERE usuario_id = ? AND modulo = ? ORDER BY creado_en DESC LIMIT 1'
   ).get(usuarioId, modulo);
@@ -92,6 +92,11 @@ function guardarEnHistorial(usuarioId, modulo, messages, data) {
     const id = nuevoId('conv');
     db.prepare('INSERT INTO conversaciones_ia (id, usuario_id, modulo) VALUES (?, ?, ?)').run(id, usuarioId, modulo);
     conv = { id };
+  }
+
+  if (Array.isArray(archivoIds)) {
+    const insertAdjunto = db.prepare('INSERT OR IGNORE INTO conversacion_archivos (conversacion_id, archivo_id) SELECT ?, id FROM archivos_usuario WHERE id=? AND usuario_id=?');
+    for (const archivoId of archivoIds.slice(0, 3)) insertAdjunto.run(conv.id, archivoId, usuarioId);
   }
 
   const ultimoMensajeUsuario = messages[messages.length - 1];

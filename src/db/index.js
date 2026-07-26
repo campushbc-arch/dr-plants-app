@@ -53,6 +53,10 @@ migrarColumnas('lotes', {
   cultivo_nombre: "TEXT DEFAULT NULL", variedad: "TEXT DEFAULT NULL",
   actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL"
 });
+migrarColumnas('pedidos', { pago_id: "TEXT DEFAULT NULL" });
+migrarColumnas('solicitudes_laboratorio', { pago_id: "TEXT DEFAULT NULL" });
+migrarColumnas('solicitudes_teleconsulta', { pago_id: "TEXT DEFAULT NULL" });
+
 for (const tabla of ['aplicaciones','analisis_laboratorio','costos_operativos']) {
   migrarColumnas(tabla, {
     creado_por: "TEXT DEFAULT NULL", actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL"

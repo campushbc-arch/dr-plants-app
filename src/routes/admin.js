@@ -63,11 +63,13 @@ router.get('/usuarios/:id/expediente', (req, res) => {
   `).get(req.params.id);
   if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado.' });
   const archivos = db.prepare(`
-    SELECT id, tipo, nombre_original AS nombre, mime_type, tamano_bytes, creado_en
-    FROM archivos_usuario
-    WHERE usuario_id = ?
-    ORDER BY creado_en DESC
-  `).all(usuario.id).map(a => ({ ...a, url: `/api/admin/archivos/${a.id}` }));
+    SELECT a.id, a.tipo, a.nombre_original AS nombre, a.mime_type, a.tamano_bytes, a.creado_en,
+      (SELECT v.estado FROM archivo_verificaciones v WHERE v.archivo_id=a.id ORDER BY v.creado_en DESC LIMIT 1) AS estado_verificacion,
+      (SELECT v.observacion FROM archivo_verificaciones v WHERE v.archivo_id=a.id ORDER BY v.creado_en DESC LIMIT 1) AS observacion_verificacion
+    FROM archivos_usuario a
+    WHERE a.usuario_id = ?
+    ORDER BY a.creado_en DESC
+  `).all(usuario.id).map(a => ({ ...a, estado_verificacion: a.estado_verificacion || 'pendiente', url: `/api/admin/archivos/${a.id}` }));
   res.json({ usuario, archivos });
 });
 
@@ -253,6 +255,45 @@ router.patch('/solicitudes/teleconsulta/:id', (req, res) => {
   }
   db.prepare('UPDATE solicitudes_teleconsulta SET estado = ? WHERE id = ?').run(estado, req.params.id);
   res.json(db.prepare('SELECT * FROM solicitudes_teleconsulta WHERE id = ?').get(req.params.id));
+});
+
+// --- Auditoría completa para el administrador ---
+router.get('/conversaciones/laboratorio', (req, res) => {
+  const conversaciones = db.prepare(`
+    SELECT c.id,c.usuario_id,c.creado_en,u.nombre AS usuario_nombre,u.email AS usuario_email,u.telefono AS usuario_telefono,
+      (SELECT COUNT(*) FROM mensajes m WHERE m.conversacion_id=c.id) AS total_mensajes,
+      (SELECT MAX(m.creado_en) FROM mensajes m WHERE m.conversacion_id=c.id) AS ultima_actividad
+    FROM conversaciones_ia c JOIN usuarios u ON u.id=c.usuario_id
+    WHERE c.modulo='laboratorio'
+    ORDER BY COALESCE(ultima_actividad,c.creado_en) DESC
+  `).all();
+  res.json(conversaciones);
+});
+
+router.get('/conversaciones/:id', (req, res) => {
+  const conversacion = db.prepare(`SELECT c.*,u.nombre AS usuario_nombre,u.email AS usuario_email,u.telefono AS usuario_telefono
+    FROM conversaciones_ia c JOIN usuarios u ON u.id=c.usuario_id WHERE c.id=?`).get(req.params.id);
+  if (!conversacion) return res.status(404).json({ error: 'Conversación no encontrada.' });
+  const mensajes = db.prepare('SELECT id,rol,contenido,creado_en FROM mensajes WHERE conversacion_id=? ORDER BY creado_en ASC').all(conversacion.id);
+  const archivos = db.prepare(`SELECT a.id,a.tipo,a.nombre_original AS nombre,a.mime_type,a.tamano_bytes,a.creado_en
+    FROM conversacion_archivos ca JOIN archivos_usuario a ON a.id=ca.archivo_id WHERE ca.conversacion_id=? ORDER BY ca.creado_en`).all(conversacion.id);
+  res.json({ conversacion, mensajes, archivos });
+});
+
+router.get('/pagos', (req, res) => {
+  res.json(db.prepare(`SELECT p.*,u.nombre AS usuario_nombre,u.email AS usuario_email
+    FROM pagos p JOIN usuarios u ON u.id=p.usuario_id ORDER BY p.creado_en DESC`).all());
+});
+
+router.patch('/archivos/:id/verificacion', (req, res) => {
+  const { estado, observacion } = req.body || {};
+  if (!['pendiente','verificado','rechazado'].includes(estado)) return res.status(400).json({ error: 'Estado de verificación inválido.' });
+  const archivo = db.prepare('SELECT id FROM archivos_usuario WHERE id=?').get(req.params.id);
+  if (!archivo) return res.status(404).json({ error: 'Archivo no encontrado.' });
+  const id = nuevoId('ver');
+  db.prepare('INSERT INTO archivo_verificaciones (id,archivo_id,administrador_id,estado,observacion) VALUES (?,?,?,?,?)')
+    .run(id, archivo.id, req.usuario.id, estado, String(observacion||'').trim() || null);
+  res.status(201).json(db.prepare('SELECT * FROM archivo_verificaciones WHERE id=?').get(id));
 });
 
 module.exports = router;

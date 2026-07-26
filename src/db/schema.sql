@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS pedidos (
   lote_id TEXT REFERENCES lotes(id),
   fecha TEXT NOT NULL DEFAULT (datetime('now')),
   estado TEXT NOT NULL DEFAULT 'recibido',
-  total_cop INTEGER NOT NULL
+  total_cop INTEGER NOT NULL,
+  pago_id TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS pedido_items (
@@ -145,7 +146,8 @@ CREATE TABLE IF NOT EXISTS solicitudes_laboratorio (
   tipo_analisis TEXT NOT NULL,
   notas TEXT,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK(estado IN ('pendiente','en_proceso','completado','cancelado')),
-  fecha TEXT NOT NULL DEFAULT (datetime('now'))
+  fecha TEXT NOT NULL DEFAULT (datetime('now')),
+  pago_id TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS solicitudes_teleconsulta (
@@ -155,7 +157,8 @@ CREATE TABLE IF NOT EXISTS solicitudes_teleconsulta (
   motivo TEXT NOT NULL,
   fecha_preferida TEXT,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK(estado IN ('pendiente','agendada','atendida','cancelada')),
-  fecha_solicitud TEXT NOT NULL DEFAULT (datetime('now'))
+  fecha_solicitud TEXT NOT NULL DEFAULT (datetime('now')),
+  pago_id TEXT DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_fincas_productor ON fincas(productor_id);
@@ -198,3 +201,41 @@ CREATE TABLE IF NOT EXISTS observaciones_agronomicas (
   eliminado_en TEXT DEFAULT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_obs_lote ON observaciones_agronomicas(lote_id, creado_en);
+
+
+CREATE TABLE IF NOT EXISTS pagos (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL CHECK(tipo IN ('productos','consulta_personalizada','analisis_laboratorio')),
+  entidad_id TEXT NOT NULL,
+  referencia TEXT NOT NULL UNIQUE,
+  descripcion TEXT,
+  monto_cop INTEGER NOT NULL,
+  monto_centavos INTEGER NOT NULL,
+  moneda TEXT NOT NULL DEFAULT 'COP',
+  estado TEXT NOT NULL DEFAULT 'PENDING',
+  wompi_transaccion_id TEXT DEFAULT NULL,
+  metodo_pago TEXT DEFAULT NULL,
+  respuesta_wompi TEXT DEFAULT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_pagos_usuario ON pagos(usuario_id, creado_en);
+CREATE INDEX IF NOT EXISTS idx_pagos_referencia ON pagos(referencia);
+
+CREATE TABLE IF NOT EXISTS conversacion_archivos (
+  conversacion_id TEXT NOT NULL REFERENCES conversaciones_ia(id) ON DELETE CASCADE,
+  archivo_id TEXT NOT NULL REFERENCES archivos_usuario(id) ON DELETE CASCADE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY(conversacion_id, archivo_id)
+);
+
+CREATE TABLE IF NOT EXISTS archivo_verificaciones (
+  id TEXT PRIMARY KEY,
+  archivo_id TEXT NOT NULL REFERENCES archivos_usuario(id) ON DELETE CASCADE,
+  administrador_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK(estado IN ('pendiente','verificado','rechazado')),
+  observacion TEXT DEFAULT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_verificaciones_archivo ON archivo_verificaciones(archivo_id, creado_en);

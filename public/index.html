@@ -1011,6 +1011,16 @@
   <div id="admin-sollab-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
 
   <div style="padding:20px 14px 0">
+    <div class="sec-lbl" style="padding:0">Conversaciones y análisis enviados desde Laboratorio</div>
+  </div>
+  <div id="admin-conversaciones-lab-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+
+  <div style="padding:20px 14px 0">
+    <div class="sec-lbl" style="padding:0">Pagos Wompi</div>
+  </div>
+  <div id="admin-pagos-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+
+  <div style="padding:20px 14px 0">
     <div class="sec-lbl" style="padding:0">Solicitudes de teleconsulta</div>
   </div>
   <div id="admin-soltele-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
@@ -1403,7 +1413,14 @@ function renderCart(){
   document.getElementById('cart-total').textContent=fmtCOP(total);
 }
 
-function finalizarPedido(){
+
+async function iniciarPagoWompi(tipo,datos){
+  const pago=await apiFetch('/api/pagos/intencion',{method:'POST',body:JSON.stringify({tipo,...datos})});
+  if(!pago.checkoutUrl)throw new Error('Wompi no devolvió una URL de pago.');
+  window.location.href=pago.checkoutUrl;
+}
+
+async function finalizarPedido(){
   const ids=Object.keys(cart);
   if(!ids.length)return;
   let total=0;
@@ -1429,12 +1446,15 @@ function finalizarPedido(){
   // requiere que los IDs de PRODUCTS coincidan con los productos reales sembrados en el
   // backend (mismo catálogo) — si no coinciden, falla en silencio y solo queda local,
   // igual que el resto de sincronizaciones "best effort" de esta app.
-  if(BACKEND_URL&&SESION.token){
-    apiFetch('/api/pedidos',{method:'POST',body:JSON.stringify({
+  if(!BACKEND_URL||!await obtenerSesionValida()){alert('Debes iniciar sesión para realizar la compra.');return;}
+  try{
+    const pedido=await apiFetch('/api/pedidos',{method:'POST',body:JSON.stringify({
       loteId:loteId||null,
-      items:ids.map(id=>{const p=PRODUCTS.find(x=>x.id===id);return{productoId:id,cantidad:cart[id],precioUnitarioCop:p.price};})
-    })}).catch(e=>console.warn('No se pudo registrar el pedido en el backend:',e.message));
-  }
+      items:ids.map(id=>({productoId:id,cantidad:cart[id]}))
+    })});
+    await iniciarPagoWompi('productos',{pedidoId:pedido.id});
+    return;
+  }catch(e){alert('No se pudo iniciar el pago: '+e.message);return;}
 
   let notaLote='';
   if(loteId){
@@ -3288,7 +3308,7 @@ async function renderAdminSolicitudes(){
         </div>
       </div>`).join('');
   }catch(e){mensajeSinBackend('admin-solicitudes-list','No se pudieron cargar las solicitudes: '+e.message);}
-  renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminSolTele();
+  renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminConversacionesLab();renderAdminPagos();renderAdminSolTele();
 }
 
 function mensajeSinBackend(id,texto){
@@ -3304,13 +3324,16 @@ async function renderAdminPedidos(){
     const pedidos=await apiFetch('/api/admin/pedidos');
     if(!pedidos.length){wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary);padding:8px 0">Aún no hay pedidos.</div>';return;}
     wrap.innerHTML=pedidos.map(p=>`
-      <div class="applog-row">
-        <div class="applog-ico"><i class="ti ti-truck-delivery"></i></div>
-        <div style="flex:1">
-          <div class="applog-name">${p.numero} · ${p.usuario_nombre}</div>
-          <div class="applog-meta">${p.usuario_email} · ${p.items.length} producto(s) · ${new Date(p.fecha).toLocaleDateString('es-CO',{day:'numeric',month:'short'})}</div>
+      <div class="lab-card" style="align-items:flex-start">
+        <div class="lab-ico"><i class="ti ti-truck-delivery"></i></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:8px"><div class="lab-name">${escapeHtml(p.numero)} · ${escapeHtml(p.usuario_nombre)}</div><b>${fmtCOP(p.total_cop)}</b></div>
+          <div class="lab-desc">${escapeHtml(p.usuario_email)} · ${new Date(p.fecha).toLocaleString('es-CO')} · Estado: ${escapeHtml(p.estado||'')}</div>
+          ${p.lote_id?`<div class="lab-desc">Lote asociado: ${escapeHtml(p.lote_id)}</div>`:''}
+          <div style="margin-top:8px;border-top:1px solid var(--color-border-tertiary);padding-top:6px">
+            ${(p.items||[]).map(i=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0"><span>${escapeHtml(i.producto_nombre)} · ${i.cantidad} unidad(es)</span><span>${fmtCOP(i.cantidad*i.precio_unitario_cop)}</span></div>`).join('')}
+          </div>
         </div>
-        <div class="applog-cost">${fmtCOP(p.total_cop)}</div>
       </div>`).join('');
   }catch(e){mensajeSinBackend('admin-pedidos-list','No se pudieron cargar los pedidos: '+e.message);}
 }
@@ -3336,6 +3359,29 @@ async function renderAdminSolLab(){
         </div>
       </div>`).join('');
   }catch(e){mensajeSinBackend('admin-sollab-list','No se pudieron cargar las solicitudes: '+e.message);}
+}
+
+
+async function renderAdminConversacionesLab(){
+  const wrap=document.getElementById('admin-conversaciones-lab-list');if(!wrap)return;
+  try{
+    const filas=await apiFetch('/api/admin/conversaciones/laboratorio');
+    if(!filas.length){wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary)">No hay conversaciones de laboratorio.</div>';return;}
+    wrap.innerHTML=filas.map(c=>`<div class="lab-card" style="align-items:flex-start"><div class="lab-ico"><i class="ti ti-messages"></i></div><div style="flex:1"><div class="lab-name">${escapeHtml(c.usuario_nombre)}</div><div class="lab-desc">${escapeHtml(c.usuario_email)} · ${c.total_mensajes} mensaje(s) · ${c.ultima_actividad?new Date(c.ultima_actividad).toLocaleString('es-CO'):''}</div><button type="button" onclick="abrirConversacionLabAdmin('${c.id}')" style="margin-top:7px;width:100%;border:none;border-radius:8px;padding:7px;background:#1b5e20;color:#fff;font-size:11px">Ver conversación, análisis y documentos</button></div></div>`).join('');
+  }catch(e){mensajeSinBackend('admin-conversaciones-lab-list','No se pudieron cargar las conversaciones: '+e.message);}
+}
+async function abrirConversacionLabAdmin(id){
+  const modal=document.getElementById('admin-expediente-modal'),cont=document.getElementById('admin-expediente-contenido');modal.style.display='block';cont.innerHTML='Cargando...';
+  try{const d=await apiFetch('/api/admin/conversaciones/'+encodeURIComponent(id));document.getElementById('admin-expediente-titulo').textContent='Laboratorio · '+d.conversacion.usuario_nombre;
+    cont.innerHTML=`<div class="lab-card"><div><div class="lab-name">${escapeHtml(d.conversacion.usuario_nombre)}</div><div class="lab-desc">${escapeHtml(d.conversacion.usuario_email)} · ${escapeHtml(d.conversacion.usuario_telefono||'')}</div></div></div><div style="margin:14px 0;font-weight:600;font-size:12px">Conversación</div>${(d.mensajes||[]).map(m=>`<div style="margin:6px 0;padding:9px;border-radius:9px;background:${m.rol==='user'?'var(--color-background-secondary)':'#EAF3DE'}"><div style="font-size:9px;text-transform:uppercase">${m.rol==='user'?'Usuario':'Asistente'}</div><div style="font-size:11.5px;white-space:pre-wrap">${escapeHtml(m.contenido)}</div></div>`).join('')}<div style="margin:14px 0 8px;font-weight:600;font-size:12px">Documentos adjuntos (${(d.archivos||[]).length})</div>${(d.archivos||[]).map(a=>`<button class="admin-ver-conv-archivo" data-id="${a.id}" data-name="${escapeHtml(a.nombre)}" data-mime="${escapeHtml(a.mime_type)}" style="display:block;width:100%;margin:6px 0;padding:8px;border:1px solid var(--color-border-tertiary);border-radius:8px;background:var(--color-background-primary);text-align:left">${escapeHtml(a.nombre)} · ${formatoTamano(a.tamano_bytes)}</button>`).join('')||'<div class="lab-desc">Sin documentos adjuntos.</div>'}`;
+    cont.querySelectorAll('.admin-ver-conv-archivo').forEach(b=>b.addEventListener('click',()=>visualizarDocumentoAdmin(b.dataset.id,b.dataset.name,b.dataset.mime)));
+  }catch(e){cont.innerHTML='<div style="color:#c62828">'+escapeHtml(e.message)+'</div>';}
+}
+async function renderAdminPagos(){
+  const wrap=document.getElementById('admin-pagos-list');if(!wrap)return;
+  try{const pagos=await apiFetch('/api/admin/pagos');if(!pagos.length){wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary)">No hay pagos registrados.</div>';return;}
+    wrap.innerHTML=pagos.map(p=>`<div class="applog-row"><div class="applog-ico"><i class="ti ti-credit-card"></i></div><div style="flex:1"><div class="applog-name">${escapeHtml(p.descripcion||p.tipo)} · ${escapeHtml(p.usuario_nombre)}</div><div class="applog-meta">${escapeHtml(p.referencia)} · ${escapeHtml(p.estado)} · ${escapeHtml(p.metodo_pago||'Método pendiente')}</div></div><div class="applog-cost">${fmtCOP(p.monto_cop)}</div></div>`).join('');
+  }catch(e){mensajeSinBackend('admin-pagos-list','No se pudieron cargar los pagos: '+e.message);}
 }
 
 async function renderAdminSolTele(){
@@ -3398,12 +3444,13 @@ async function abrirExpedienteAdmin(id){
           <div style="font-size:11.5px;font-weight:600;color:var(--color-text-primary)">${escapeHtml(etiquetaTipoArchivo(a.tipo))}</div>
           <div style="font-size:10px;color:var(--color-text-secondary);overflow-wrap:anywhere;margin-top:2px">${escapeHtml(a.nombre||'Archivo')} · ${formatoTamano(a.tamano_bytes)}</div>
           <div style="font-size:9.5px;color:var(--color-text-secondary);margin-top:2px">${escapeHtml(a.mime_type||'')}</div>
-          <button type="button" data-id="${escapeHtml(a.id)}" data-name="${escapeHtml(a.nombre||'Archivo')}" data-mime="${escapeHtml(a.mime_type||'')}" class="admin-ver-archivo" style="width:100%;margin-top:8px;border:none;border-radius:8px;padding:8px;background:#1b5e20;color:#fff;font-size:11px;font-weight:500;cursor:pointer">Visualizar</button>
+          <button type="button" data-id="${escapeHtml(a.id)}" data-name="${escapeHtml(a.nombre||'Archivo')}" data-mime="${escapeHtml(a.mime_type||'')}" class="admin-ver-archivo" style="width:100%;margin-top:8px;border:none;border-radius:8px;padding:8px;background:#1b5e20;color:#fff;font-size:11px;font-weight:500;cursor:pointer">Visualizar</button><div style="font-size:10px;margin-top:6px">Verificación: <b>${escapeHtml(a.estado_verificacion||'pendiente')}</b>${a.observacion_verificacion?' · '+escapeHtml(a.observacion_verificacion):''}</div><div style="display:flex;gap:6px;margin-top:6px"><button type="button" onclick="verificarArchivoAdmin('${a.id}','verificado')" style="flex:1;border:none;border-radius:7px;padding:6px;background:#1b5e20;color:#fff;font-size:10px">Verificar</button><button type="button" onclick="verificarArchivoAdmin('${a.id}','rechazado')" style="flex:1;border:1px solid #F09595;border-radius:7px;padding:6px;background:transparent;color:#c62828;font-size:10px">Rechazar</button></div>
         </div>`).join(''):'<div style="font-size:11px;color:var(--color-text-secondary)">Este usuario no ha cargado archivos.</div>'}
       </div>`;
     cont.querySelectorAll('.admin-ver-archivo').forEach(btn=>btn.addEventListener('click',()=>visualizarDocumentoAdmin(btn.dataset.id,btn.dataset.name,btn.dataset.mime)));
   }catch(e){cont.innerHTML='<div style="color:#c62828;font-size:12px">No se pudo cargar el expediente: '+escapeHtml(e.message)+'</div>';}
 }
+async function verificarArchivoAdmin(id,estado){const observacion=prompt('Observación de verificación (opcional):','')||'';try{await apiFetch('/api/admin/archivos/'+encodeURIComponent(id)+'/verificacion',{method:'PATCH',body:JSON.stringify({estado,observacion})});alert('Verificación guardada.');}catch(e){alert('No se pudo guardar: '+e.message);}}
 function cerrarExpedienteAdmin(){document.getElementById('admin-expediente-modal').style.display='none';}
 async function visualizarDocumentoAdmin(id,nombre,mimeType){
   if(!id){alert('Este documento no está disponible.');return;}
@@ -3824,8 +3871,9 @@ async function solicitarAnalisisLab(){
     return;
   }
   try{
-    await apiFetch('/api/solicitudes/laboratorio',{method:'POST',body:JSON.stringify({tipoAnalisis,loteId:currentLote||null,notas})});
-    msg.textContent='✓ Solicitud enviada. El equipo de Campus HBC la va a revisar.';
+    const solicitud=await apiFetch('/api/solicitudes/laboratorio',{method:'POST',body:JSON.stringify({tipoAnalisis,loteId:currentLote||null,notas})});
+    msg.textContent='Solicitud creada. Te estamos llevando al pago seguro de Wompi...';
+    await iniciarPagoWompi('analisis_laboratorio',{solicitudId:solicitud.id});
     msg.style.display='block';
     msg.style.background='#EAF3DE';msg.style.color='#1b5e20';
     document.getElementById('lab-sol-notas').value='';
@@ -3863,8 +3911,9 @@ async function solicitarTeleconsulta(){
     return;
   }
   try{
-    await apiFetch('/api/solicitudes/teleconsulta',{method:'POST',body:JSON.stringify({motivo,loteId:currentLote||null,fechaPreferida})});
-    msg.textContent='✓ Solicitud enviada. Un agrónomo de Campus HBC se va a poner en contacto contigo.';
+    const solicitud=await apiFetch('/api/solicitudes/teleconsulta',{method:'POST',body:JSON.stringify({motivo,loteId:currentLote||null,fechaPreferida})});
+    msg.textContent='Solicitud creada. Te estamos llevando al pago seguro de Wompi...';
+    await iniciarPagoWompi('consulta_personalizada',{solicitudId:solicitud.id});
     msg.style.display='block';msg.style.background='#EAF3DE';msg.style.color='#1b5e20';
     document.getElementById('tele-sol-motivo').value='';
     document.getElementById('tele-sol-fecha').value='';
