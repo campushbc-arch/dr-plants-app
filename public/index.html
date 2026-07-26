@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Dr Plants — Agro Campus HBC</title>
 <meta name="description" content="Ecosistema agro de Campus HBC: agrónomo con IA, laboratorio de diagnóstico, seguimiento de cultivo, tienda y formación tecnológica.">
 <meta name="theme-color" content="#1b5e20">
@@ -332,6 +332,36 @@
 .cta-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 28px);margin:0 14px 16px;background:#1b5e20;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
 .cta-btn.gold{background:#c9a227}
 </style>
+
+<style id="drplants-modern-v61">
+:root{
+  --color-background-primary:#fbfdfb;--color-background-secondary:#f1f6f2;
+  --color-text-primary:#122018;--color-text-secondary:#53665a;
+  --color-border-secondary:#d7e4da;--color-border-tertiary:#e2ebe4;
+  --border-radius-lg:22px;--border-radius-md:14px;
+  --font-sans:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+html{font-size:16px;background:radial-gradient(circle at 20% 0%,#e4f7e8 0,transparent 34%),#eaf0eb}
+body{min-height:100vh;background:linear-gradient(145deg,rgba(229,246,232,.78),rgba(245,248,245,.96));color:var(--color-text-primary)}
+.app-wrap{max-width:none;min-height:100vh;padding:0;background:transparent;border-radius:0}
+.phone{width:100%;max-width:760px;min-height:100vh;border:0;background:rgba(251,253,251,.96);box-shadow:0 22px 70px rgba(15,60,31,.14);border-radius:0}
+.hdr{padding:max(14px,env(safe-area-inset-top)) 20px 13px;background:linear-gradient(135deg,#0c4f2b,#16733c 58%,#1a8c4b);position:sticky;top:0;z-index:40;box-shadow:0 8px 24px rgba(7,65,31,.2)}
+.hdr-name{font-size:1.08rem;font-weight:700}.hdr-sub{font-size:.68rem}.hdr-btn{width:40px;height:40px;border-radius:13px;backdrop-filter:blur(12px)}
+.hero{background:linear-gradient(145deg,#0c4f2b,#15743c);padding:28px 22px 30px}.hero-h{font-size:clamp(1.65rem,5vw,2.25rem);font-weight:750}.hero-p{font-size:1rem}.body{padding:18px;gap:16px}
+.main-svc,.svc,.lab-card,.pc,.stat,.fform,.card{box-shadow:0 10px 30px rgba(22,67,36,.07);border-color:rgba(62,120,77,.13)}
+.main-svc{background:linear-gradient(145deg,#0e572f,#13723c);padding:20px}.ms-title{font-size:1.35rem;font-weight:700}.ms-desc{font-size:.95rem}.ms-cta,.cta-btn{min-height:46px;font-size:.95rem;border-radius:14px}
+.grid2{gap:12px}.svc{padding:16px;transition:transform .18s ease,box-shadow .18s ease}.svc:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(22,67,36,.12)}.svc-name{font-size:.95rem}.svc-mini{font-size:.82rem}
+.pg-hdr{padding:14px 18px;background:rgba(245,249,246,.88);backdrop-filter:blur(14px);position:sticky;top:67px;z-index:30}.pg-title{font-size:1rem;font-weight:700}.back{font-size:.95rem}
+.chat-ai{padding:15px 18px;background:linear-gradient(90deg,#eff8f1,#f9fbf9)}.ai-av{width:44px;height:44px;box-shadow:0 8px 20px rgba(20,103,52,.2)}.ai-name{font-size:1rem;font-weight:700}.ai-st{font-size:.8rem}
+.msgs{padding:18px;gap:12px;min-height:240px}.mb,.mu{font-size:.95rem;line-height:1.58;padding:13px 15px;border-radius:8px 18px 18px 18px}.mu{border-radius:18px 8px 18px 18px;background:linear-gradient(135deg,#146a37,#208749)}.mb-lbl{font-size:.68rem}
+.chips{padding:0 18px 14px;gap:8px}.chip{font-size:.82rem;padding:8px 13px;border-radius:999px}.cin{padding:13px 18px calc(13px + env(safe-area-inset-bottom));background:rgba(251,253,251,.94);position:sticky;bottom:0;z-index:25;backdrop-filter:blur(16px)}.cin input{min-height:48px;padding:12px 16px;font-size:1rem;border-radius:999px;border:1px solid #99c8a6;background:#fff}.csend{width:48px;height:48px;box-shadow:0 9px 20px rgba(18,100,50,.25);transition:transform .15s ease}.csend:active{transform:scale(.94)}
+input,select,textarea,button{font-size:16px}.fgrp label,.sec-lbl{font-size:.76rem}.fgrp input,.fgrp select,.fgrp textarea,select{min-height:48px;font-size:1rem;border-radius:13px}
+.bnav{position:sticky;bottom:0;z-index:35;padding:10px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(20,66,34,.08)}.ni i{font-size:23px}.ni span{font-size:.7rem}
+@media (min-width:761px){body{padding:22px}.phone{min-height:calc(100vh - 44px);border-radius:28px;border:1px solid rgba(58,111,71,.14);overflow:hidden}.app-wrap{min-height:calc(100vh - 44px)}.hdr{top:0}.pg-hdr{top:67px}.pgrid{grid-template-columns:repeat(3,1fr)}.grid2{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:430px){.body,.msgs{padding-left:14px;padding-right:14px}.hero{padding-left:18px;padding-right:18px}.grid2{grid-template-columns:1fr 1fr}.mb{max-width:92%}.mu{max-width:88%}}
+@media (max-width:350px){.grid2{grid-template-columns:1fr}.hdr-sub{display:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body>
 
@@ -464,7 +494,7 @@
   <div class="msgs" id="chat">
     <div class="mb">
       <div class="mb-lbl">Dr. Agro IA</div>
-      Hola. Soy tu ingeniero agrónomo virtual, con experiencia en cualquier cultivo — transitorios y perennes. Puedo ayudarte con diagnóstico de enfermedades, fertilización, manejo de plagas, riego y más.<br><br>Para aprovechar todas las funciones, por favor <span class="gold-t">regístrate</span> primero.
+      Hola. Soy tu ingeniero agrónomo virtual, con experiencia en cualquier cultivo — transitorios y perennes. Puedo ayudarte con diagnóstico de enfermedades, fertilización, manejo de plagas, riego y más.<br><br>Escribe tu pregunta y te orientaré con recomendaciones claras y prácticas para tu cultivo.
     </div>
   </div>
   <div class="chips">
@@ -550,10 +580,10 @@
     <div class="chip" onclick="chipMsgLab('¿Cómo interpreto los resultados de mi análisis de suelo?')">Interpretar resultados</div>
     <div class="chip" onclick="chipMsgLab('Mi cultivo tiene hojas amarillas, ¿qué análisis necesito?')">Qué análisis necesito</div>
   </div>
-  <div class="cin">
-    <input id="labcin" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')sendMsgLab()">
-    <button class="csend" id="labsendbtn" onclick="sendMsgLab()" aria-label="Enviar"><i class="ti ti-send"></i></button>
-  </div>
+  <form class="cin" id="laboratorio-form" novalidate>
+    <input id="labcin" name="consultaLaboratorio" placeholder="Escribe tu consulta..." autocomplete="off">
+    <button class="csend" id="labsendbtn" type="submit" aria-label="Enviar consulta al laboratorio"><i class="ti ti-send"></i></button>
+  </form>
 
   <div style="padding:18px 14px 0">
     <div class="sec-lbl" style="margin-bottom:8px">Solicitar un análisis</div>
@@ -607,10 +637,10 @@
     <div class="chip" onclick="chipMsgSoporte('Un producto de la línea CampusHBC no dio el resultado esperado, ¿qué hago?')">Problema con un producto</div>
     <div class="chip" onclick="chipMsgSoporte('Quiero hablar con un técnico humano')">Hablar con un técnico</div>
   </div>
-  <div class="cin">
-    <input id="scin" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')sendMsgSoporte()">
-    <button class="csend" id="scsendbtn" onclick="sendMsgSoporte()" aria-label="Enviar"><i class="ti ti-send"></i></button>
-  </div>
+  <form class="cin" id="soporte-form" novalidate>
+    <input id="scin" name="consultaSoporte" placeholder="Escribe tu consulta..." autocomplete="off">
+    <button class="csend" id="scsendbtn" type="submit" aria-label="Enviar consulta a soporte"><i class="ti ti-send"></i></button>
+  </form>
   <div style="padding:14px 14px 18px">
     <a href="https://wa.me/573166912983?text=Hola%2C%20necesito%20soporte%20t%C3%A9cnico%20de%20Campus%20HBC" target="_blank" rel="noopener" class="cta-btn wa-btn" style="text-decoration:none">
       <i class="ti ti-headset" aria-hidden="true"></i> Hablar con un técnico humano por WhatsApp
@@ -1668,7 +1698,7 @@ function isoDaysAgo(n){return new Date(Date.now()-n*86400000).toISOString().slic
 let FINCA_IDS={}; // nombre de finca (como lo ve el usuario) -> id real en el backend
 
 let renovandoTokenPromise=null;
-async function renovarTokenSesion(){if(!renovandoTokenPromise)renovandoTokenPromise=fetch(BACKEND_URL+'/api/auth/refresh',{method:'POST',credentials:'include'}).then(async r=>{if(!r.ok)return null;const d=await r.json();SESION={...SESION,autenticado:true,id:d.usuario.id,nombre:d.usuario.nombre,email:d.usuario.email,telefono:d.usuario.telefono,tipoProductor:d.usuario.tipo_productor,pais:d.usuario.pais,region:d.usuario.region,rol:d.usuario.rol,token:d.token};guardarEstado();actualizarUIsesion();return d.token;}).finally(()=>renovandoTokenPromise=null);return renovandoTokenPromise;}
+async function renovarTokenSesion(){if(!renovandoTokenPromise)renovandoTokenPromise=fetch(BACKEND_URL+'/api/auth/refresh',{method:'POST',cache:'no-store',credentials:'include'}).then(async r=>{if(!r.ok)return null;const d=await r.json();aplicarUsuarioSesion(d.usuario,d.token);return d.token;}).catch(()=>null).finally(()=>renovandoTokenPromise=null);return renovandoTokenPromise;}
 async function apiFetch(path,opciones={},reintento=true){let token=await obtenerSesionValida();const headers=Object.assign({'Content-Type':'application/json'},opciones.headers||{});if(token)headers['Authorization']='Bearer '+token;const resp=await fetch(BACKEND_URL+path,Object.assign({credentials:'include'},opciones,{headers}));if(resp.status===401&&reintento){const nuevo=await renovarTokenSesion();if(nuevo)return apiFetch(path,opciones,false);}const data=await resp.json().catch(()=>null);if(!resp.ok)throw new Error((data&&data.error)||('Error '+resp.status));return data;}
 
 // Se llama justo después de un login/registro exitoso contra el backend real. Reemplaza
@@ -2961,24 +2991,44 @@ function guardarEstado(){
   }
 }
 
+function aplicarUsuarioSesion(usuario,token){
+  SESION={
+    autenticado:true,id:usuario.id,nombre:usuario.nombre,email:usuario.email,
+    telefono:usuario.telefono,tipoProductor:usuario.tipo_productor,
+    pais:usuario.pais,region:usuario.region,rol:usuario.rol,token
+  };
+  guardarEstado();
+  actualizarUIsesion();
+}
+
 async function cargarEstado(){
-  const token=localStorage.getItem('drplants_token');
-  if(!token)return false;
+  let token=localStorage.getItem('drplants_token')||SESION.token||'';
+  if(!token){
+    token=await renovarTokenSesion();
+    if(!token)return false;
+  }
   try{
-    const resp=await fetch(BACKEND_URL+'/api/auth/me',{
+    let resp=await fetch(BACKEND_URL+'/api/auth/me',{
+      cache:'no-store',credentials:'include',
       headers:{'Authorization':'Bearer '+token}
     });
+    if(resp.status===401){
+      const renovado=await renovarTokenSesion();
+      if(!renovado)throw new Error('Sesión expirada');
+      token=renovado;
+      resp=await fetch(BACKEND_URL+'/api/auth/me',{
+        cache:'no-store',credentials:'include',
+        headers:{'Authorization':'Bearer '+token}
+      });
+    }
     if(!resp.ok)throw new Error('Sesión inválida');
     const usuario=await resp.json();
-    SESION={
-      autenticado:true,id:usuario.id,nombre:usuario.nombre,email:usuario.email,
-      telefono:usuario.telefono,tipoProductor:usuario.tipo_productor,
-      pais:usuario.pais,region:usuario.region,rol:usuario.rol,token
-    };
-    actualizarUIsesion();
+    aplicarUsuarioSesion(usuario,token);
     await cargarFincasDesdeBackend();
     return true;
   }catch(e){
+    const renovado=await renovarTokenSesion();
+    if(renovado)return true;
     localStorage.removeItem('drplants_token');
     SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',token:null};
     actualizarUIsesion();
@@ -2988,17 +3038,15 @@ async function cargarEstado(){
 
 let restaurandoSesionPromise=null;
 async function obtenerSesionValida(){
-  let token=localStorage.getItem('drplants_token')||SESION.token||'';
-  if(token&&SESION.autenticado){
+  const token=localStorage.getItem('drplants_token')||SESION.token||'';
+  if(token){
     if(SESION.token!==token)SESION.token=token;
     return token;
   }
-  if(!token)return '';
   if(!restaurandoSesionPromise){
-    restaurandoSesionPromise=cargarEstado().finally(()=>{restaurandoSesionPromise=null;});
+    restaurandoSesionPromise=renovarTokenSesion().finally(()=>{restaurandoSesionPromise=null;});
   }
-  const restaurada=await restaurandoSesionPromise;
-  return restaurada?(localStorage.getItem('drplants_token')||SESION.token||''):'';
+  return (await restaurandoSesionPromise)||'';
 }
 
 function actualizarUIsesion(){
@@ -3816,25 +3864,24 @@ async function enviarMensajeIA(cfg){
   try{
     // Verifica y restaura la sesión justo antes de consultar a la IA.
     // Así no dependemos únicamente del estado visual de la pantalla.
-    let tokenActual=await obtenerSesionValida();
+    let tokenActual=await obtenerSesionValida()||await renovarTokenSesion();
     if(!tokenActual){
       throw Object.assign(new Error('AUTH_REQUIRED'),{authRequired:true});
     }
     const payloadIA={
       system:cfg.system,
       messages:cfg.history,
-      modulo:cfg.chatId==='chat'?'dr_agro':(cfg.chatId==='soporte-chat'?'soporte':'laboratorio'),
+      modulo:cfg.chatId==='chat'?'dr_agro':(cfg.chatId==='schat'?'soporte':'laboratorio'),
       archivoIds:cfg.chatId==='chat'&&DR_AGRO_ARCHIVO_ID?[DR_AGRO_ARCHIVO_ID]:[]
     };
     let response=await llamarClaudeAPI(payloadIA,tokenActual);
     if(response.status===401){
-      // Una PWA puede conservar temporalmente estado antiguo en memoria. Antes de
-      // cerrar la sesión, validamos una vez el token persistido y reintentamos.
-      const tokenPersistido=localStorage.getItem('drplants_token')||'';
-      if(tokenPersistido&&tokenPersistido!==tokenActual){
-        tokenActual=tokenPersistido;
-        SESION.token=tokenPersistido;
-        response=await llamarClaudeAPI(payloadIA,tokenPersistido);
+      // El access token puede haber expirado aunque la cookie renovable siga vigente.
+      // Renovamos una vez y repetimos exactamente la misma pregunta sin sacar al usuario.
+      const tokenRenovado=await renovarTokenSesion();
+      if(tokenRenovado){
+        tokenActual=tokenRenovado;
+        response=await llamarClaudeAPI(payloadIA,tokenRenovado);
       }
     }
     if(response.status===401){
@@ -3901,7 +3948,7 @@ function sendMsg(){
 window.sendMsg=sendMsg;
 
 function sendMsgSoporte(){
-  enviarMensajeIA({inputId:'scin',btnId:'scsendbtn',chatId:'schat',history:soporteHistory,system:SOPORTE_SYSTEM+'\n\n'+loteContextoTexto(),label:'Soporte Técnico'});
+  return enviarMensajeIA({inputId:'scin',btnId:'scsendbtn',chatId:'schat',history:soporteHistory,system:SOPORTE_SYSTEM+'\n\n'+loteContextoTexto(),label:'Soporte Técnico'});
 }
 
 function chipMsgSoporte(text){
@@ -3932,7 +3979,7 @@ Reglas de respuesta:
 let labHistory = [];
 
 function sendMsgLab(){
-  enviarMensajeIA({inputId:'labcin',btnId:'labsendbtn',chatId:'labchat',history:labHistory,system:LABORATORIO_SYSTEM,label:'Asistente del Laboratorio'});
+  return enviarMensajeIA({inputId:'labcin',btnId:'labsendbtn',chatId:'labchat',history:labHistory,system:LABORATORIO_SYSTEM,label:'Asistente del Laboratorio'});
 }
 
 function chipMsgLab(text){
@@ -4050,33 +4097,28 @@ document.addEventListener('DOMContentLoaded',async()=>{
   cargarDepartamentos();
   await cargarEstado();
 
-  const drAgroForm=document.getElementById('dr-agro-form');
-  const drAgroInput=document.getElementById('cin');
-  const drAgroBtn=document.getElementById('csendbtn');
-  if(drAgroForm){
-    drAgroForm.addEventListener('submit',async event=>{
+  function enlazarFormularioChat(formId,inputId,btnId,enviar){
+    const form=document.getElementById(formId);
+    const input=document.getElementById(inputId);
+    const btn=document.getElementById(btnId);
+    if(!form||!input)return;
+    form.addEventListener('submit',async event=>{
       event.preventDefault();
       event.stopPropagation();
-      if(drAgroBtn?.disabled)return;
-      try{
-        await window.sendMsg();
-      }catch(error){
-        console.error('Error al enviar pregunta a Dr. Agro:',error);
-        const chat=document.getElementById('chat');
-        if(chat){
-          chat.innerHTML+='<div class="mb"><div class="mb-lbl">Dr. Agro IA</div>No pude procesar el botón de envío. Recarga la aplicación e inténtalo nuevamente.</div>';
-          chat.scrollTop=chat.scrollHeight;
-        }
+      if(btn?.disabled||!input.value.trim())return;
+      await enviar();
+    });
+    input.addEventListener('keydown',event=>{
+      if(event.key==='Enter'&&!event.shiftKey){
+        event.preventDefault();
+        form.requestSubmit();
       }
     });
   }
-  // Respaldo para navegadores/PWA que no disparen correctamente submit con Enter.
-  drAgroInput?.addEventListener('keydown',event=>{
-    if(event.key==='Enter'&&!event.shiftKey){
-      event.preventDefault();
-      drAgroForm?.requestSubmit();
-    }
-  });
+
+  enlazarFormularioChat('dr-agro-form','cin','csendbtn',sendMsg);
+  enlazarFormularioChat('laboratorio-form','labcin','labsendbtn',sendMsgLab);
+  enlazarFormularioChat('soporte-form','scin','scsendbtn',sendMsgSoporte);
 });
 </script>
 </body>
