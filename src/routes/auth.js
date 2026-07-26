@@ -6,6 +6,8 @@ const path = require('path');
 const db = require('../db');
 const { nuevoId, firmarToken, requiereAuth } = require('../auth');
 const { flattenFiles, multerFileFilter, safeDeleteMany, uploadLimits, validateStoredFile } = require('../upload-security');
+const { cleanString, email: validarEmail, phone: validarTelefono, strongPassword } = require('../validation');
+const { audit } = require('../audit');
 
 const router = express.Router();
 const HOME_DIR = process.env.HOME || path.join(__dirname, '..', '..');
@@ -32,13 +34,14 @@ router.post('/register', (req, res) => {
     const limpiar = () => safeDeleteMany(archivosSubidos);
     try {
       const { nombre, email, telefono, password, rol, tipoProductor, pais, region, tarjetaProfesional, especialidad } = req.body;
-      const emailNormalizado = String(email || '').trim().toLowerCase();
-      if (!nombre || !emailNormalizado || !telefono || !password || !rol || !tipoProductor || !pais || !region) {
+      const emailNormalizado = validarEmail(email);
+      const telefonoNormalizado = validarTelefono(telefono);
+      if (!nombre || !emailNormalizado || !telefonoNormalizado || !password || !rol || !tipoProductor || !pais || !region) {
         limpiar();
         return res.status(400).json({ error: 'Debes completar todos los datos obligatorios del formulario.' });
       }
-      if (!/^\S+@\S+\.\S+$/.test(emailNormalizado)) { limpiar(); return res.status(400).json({ error: 'El correo electrónico no es válido.' }); }
-      if (password.length < 6) { limpiar(); return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres.' }); }
+      if (!emailNormalizado) { limpiar(); return res.status(400).json({ error: 'El correo electrónico no es válido.' }); }
+      if (!strongPassword(password)) { limpiar(); return res.status(400).json({ error: 'La contraseña debe tener entre 10 y 128 caracteres e incluir letras y números.' }); }
       if (db.prepare('SELECT 1 FROM usuarios WHERE lower(email) = ?').get(emailNormalizado)) { limpiar(); return res.status(409).json({ error: 'Ya existe una cuenta registrada con ese correo.' }); }
       const rolSolicitado = ['agricultor', 'agronomo'].includes(rol) ? rol : null;
       if (!rolSolicitado) { limpiar(); return res.status(400).json({ error: 'Tipo de cuenta inválido.' }); }
@@ -53,14 +56,14 @@ router.post('/register', (req, res) => {
       if (rolSolicitado !== 'agronomo' && archivosSubidos.length) limpiar();
 
       const id = nuevoId('usr');
-      const passwordHash = bcrypt.hashSync(password, 10);
+      const passwordHash = bcrypt.hashSync(password, Number(process.env.BCRYPT_ROUNDS || 12));
       const rolFinal = rolSolicitado === 'agronomo' ? 'agronomo_pendiente' : rolSolicitado;
       const transaction = db.transaction(() => {
         db.prepare(`INSERT INTO usuarios
           (id,nombre,email,telefono,password_hash,rol,tipo_productor,pais,region,tarjeta_profesional,especialidad,estado_agronomo)
           VALUES (@id,@nombre,@email,@telefono,@passwordHash,@rolFinal,@tipoProductor,@pais,@region,@tarjetaProfesional,@especialidad,@estadoAgronomo)`)
-          .run({ id, nombre: nombre.trim(), email: emailNormalizado, telefono: telefono.trim(), passwordHash, rolFinal,
-            tipoProductor: tipoProductor.trim(), pais: pais.trim(), region: region.trim(), tarjetaProfesional: tarjetaProfesional || null,
+          .run({ id, nombre: cleanString(nombre, 120), email: emailNormalizado, telefono: telefonoNormalizado, passwordHash, rolFinal,
+            tipoProductor: cleanString(tipoProductor, 80), pais: cleanString(pais, 80), region: cleanString(region, 120), tarjetaProfesional: tarjetaProfesional || null,
             especialidad: especialidad || null, estadoAgronomo: rolSolicitado === 'agronomo' ? 'pendiente' : null });
         if (rolSolicitado === 'agronomo') {
           for (const [tipo, file] of [['documento_identidad', documentoIdentidad], ['tarjeta_profesional', tarjetaArchivo]]) {
@@ -77,6 +80,7 @@ router.post('/register', (req, res) => {
         return res.status(201).json({ pendienteAprobacion: true, usuario: sinPassword(usuario), mensaje: 'Registro recibido. El administrador debe verificar tu identidad y tarjeta profesional antes de aprobar el acceso.' });
       }
       const token = firmarToken(usuario);
+      audit({ req, action: 'registro_usuario', entityType: 'usuario', entityId: id });
       return res.status(201).json({ token, usuario: sinPassword(usuario) });
     } catch (error) {
       limpiar();
@@ -91,10 +95,11 @@ router.post('/login', (req, res) => {
   const identificador = String(email || '').trim().toLowerCase();
   if (!identificador || !password) return res.status(400).json({ error: 'email y password son obligatorios.' });
   const usuario = db.prepare('SELECT * FROM usuarios WHERE lower(email) = ?').get(identificador);
-  if (!usuario || !bcrypt.compareSync(password, usuario.password_hash)) return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
+  if (!usuario || !bcrypt.compareSync(password, usuario.password_hash)) { audit({ req, action: 'login', result: 'fallido', metadata: { identificador } }); return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' }); }
   if (usuario.rol === 'agronomo_pendiente' || usuario.estado_agronomo === 'pendiente') return res.status(403).json({ code: 'PENDING_APPROVAL', error: 'Tu registro como agrónomo está pendiente de aprobación.' });
   if (usuario.estado_agronomo === 'rechazado') return res.status(403).json({ code: 'REJECTED', error: 'Tu solicitud como agrónomo fue rechazada. Comunícate con el administrador.' });
   if (usuario.activo === 0) return res.status(403).json({ error: 'Tu cuenta está bloqueada. Comunícate con el administrador.' });
+  audit({ req, action: 'login', entityType: 'usuario', entityId: usuario.id });
   res.json({ token: firmarToken(usuario), usuario: sinPassword(usuario) });
 });
 

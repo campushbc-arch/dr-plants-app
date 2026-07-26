@@ -297,3 +297,20 @@ CREATE TABLE IF NOT EXISTS auditoria_ia (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_auditoria_ia_usuario ON auditoria_ia(usuario_id, creado_en);
+
+-- Registro inmutable de eventos de seguridad y acciones sensibles.
+CREATE TABLE IF NOT EXISTS auditoria_seguridad (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT REFERENCES usuarios(id) ON DELETE SET NULL,
+  accion TEXT NOT NULL,
+  resultado TEXT NOT NULL DEFAULT 'ok',
+  entidad_tipo TEXT DEFAULT NULL,
+  entidad_id TEXT DEFAULT NULL,
+  ip TEXT DEFAULT NULL,
+  user_agent TEXT DEFAULT NULL,
+  request_id TEXT DEFAULT NULL,
+  metadata_json TEXT DEFAULT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_auditoria_seguridad_fecha ON auditoria_seguridad(creado_en);
+CREATE INDEX IF NOT EXISTS idx_auditoria_seguridad_usuario ON auditoria_seguridad(usuario_id, creado_en);

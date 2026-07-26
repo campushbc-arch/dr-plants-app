@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
 const { crearNotificacionAdmin } = require('../notificaciones');
+const { enumValue, id: validarId } = require('../validation');
+const { audit } = require('../audit');
 
 const router = express.Router();
 
@@ -39,9 +41,11 @@ router.get('/configuracion', requiereAuth, (_req, res) => {
 router.post('/intencion', requiereAuth, (req, res) => {
   const usuario = db.prepare('SELECT id,nombre,email,telefono FROM usuarios WHERE id=?').get(req.usuario.id);
   if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado.' });
-  const { tipo, pedidoId, solicitudId } = req.body || {};
+  const tipo = enumValue(req.body?.tipo, ['productos', 'consulta_personalizada', 'analisis_laboratorio']);
+  const pedidoId = validarId(req.body?.pedidoId);
+  const solicitudId = validarId(req.body?.solicitudId);
   const permitidos = ['productos', 'consulta_personalizada', 'analisis_laboratorio'];
-  if (!permitidos.includes(tipo)) return res.status(400).json({ error: 'Tipo de cobro inválido.' });
+  if (!tipo || !permitidos.includes(tipo)) return res.status(400).json({ error: 'Tipo de cobro inválido.' });
 
   const { publicKey, integritySecret, appUrl } = cfg();
   if (!publicKey || !integritySecret) {
@@ -103,6 +107,8 @@ router.post('/intencion', requiereAuth, (req, res) => {
     'customer-data:phone-number': usuario.telefono || ''
   });
 
+  audit({ req, action: 'crear_intencion_pago', entityType: 'pago', entityId: id, metadata: { tipo, montoCop } });
+
   res.status(201).json({
     pagoId: id,
     referencia,
@@ -142,6 +148,7 @@ router.post('/wompi/eventos', (req, res) => {
       const estado = String(trx.status || 'PENDING').toUpperCase();
       db.prepare(`UPDATE pagos SET estado=?, wompi_transaccion_id=?, metodo_pago=?, respuesta_wompi=?, actualizado_en=datetime('now') WHERE id=?`)
         .run(estado, trx.id || null, trx.payment_method_type || null, JSON.stringify(trx), pago.id);
+      audit({ req, action: 'webhook_wompi', entityType: 'pago', entityId: pago.id, metadata: { estado, transaccion: trx.id || null } });
       if (estado === 'APPROVED') {
         if (pago.tipo === 'productos') db.prepare("UPDATE pedidos SET estado='pagado' WHERE id=?").run(pago.entidad_id);
         if (pago.tipo === 'analisis_laboratorio') db.prepare("UPDATE solicitudes_laboratorio SET estado='en_proceso' WHERE id=?").run(pago.entidad_id);

@@ -3,6 +3,8 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
+const helmet = require('helmet');
+const hpp = require('hpp');
 
 const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
@@ -14,6 +16,8 @@ const solicitudesRoutes = require('./routes/solicitudes');
 const archivosRoutes = require('./routes/archivos');
 const pagosRoutes = require('./routes/pagos');
 const { seedSiVacio } = require('./db/seed');
+const { corsOptions, requestId, originGuard, globalLimiter, loginLimiter, registerLimiter, uploadLimiter, paymentLimiter, webhookLimiter } = require('./security');
+const { sanitizeRequest } = require('./validation');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -25,10 +29,26 @@ for (const variable of ['JWT_SECRET', 'ADMIN_USERNAME', 'ADMIN_PASSWORD']) {
 }
 
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
-const corsOrigin = process.env.CORS_ORIGIN || false;
-app.use(cors({ origin: corsOrigin, credentials: false }));
-app.use(express.json({ limit: '1mb' }));
+app.use(requestId);
+app.use(helmet({
+  // El frontend actual usa scripts y estilos inline. Se mantienen las demás cabeceras
+  // de Helmet y se deja CSP para una fase de migración con nonces.
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  strictTransportSecurity: process.env.NODE_ENV === 'production'
+    ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+    : false
+}));
+app.use(cors(corsOptions()));
+app.use(hpp());
+app.use(express.json({ limit: '512kb', strict: true, type: ['application/json', 'application/*+json'] }));
+app.use(express.urlencoded({ extended: false, limit: '128kb', parameterLimit: 100 }));
+app.use(sanitizeRequest);
+app.use(originGuard);
+app.use('/api', globalLimiter);
 
 // Evita que navegadores/PWA/proxies reutilicen respuestas de sesión o API.
 app.use('/api', (req, res, next) => {
@@ -37,50 +57,12 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-app.get('/api/health', (req, res) => res.json({ ok: true, servicio: 'dr-plants-backend' }));
-
-function crearLimitador({ ventanaMs, maximo, mensaje }) {
-  const intentos = new Map();
-  const limpieza = setInterval(() => {
-    const ahora = Date.now();
-    for (const [clave, dato] of intentos) {
-      if (dato.reinicio <= ahora) intentos.delete(clave);
-    }
-  }, Math.min(ventanaMs, 60 * 1000));
-  limpieza.unref();
-
-  return (req, res, next) => {
-    const ahora = Date.now();
-    const clave = req.ip || req.socket.remoteAddress || 'desconocida';
-    let dato = intentos.get(clave);
-    if (!dato || dato.reinicio <= ahora) {
-      dato = { cantidad: 0, reinicio: ahora + ventanaMs };
-      intentos.set(clave, dato);
-    }
-    dato.cantidad += 1;
-    res.set('RateLimit-Limit', String(maximo));
-    res.set('RateLimit-Remaining', String(Math.max(0, maximo - dato.cantidad)));
-    res.set('RateLimit-Reset', String(Math.ceil(dato.reinicio / 1000)));
-    if (dato.cantidad > maximo) {
-      res.set('Retry-After', String(Math.ceil((dato.reinicio - ahora) / 1000)));
-      return res.status(429).json({ code: 'RATE_LIMITED', error: mensaje });
-    }
-    next();
-  };
-}
-
-const registroLimiter = crearLimitador({
-  ventanaMs: 15 * 60 * 1000,
-  maximo: 5,
-  mensaje: 'Demasiados intentos de registro. Intenta nuevamente en 15 minutos.'
-});
-const uploadsLimiter = crearLimitador({
-  ventanaMs: 15 * 60 * 1000,
-  maximo: 10,
-  mensaje: 'Demasiadas cargas de archivos. Intenta nuevamente en 15 minutos.'
-});
-app.use('/api/auth/register', registroLimiter);
-app.use('/api/archivos/subir', uploadsLimiter);
+app.get('/api/health', (req, res) => res.json({ ok: true, servicio: 'dr-plants-backend', requestId: req.id }));
+app.use('/api/auth/login', loginLimiter);
+app.use('/api/auth/register', registerLimiter);
+app.use('/api/archivos/subir', uploadLimiter);
+app.use('/api/pagos/intencion', paymentLimiter);
+app.use('/api/pagos/wompi/eventos', webhookLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
@@ -103,10 +85,16 @@ app.get(/^(?!\/api\/).*/, (req, res) => {
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    return res.status(400).json({ code: err.code, error: 'La carga del archivo no pudo completarse: ' + err.message });
+    return res.status(400).json({ code: err.code, error: 'La carga del archivo no pudo completarse.', requestId: req.id });
   }
-  console.error(err);
-  return res.status(500).json({ error: 'Error interno del servidor.' });
+  if (err?.message === 'Origen no autorizado por CORS.') {
+    return res.status(403).json({ code: 'CORS_REJECTED', error: err.message, requestId: req.id });
+  }
+  if (err instanceof SyntaxError && 'body' in err) {
+    return res.status(400).json({ code: 'INVALID_JSON', error: 'El cuerpo JSON no es válido.', requestId: req.id });
+  }
+  console.error(`[${req.id || 'sin-id'}]`, err);
+  return res.status(500).json({ error: 'Error interno del servidor.', requestId: req.id });
 });
 
 // Siembra datos de ejemplo solo si la base de datos está vacía — así no hace falta

@@ -378,4 +378,16 @@ router.get('/auditoria-ia', (req, res) => {
   res.json(db.prepare(`SELECT a.*,u.nombre usuario_nombre,u.email usuario_email FROM auditoria_ia a JOIN usuarios u ON u.id=a.usuario_id ${where} ORDER BY a.creado_en DESC LIMIT 200`).all(...params));
 });
 
+
+// Auditoría de seguridad: solo administradores, con paginación limitada.
+router.get('/auditoria-seguridad', (req, res) => {
+  const limite = Math.min(Math.max(Number(req.query.limite) || 100, 1), 500);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
+  const rows = db.prepare(`SELECT a.id,a.accion,a.resultado,a.entidad_tipo,a.entidad_id,a.ip,
+    a.user_agent,a.request_id,a.metadata_json,a.creado_en,u.nombre AS usuario_nombre,u.email AS usuario_email
+    FROM auditoria_seguridad a LEFT JOIN usuarios u ON u.id=a.usuario_id
+    ORDER BY a.creado_en DESC LIMIT ? OFFSET ?`).all(limite, offset);
+  res.json(rows);
+});
+
 module.exports = router;

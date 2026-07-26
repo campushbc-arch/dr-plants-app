@@ -3,8 +3,13 @@ const crypto = require('crypto');
 const db = require('./db');
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_ISSUER = 'dr-plants';
+const JWT_AUDIENCE = 'dr-plants-web';
 if (!JWT_SECRET) {
   throw new Error('Falta JWT_SECRET en el .env — genera uno con: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
+}
+if (process.env.NODE_ENV === 'production' && JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET debe tener al menos 32 caracteres en producción.');
 }
 
 function nuevoId(prefijo) {
@@ -15,7 +20,7 @@ function firmarToken(usuario) {
   return jwt.sign(
     { id: usuario.id, rol: usuario.rol },
     JWT_SECRET,
-    { expiresIn: '30d' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '12h', issuer: JWT_ISSUER, audience: JWT_AUDIENCE }
   );
 }
 
@@ -25,7 +30,7 @@ function requiereAuth(req, res, next) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'No autenticado. Falta el token.' });
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET, { issuer: JWT_ISSUER, audience: JWT_AUDIENCE, algorithms: ['HS256'] });
     const usuarioActual = db.prepare('SELECT id, rol, activo FROM usuarios WHERE id = ?').get(payload.id);
     if (!usuarioActual) {
       return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'La cuenta ya no existe.' });
