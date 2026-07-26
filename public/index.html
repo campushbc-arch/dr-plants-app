@@ -154,7 +154,7 @@
 .cin input{flex:1;border:0.5px solid var(--color-border-tertiary);border-radius:20px;padding:8px 12px;font-size:12px;font-family:inherit;color:var(--color-text-primary);background:var(--color-background-secondary);outline:none}
 .cin input:focus{border-color:#388e3c}
 .cin input:disabled{opacity:0.6}
-.csend{width:34px;height:34px;background:#1b5e20;border:none;border-radius:50%;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.csend{width:34px;height:34px;background:#1b5e20;border:none;border-radius:50%;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;z-index:2;pointer-events:auto}
 .csend:disabled{opacity:0.6;cursor:default}
 .csend i{font-size:15px}
 .typing-dots i{font-style:normal;animation:blink 1.2s infinite}
@@ -474,10 +474,10 @@
     <div class="chip" onclick="chipMsg('¿Qué fertilización recomiendas para esta etapa del cultivo?')">Fertilización</div>
   </div>
   <div style="padding:0 14px 6px"><label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#1b5e20;cursor:pointer"><i class="ti ti-paperclip"></i> Adjuntar análisis de suelo u otro PDF<input id="dr-agro-pdf" type="file" accept="application/pdf" style="display:none" onchange="subirPdfDrAgro(this.files[0])"></label><span id="dr-agro-pdf-nombre" style="font-size:10px;color:var(--color-text-secondary);margin-left:8px"></span></div>
-  <div class="cin">
-    <input id="cin" placeholder="Escribe tu consulta..." onkeydown="if(event.key==='Enter')sendMsg()">
-    <button class="csend" id="csendbtn" onclick="sendMsg()" aria-label="Enviar"><i class="ti ti-send"></i></button>
-  </div>
+  <form class="cin" id="dr-agro-form" novalidate>
+    <input id="cin" name="consulta" placeholder="Escribe tu consulta..." autocomplete="off">
+    <button class="csend" id="csendbtn" type="submit" aria-label="Enviar pregunta"><i class="ti ti-send"></i></button>
+  </form>
 
   <div style="padding:18px 14px 24px">
     <div class="sec-lbl" style="margin-bottom:8px">¿Necesitas hablar con un agrónomo de verdad?</div>
@@ -3870,10 +3870,11 @@ async function enviarMensajeIA(cfg){
       throw new Error(detalle);
     }
     const data=await response.json();
-    const blocks=data.content||[];
-    const reply=blocks.filter(b=>b.type==='text').map(b=>b.text).join('\n\n').trim()
+    const blocks=Array.isArray(data.content)?data.content:[];
+    const reply=(typeof data.reply==='string'?data.reply:'').trim()
+      || blocks.filter(b=>b&&b.type==='text'&&typeof b.text==='string').map(b=>b.text).join('\n\n').trim()
       || "No pude generar una respuesta en este momento. Intenta de nuevo.";
-    const usoBusqueda=blocks.some(b=>b.type==='server_tool_use'||b.type==='web_search_tool_result');
+    const usoBusqueda=false;
     cfg.history.push({role:'assistant',content:reply});
     typingBubble(false,cfg.chatId);
     const badge=usoBusqueda?'<div style="font-size:9px;color:#8ed1ff;margin-top:5px"><i class="ti ti-search" aria-hidden="true"></i> Consultó fuentes actualizadas en la web</div>':'';
@@ -3895,8 +3896,9 @@ async function enviarMensajeIA(cfg){
 }
 
 function sendMsg(){
-  enviarMensajeIA({inputId:'cin',btnId:'csendbtn',chatId:'chat',history:drAgroHistory,system:DR_AGRO_SYSTEM+'\n\n'+loteContextoTexto(),label:'Dr. Agro IA'});
+  return enviarMensajeIA({inputId:'cin',btnId:'csendbtn',chatId:'chat',history:drAgroHistory,system:DR_AGRO_SYSTEM+'\n\n'+loteContextoTexto(),label:'Dr. Agro IA'});
 }
+window.sendMsg=sendMsg;
 
 function sendMsgSoporte(){
   enviarMensajeIA({inputId:'scin',btnId:'scsendbtn',chatId:'schat',history:soporteHistory,system:SOPORTE_SYSTEM+'\n\n'+loteContextoTexto(),label:'Soporte Técnico'});
@@ -4043,7 +4045,39 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-document.addEventListener('DOMContentLoaded',async()=>{poblarCatalogoCultivos();cargarDepartamentos();await cargarEstado();});
+document.addEventListener('DOMContentLoaded',async()=>{
+  poblarCatalogoCultivos();
+  cargarDepartamentos();
+  await cargarEstado();
+
+  const drAgroForm=document.getElementById('dr-agro-form');
+  const drAgroInput=document.getElementById('cin');
+  const drAgroBtn=document.getElementById('csendbtn');
+  if(drAgroForm){
+    drAgroForm.addEventListener('submit',async event=>{
+      event.preventDefault();
+      event.stopPropagation();
+      if(drAgroBtn?.disabled)return;
+      try{
+        await window.sendMsg();
+      }catch(error){
+        console.error('Error al enviar pregunta a Dr. Agro:',error);
+        const chat=document.getElementById('chat');
+        if(chat){
+          chat.innerHTML+='<div class="mb"><div class="mb-lbl">Dr. Agro IA</div>No pude procesar el botón de envío. Recarga la aplicación e inténtalo nuevamente.</div>';
+          chat.scrollTop=chat.scrollHeight;
+        }
+      }
+    });
+  }
+  // Respaldo para navegadores/PWA que no disparen correctamente submit con Enter.
+  drAgroInput?.addEventListener('keydown',event=>{
+    if(event.key==='Enter'&&!event.shiftKey){
+      event.preventDefault();
+      drAgroForm?.requestSubmit();
+    }
+  });
+});
 </script>
 </body>
 </html>

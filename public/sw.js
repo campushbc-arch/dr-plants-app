@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-shell-v5-3-rate-limit-fix';
+const CACHE_NAME = 'dr-plants-shell-v6-ai-stable';
 const APP_SHELL = [
   '/',
   '/manifest.json',
