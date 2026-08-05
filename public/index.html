@@ -974,9 +974,21 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   </div>
   <div class="phdr-card">
     <div class="phdr-t">Capacítate a tu ritmo</div>
-    <div class="phdr-s">Lecciones cortas, prácticas y pensadas para el campo — con preguntas al final para verificar lo aprendido.</div>
+    <div class="phdr-s">Lecciones prácticas y nuevos programas profesionales para fortalecer la gestión técnica y comercial del sector agrícola.</div>
   </div>
   <div id="formacion-list" style="padding:0 14px;display:flex;flex-direction:column;gap:16px"></div>
+  <div style="padding:22px 14px 8px"><div class="sec-lbl" style="padding:0">Otros cursos</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px">Programas especializados con matrícula y acceso administrado.</div></div>
+  <div id="otros-cursos-list" style="padding:0 14px 28px;display:flex;flex-direction:column;gap:12px"></div>
+</div>
+
+<div id="s-curso-detalle" class="screen">
+  <div class="pg-hdr"><button class="back" onclick="go('formacion','')"><i class="ti ti-arrow-left"></i> Formación</button><span class="pg-title">Detalle del curso</span></div>
+  <div id="curso-detalle-contenido" style="padding:0 14px 28px"></div>
+</div>
+
+<div id="s-curso-contenido" class="screen">
+  <div class="pg-hdr"><button class="back" onclick="abrirCursoDetalle(CURSO_ACTUAL_ID)"><i class="ti ti-arrow-left"></i> Curso</button><span class="pg-title">Contenido del curso</span></div>
+  <div id="curso-contenido-wrap" style="padding:0 14px 28px"></div>
 </div>
 
 <div id="s-leccion" class="screen">
@@ -1087,6 +1099,12 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="phdr-s">Verifica la tarjeta profesional antes de aprobar el acceso a fincas de productores.</div>
   </div>
   <div id="admin-solicitudes-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
+
+  <div class="phdr-card" style="margin-top:12px">
+    <div class="phdr-t">Matrículas de cursos</div>
+    <div class="phdr-s">Revisa pagos aprobados y activa el acceso de los estudiantes al contenido.</div>
+  </div>
+  <div id="admin-matriculas-cursos-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div style="padding:20px 14px 0">
     <div class="sec-lbl" style="padding:0">Pedidos de AgroTienda</div>
@@ -2387,13 +2405,13 @@ async function go(sid,nid){
   const ni=document.getElementById('ni-'+nid);
   if(ni)ni.classList.add('on');
   const bnav=document.getElementById('bnav');
-  bnav.style.display=(sid==='reg'||sid==='carrito'||sid==='pedido-confirmado'||sid==='notif'||sid==='perfil'||sid==='pedidos'||sid==='panel-agronomo'||sid==='panel-admin'||sid==='agronomo-pendiente'||sid==='splash')?'none':'flex';
+  bnav.style.display=(sid==='reg'||sid==='carrito'||sid==='pedido-confirmado'||sid==='notif'||sid==='perfil'||sid==='pedidos'||sid==='panel-agronomo'||sid==='panel-admin'||sid==='agronomo-pendiente'||sid==='splash'||sid==='curso-detalle'||sid==='curso-contenido')?'none':'flex';
   if(sid==='reg')renderRegMode();
   if(sid==='carrito')renderCart();
   if(sid==='cultivo')renderLotesList();
   if(sid==='precios')renderMarketList();
   if(sid==='rec-puntos')renderRecPoints();
-  if(sid==='formacion')renderFormacionList();
+  if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
   if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
@@ -2892,6 +2910,61 @@ const UNITS=[
   }
 ];
 
+
+
+let CURSO_ACTUAL_ID='curso-master-ventas-agro';
+let CURSOS_CACHE=[];
+function estadoMatriculaTexto(estado){return ({pendiente_pago:'Pago pendiente',pago_aprobado:'Pago aprobado · pendiente de activación',activa:'Acceso activo',rechazada:'Matrícula rechazada',cancelada:'Matrícula cancelada'})[estado]||'Disponible';}
+async function renderOtrosCursos(){
+  const wrap=document.getElementById('otros-cursos-list');if(!wrap)return;
+  wrap.innerHTML='<div class="unit-card"><div style="padding:14px;color:var(--color-text-secondary);font-size:11px">Cargando cursos…</div></div>';
+  try{
+    CURSOS_CACHE=await apiFetch('/api/cursos');
+    if(!CURSOS_CACHE.length){wrap.innerHTML='<div class="unit-card"><div class="unit-empty">Próximamente encontrarás nuevos programas.</div></div>';return;}
+    wrap.innerHTML=CURSOS_CACHE.map(c=>`<article class="unit-card" style="overflow:hidden;cursor:pointer" onclick="abrirCursoDetalle('${c.id}')">
+      <div style="padding:16px;background:linear-gradient(135deg,#0f5f38,#1d8b50);color:white;display:flex;gap:13px;align-items:flex-start">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-chart-arrows-vertical" style="font-size:25px"></i></div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:700;line-height:1.25">${escapeHtml(c.nombre)}</div><div style="font-size:11px;opacity:.86;margin-top:5px">Programa profesional · Campus HBC</div></div>
+      </div>
+      <div style="padding:14px"><div style="font-size:12px;line-height:1.55;color:var(--color-text-secondary)">${escapeHtml(c.descripcion)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:13px"><div style="font-size:15px;font-weight:700;color:#1b5e20">${fmtCOP(c.precio_cop)}</div><span class="viz-badge" style="font-size:10px">${escapeHtml(estadoMatriculaTexto(c.matricula_estado))}</span></div></div>
+    </article>`).join('');
+  }catch(e){wrap.innerHTML=`<div class="unit-card"><div class="unit-empty">${escapeHtml(e.message||'No se pudieron cargar los cursos.')}</div></div>`;}
+}
+async function abrirCursoDetalle(id){
+  CURSO_ACTUAL_ID=id;go('curso-detalle','');
+  const wrap=document.getElementById('curso-detalle-contenido');wrap.innerHTML='<div style="padding:24px;text-align:center">Cargando temario…</div>';
+  try{
+    const c=await apiFetch('/api/cursos/'+encodeURIComponent(id));
+    const estado=c.matricula?.estado||null;
+    const modulos=(c.modulos||[]).map((m,idx)=>`<div class="unit-card" style="margin-bottom:10px"><div class="unit-hdr">Módulo ${idx+1}. ${escapeHtml(m.titulo)}</div><div style="padding:10px 14px 2px;font-size:11px;color:var(--color-text-secondary)">${escapeHtml(m.descripcion||'')}</div>${(m.lecciones||[]).map(l=>`<div class="lesson-row" style="cursor:default"><div class="lesson-ico"><i class="ti ti-player-play"></i></div><div><div class="lesson-name">${escapeHtml(l.titulo)}</div><div class="lesson-meta">${escapeHtml(l.descripcion||'')} · ${l.duracion_min} min</div></div></div>`).join('')}</div>`).join('');
+    let accion='';
+    if(estado==='activa') accion=`<button class="cta-btn" onclick="abrirContenidoCurso('${c.id}')"><i class="ti ti-player-play"></i> Entrar al curso</button>`;
+    else if(estado==='pago_aprobado') accion='<div class="viz-callout" style="margin:14px 0">Tu pago fue aprobado. El administrador debe activar tu acceso; recibirás una notificación cuando esté listo.</div>';
+    else if(estado==='pendiente_pago') accion=`<button class="cta-btn gold" onclick="pagarMatriculaCurso('${c.id}','${c.matricula.id}')"><i class="ti ti-credit-card"></i> Continuar pago con Wompi · ${fmtCOP(c.precio_cop)}</button>`;
+    else accion=`<button class="cta-btn gold" onclick="confirmarMatriculaCurso('${c.id}')"><i class="ti ti-school"></i> Matricularse · ${fmtCOP(c.precio_cop)}</button>`;
+    wrap.innerHTML=`<div class="phdr-card" style="margin:0 0 14px;background:linear-gradient(135deg,#0c5b34,#168b4e);color:#fff"><div class="phdr-t" style="font-size:18px;color:#fff">${escapeHtml(c.nombre)}</div><div class="phdr-s" style="color:rgba(255,255,255,.86);font-size:12px;line-height:1.55">${escapeHtml(c.descripcion)}</div><div style="font-size:20px;font-weight:700;margin-top:12px">${fmtCOP(c.precio_cop)}</div></div>
+      ${accion}<div class="sec-lbl" style="padding:14px 0 8px">Temario completo</div>${modulos}`;
+  }catch(e){wrap.innerHTML=`<div class="unit-card"><div class="unit-empty">${escapeHtml(e.message)}</div></div>`;}
+}
+async function confirmarMatriculaCurso(cursoId){
+  if(!SESION.autenticado){openReg();return;}
+  const datos=`Nombre: ${SESION.nombre||''}\nCorreo: ${SESION.email||''}\nTeléfono: ${SESION.telefono||''}\nPaís: ${SESION.pais||''}\nRegión: ${SESION.region||''}`;
+  if(!confirm(`Confirma tus datos para la matrícula:\n\n${datos}\n\nEl valor a pagar es $320.000 COP.`))return;
+  try{const m=await apiFetch('/api/cursos/'+encodeURIComponent(cursoId)+'/matricula',{method:'POST',body:'{}'});await pagarMatriculaCurso(cursoId,m.id);}catch(e){alert(e.message||'No se pudo crear la matrícula.');}
+}
+async function pagarMatriculaCurso(cursoId,matriculaId){
+  try{await iniciarPagoWompi('curso',{matriculaId});}catch(e){alert(e.message||'No se pudo iniciar el pago.');}
+}
+async function abrirContenidoCurso(cursoId){
+  CURSO_ACTUAL_ID=cursoId;go('curso-contenido','');const wrap=document.getElementById('curso-contenido-wrap');wrap.innerHTML='<div style="padding:24px;text-align:center">Cargando contenido…</div>';
+  try{const c=await apiFetch('/api/cursos/'+encodeURIComponent(cursoId)+'/contenido');wrap.innerHTML=`<div class="phdr-card"><div class="phdr-t">${escapeHtml(c.nombre)}</div><div class="phdr-s">Tu acceso está activo. Avanza por las lecciones en el orden recomendado.</div></div>`+(c.modulos||[]).map((m,i)=>`<div class="unit-card" style="margin-bottom:12px"><div class="unit-hdr">Módulo ${i+1}. ${escapeHtml(m.titulo)}</div>${(m.lecciones||[]).map(l=>`<div class="lesson-row"><div class="lesson-ico"><i class="ti ti-player-play"></i></div><div style="flex:1"><div class="lesson-name">${escapeHtml(l.titulo)}</div><div class="lesson-meta">${escapeHtml(l.descripcion||'')} · ${l.duracion_min} min</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:5px">${escapeHtml(l.contenido||'Contenido en preparación.')}</div></div></div>`).join('')}</div>`).join('');}catch(e){wrap.innerHTML=`<div class="viz-callout">${escapeHtml(e.message)}</div>`;}
+}
+async function renderAdminMatriculasCursos(){
+  const wrap=document.getElementById('admin-matriculas-cursos-list');if(!wrap)return;
+  try{const filas=await apiFetch('/api/admin/matriculas-cursos');if(!filas.length){wrap.innerHTML='<div class="unit-empty">No hay matrículas todavía.</div>';return;}wrap.innerHTML=filas.map(m=>`<div class="lab-card" style="align-items:flex-start"><div class="lab-ico"><i class="ti ti-school"></i></div><div style="flex:1"><div class="lab-name">${escapeHtml(m.usuario_nombre)} · ${escapeHtml(m.curso_nombre)}</div><div class="lab-desc">${escapeHtml(m.usuario_email)} · ${escapeHtml(m.usuario_telefono||'Sin teléfono')}</div><div class="lab-desc"><b>Matrícula:</b> ${escapeHtml(estadoMatriculaTexto(m.estado))} · <b>Pago:</b> ${escapeHtml(m.pago_estado||'Sin pago')} ${m.pago_referencia?'· '+escapeHtml(m.pago_referencia):''}</div><div class="lab-desc">Valor: ${fmtCOP(m.precio_cop)} · Solicitud: ${escapeHtml(m.creado_en||'')}</div>${m.estado==='pago_aprobado'&&m.pago_estado==='APPROVED'?`<button class="mini-btn" style="margin-top:8px;background:#1b5e20;color:white" onclick="activarMatriculaCursoAdmin('${m.id}')">Activar acceso</button>`:''}</div></div>`).join('');}catch(e){wrap.innerHTML=`<div class="unit-empty">${escapeHtml(e.message)}</div>`;}
+}
+async function activarMatriculaCursoAdmin(id){if(!confirm('¿Activar el acceso de este estudiante al curso?'))return;try{await apiFetch('/api/admin/matriculas-cursos/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify({accion:'activar'})});alert('Acceso activado y usuario notificado.');renderAdminMatriculasCursos();renderAdminNotificaciones();}catch(e){alert(e.message);}}
 
 let lecActual=null,lecIdx=0,lecRespuestas={};
 
@@ -3413,7 +3486,7 @@ async function renderAdminSolicitudes(){
         </div>
       </div>`).join('');
   }catch(e){mensajeSinBackend('admin-solicitudes-list','No se pudieron cargar las solicitudes: '+e.message);}
-  renderAdminDashboard();renderAdminNotificaciones();renderAdminSolicitudesCircular();renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminConversacionesLab();renderAdminPagos();renderAdminSolTele();renderAdminAuditoriaIA();
+  renderAdminDashboard();renderAdminNotificaciones();renderAdminSolicitudesCircular();renderAdminMatriculasCursos();renderAdminProductos();renderAdminPedidos();renderAdminSolLab();renderAdminConversacionesLab();renderAdminPagos();renderAdminSolTele();renderAdminAuditoriaIA();
 }
 
 function mensajeSinBackend(id,texto){

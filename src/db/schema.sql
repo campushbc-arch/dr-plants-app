@@ -206,7 +206,7 @@ CREATE INDEX IF NOT EXISTS idx_obs_lote ON observaciones_agronomicas(lote_id, cr
 CREATE TABLE IF NOT EXISTS pagos (
   id TEXT PRIMARY KEY,
   usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-  tipo TEXT NOT NULL CHECK(tipo IN ('productos','consulta_personalizada','analisis_laboratorio')),
+  tipo TEXT NOT NULL CHECK(tipo IN ('productos','consulta_personalizada','analisis_laboratorio','curso')),
   entidad_id TEXT NOT NULL,
   referencia TEXT NOT NULL UNIQUE,
   descripcion TEXT,
@@ -371,3 +371,42 @@ CREATE TABLE IF NOT EXISTS solicitudes_recoleccion_circular (
   actualizada_en TEXT DEFAULT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_solicitudes_recoleccion_estado ON solicitudes_recoleccion_circular(estado,creada_en);
+
+CREATE TABLE IF NOT EXISTS cursos (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  descripcion TEXT NOT NULL,
+  precio_cop INTEGER NOT NULL,
+  portada TEXT DEFAULT NULL,
+  publicado INTEGER NOT NULL DEFAULT 1 CHECK(publicado IN (0,1)),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS curso_modulos (
+  id TEXT PRIMARY KEY,
+  curso_id TEXT NOT NULL REFERENCES cursos(id) ON DELETE CASCADE,
+  titulo TEXT NOT NULL,
+  descripcion TEXT,
+  orden INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE IF NOT EXISTS curso_lecciones (
+  id TEXT PRIMARY KEY,
+  modulo_id TEXT NOT NULL REFERENCES curso_modulos(id) ON DELETE CASCADE,
+  titulo TEXT NOT NULL,
+  descripcion TEXT,
+  duracion_min INTEGER NOT NULL DEFAULT 20,
+  contenido TEXT,
+  orden INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE IF NOT EXISTS matriculas_curso (
+  id TEXT PRIMARY KEY,
+  curso_id TEXT NOT NULL REFERENCES cursos(id) ON DELETE CASCADE,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  estado TEXT NOT NULL DEFAULT 'pendiente_pago' CHECK(estado IN ('pendiente_pago','pago_aprobado','activa','rechazada','cancelada')),
+  pago_id TEXT DEFAULT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  pagado_en TEXT DEFAULT NULL,
+  activado_en TEXT DEFAULT NULL,
+  activado_por TEXT DEFAULT NULL REFERENCES usuarios(id),
+  UNIQUE(curso_id,usuario_id)
+);
+CREATE INDEX IF NOT EXISTS idx_matriculas_usuario ON matriculas_curso(usuario_id,creado_en);

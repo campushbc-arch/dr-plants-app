@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v7-futurista';
+const CACHE_NAME = 'dr-plants-v7-1-master-ventas';
 const APP_SHELL = [
   '/',
   '/manifest.json',

@@ -41,10 +41,11 @@ router.get('/configuracion', requiereAuth, (_req, res) => {
 router.post('/intencion', requiereAuth, (req, res) => {
   const usuario = db.prepare('SELECT id,nombre,email,telefono FROM usuarios WHERE id=?').get(req.usuario.id);
   if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado.' });
-  const tipo = enumValue(req.body?.tipo, ['productos', 'consulta_personalizada', 'analisis_laboratorio']);
+  const tipo = enumValue(req.body?.tipo, ['productos', 'consulta_personalizada', 'analisis_laboratorio', 'curso']);
   const pedidoId = validarId(req.body?.pedidoId);
   const solicitudId = validarId(req.body?.solicitudId);
-  const permitidos = ['productos', 'consulta_personalizada', 'analisis_laboratorio'];
+  const matriculaId = validarId(req.body?.matriculaId);
+  const permitidos = ['productos', 'consulta_personalizada', 'analisis_laboratorio', 'curso'];
   if (!tipo || !permitidos.includes(tipo)) return res.status(400).json({ error: 'Tipo de cobro inválido.' });
 
   const { publicKey, integritySecret, appUrl } = cfg();
@@ -68,6 +69,12 @@ router.post('/intencion', requiereAuth, (req, res) => {
     montoCop = precioServicio(tipo);
     descripcion = `Análisis de laboratorio: ${solicitud.tipo_analisis}`;
     entidadId = solicitud.id;
+  } else if (tipo === 'curso') {
+    const matricula = db.prepare(`SELECT m.*,c.nombre,c.precio_cop FROM matriculas_curso m JOIN cursos c ON c.id=m.curso_id WHERE m.id=? AND m.usuario_id=?`).get(matriculaId, req.usuario.id);
+    if (!matricula) return res.status(404).json({ error: 'Matrícula no encontrada.' });
+    montoCop = Number(matricula.precio_cop);
+    descripcion = `Matrícula: ${matricula.nombre}`;
+    entidadId = matricula.id;
   } else {
     const solicitud = db.prepare('SELECT * FROM solicitudes_teleconsulta WHERE id=? AND usuario_id=?').get(solicitudId, req.usuario.id);
     if (!solicitud) return res.status(404).json({ error: 'Solicitud de consulta no encontrada.' });
@@ -94,6 +101,7 @@ router.post('/intencion', requiereAuth, (req, res) => {
   if (tipo === 'productos') db.prepare("UPDATE pedidos SET estado='pendiente_pago', pago_id=? WHERE id=?").run(id, entidadId);
   if (tipo === 'analisis_laboratorio') db.prepare('UPDATE solicitudes_laboratorio SET pago_id=? WHERE id=?').run(id, entidadId);
   if (tipo === 'consulta_personalizada') db.prepare('UPDATE solicitudes_teleconsulta SET pago_id=? WHERE id=?').run(id, entidadId);
+  if (tipo === 'curso') db.prepare('UPDATE matriculas_curso SET pago_id=? WHERE id=?').run(id, entidadId);
 
   const params = new URLSearchParams({
     'public-key': publicKey,
@@ -153,6 +161,11 @@ router.post('/wompi/eventos', (req, res) => {
         if (pago.tipo === 'productos') db.prepare("UPDATE pedidos SET estado='pagado' WHERE id=?").run(pago.entidad_id);
         if (pago.tipo === 'analisis_laboratorio') db.prepare("UPDATE solicitudes_laboratorio SET estado='en_proceso' WHERE id=?").run(pago.entidad_id);
         if (pago.tipo === 'consulta_personalizada') db.prepare("UPDATE solicitudes_teleconsulta SET estado='pendiente' WHERE id=?").run(pago.entidad_id);
+        if (pago.tipo === 'curso') {
+          db.prepare("UPDATE matriculas_curso SET estado='pago_aprobado', pagado_en=datetime('now') WHERE id=?").run(pago.entidad_id);
+          const mat = db.prepare(`SELECT m.id,m.usuario_id,c.nombre FROM matriculas_curso m JOIN cursos c ON c.id=m.curso_id WHERE m.id=?`).get(pago.entidad_id);
+          if (mat) crearNotificacionAdmin({ tipo:'matricula_pagada', titulo:'Matrícula pagada pendiente de activación', mensaje:`${mat.nombre}: el pago fue aprobado y el acceso del estudiante está pendiente de activación.`, usuarioId:mat.usuario_id, entidadTipo:'matricula_curso', entidadId:mat.id, prioridad:'alta' });
+        }
         crearNotificacionAdmin({ tipo:'pago_aprobado', titulo:'Pago aprobado', mensaje:`Pago aprobado por $${Number(pago.monto_cop).toLocaleString('es-CO')} COP: ${pago.descripcion || pago.tipo}.`, usuarioId:pago.usuario_id, entidadTipo:'pago', entidadId:pago.id, prioridad:'alta' });
       } else if (['DECLINED','ERROR','VOIDED'].includes(estado)) {
         crearNotificacionAdmin({ tipo:'pago_no_aprobado', titulo:'Pago no aprobado', mensaje:`La transacción ${pago.referencia} quedó en estado ${estado}.`, usuarioId:pago.usuario_id, entidadTipo:'pago', entidadId:pago.id, prioridad:'normal' });

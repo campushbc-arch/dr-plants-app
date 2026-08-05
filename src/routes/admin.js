@@ -460,4 +460,24 @@ router.patch('/circular/solicitudes/:id', (req, res) => {
   res.json(db.prepare(`SELECT s.*,u.nombre usuario_nombre,u.email usuario_email,u.telefono usuario_telefono FROM solicitudes_recoleccion_circular s JOIN usuarios u ON u.id=s.usuario_id WHERE s.id=?`).get(actual.id));
 });
 
+
+// --- Matrículas de cursos ---
+router.get('/matriculas-cursos', (req,res)=>{
+  res.json(db.prepare(`SELECT m.*,c.nombre AS curso_nombre,c.precio_cop,u.nombre AS usuario_nombre,u.email AS usuario_email,u.telefono AS usuario_telefono,p.estado AS pago_estado,p.referencia AS pago_referencia,p.monto_cop AS pago_monto
+    FROM matriculas_curso m JOIN cursos c ON c.id=m.curso_id JOIN usuarios u ON u.id=m.usuario_id
+    LEFT JOIN pagos p ON p.id=m.pago_id ORDER BY m.creado_en DESC`).all());
+});
+
+router.patch('/matriculas-cursos/:id', (req,res)=>{
+  const accion=String(req.body?.accion||'');
+  if(!['activar','rechazar','cancelar'].includes(accion)) return res.status(400).json({error:'Acción inválida.'});
+  const m=db.prepare(`SELECT m.*,c.nombre AS curso_nombre,p.estado AS pago_estado FROM matriculas_curso m JOIN cursos c ON c.id=m.curso_id LEFT JOIN pagos p ON p.id=m.pago_id WHERE m.id=?`).get(req.params.id);
+  if(!m) return res.status(404).json({error:'Matrícula no encontrada.'});
+  if(accion==='activar' && m.pago_estado!=='APPROVED') return res.status(400).json({error:'No se puede activar: el pago todavía no está aprobado.'});
+  const estado=accion==='activar'?'activa':accion==='rechazar'?'rechazada':'cancelada';
+  db.prepare(`UPDATE matriculas_curso SET estado=?,activado_en=CASE WHEN ?='activa' THEN datetime('now') ELSE activado_en END,activado_por=CASE WHEN ?='activa' THEN ? ELSE activado_por END WHERE id=?`).run(estado,estado,estado,req.usuario.id,m.id);
+  crearNotificacionUsuario({usuarioId:m.usuario_id,tipo:'matricula_curso',titulo:estado==='activa'?'Acceso al curso activado':'Estado de matrícula actualizado',mensaje:estado==='activa'?`Tu acceso a ${m.curso_nombre} fue activado. Ya puedes ingresar al contenido.`:`Tu matrícula en ${m.curso_nombre} quedó en estado ${estado}.`,entidadTipo:'matricula_curso',entidadId:m.id,urlDestino:'formacion',prioridad:'alta'});
+  res.json(db.prepare('SELECT * FROM matriculas_curso WHERE id=?').get(m.id));
+});
+
 module.exports = router;
