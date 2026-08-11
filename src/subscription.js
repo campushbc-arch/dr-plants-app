@@ -1,4 +1,5 @@
 const db = require('./db');
+const { esSuperAdmin, esEjecutivoComercial } = require('./enterprise');
 
 const PLANES = [
   { id:'starter', nombre:'Starter', minHa:1, maxHa:50, mensual:50000, anual:420000 },
@@ -25,6 +26,9 @@ function accesoTemporalActivo(usuarioId){
   return db.prepare(`SELECT * FROM accesos_temporales_cultivo WHERE usuario_id=? AND revocado_en IS NULL AND datetime(vence_en)>datetime('now') ORDER BY vence_en DESC LIMIT 1`).get(usuarioId) || null;
 }
 function estadoAcceso(usuarioId, rol){
+  const usuario={id:usuarioId,rol};
+  if(esSuperAdmin(usuario)) return {permitido:true,estado:'super_admin',hectareas:hectareasUsuario(usuarioId,rol),sinLimites:true};
+  if(esEjecutivoComercial(usuario)) return {permitido:true,estado:'ejecutivo_comercial',hectareas:hectareasUsuario(usuarioId,rol),sinLimites:true,demo:true};
   if(rol==='admin') return {permitido:true,estado:'admin',hectareas:0};
   const ha=hectareasUsuario(usuarioId,rol);
   const accesoTemporal=accesoTemporalActivo(usuarioId);

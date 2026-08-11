@@ -2,6 +2,9 @@ const express = require('express');
 const db = require('../db');
 const { nuevoId, requiereAuth, requiereRol } = require('../auth');
 const { crearNotificacionUsuario } = require('../notificaciones');
+const { firmarToken } = require('../auth');
+const { rolEmpresarial, esSuperAdmin } = require('../enterprise');
+const { audit } = require('../audit');
 
 const router = express.Router();
 router.use(requiereAuth, requiereRol('admin'));
@@ -52,7 +55,8 @@ router.get('/usuarios', (req, res) => {
               ORDER BY datetime(a.vence_en) DESC LIMIT 1) AS acceso_temp_vence,
            (SELECT a.tipo FROM accesos_temporales_cultivo a
               WHERE a.usuario_id=usuarios.id AND a.revocado_en IS NULL AND datetime(a.vence_en)>datetime('now')
-              ORDER BY datetime(a.vence_en) DESC LIMIT 1) AS acceso_temp_tipo
+              ORDER BY datetime(a.vence_en) DESC LIMIT 1) AS acceso_temp_tipo,
+           (SELECT p.rol FROM permisos_empresariales p WHERE p.usuario_id=usuarios.id AND p.activo=1) AS rol_empresarial
     FROM usuarios
     WHERE ${condiciones.join(' AND ')}
     ORDER BY activo ASC, creado_en DESC
@@ -485,6 +489,36 @@ router.patch('/matriculas-cursos/:id', (req,res)=>{
   db.prepare(`UPDATE matriculas_curso SET estado=?,activado_en=CASE WHEN ?='activa' THEN datetime('now') ELSE activado_en END,activado_por=CASE WHEN ?='activa' THEN ? ELSE activado_por END WHERE id=?`).run(estado,estado,estado,req.usuario.id,m.id);
   crearNotificacionUsuario({usuarioId:m.usuario_id,tipo:'matricula_curso',titulo:estado==='activa'?'Acceso al curso activado':'Estado de matrícula actualizado',mensaje:estado==='activa'?`Tu acceso a ${m.curso_nombre} fue activado. Ya puedes ingresar al contenido.`:`Tu matrícula en ${m.curso_nombre} quedó en estado ${estado}.`,entidadTipo:'matricula_curso',entidadId:m.id,urlDestino:'formacion',prioridad:'alta'});
   res.json(db.prepare('SELECT * FROM matriculas_curso WHERE id=?').get(m.id));
+});
+
+
+// --- V8C.5 · Roles empresariales, impersonación y control de demostraciones ---
+router.get('/empresa/estado', (req,res)=>{
+  res.json({ rolEmpresarial: rolEmpresarial(req.usuario.id) || (req.usuario.rol==='admin'?'super_admin':null), superAdmin: esSuperAdmin(req.usuario) });
+});
+router.patch('/usuarios/:id/rol-empresarial', (req,res)=>{
+  if(!esSuperAdmin(req.usuario)) return res.status(403).json({error:'Solo el Super Administrador puede asignar roles empresariales.'});
+  const destino=db.prepare('SELECT id,nombre,email,rol FROM usuarios WHERE id=?').get(req.params.id);
+  if(!destino) return res.status(404).json({error:'Usuario no encontrado.'});
+  const rol=String(req.body?.rol||'ninguno');
+  if(rol==='ninguno') db.prepare('DELETE FROM permisos_empresariales WHERE usuario_id=?').run(destino.id);
+  else {
+    if(!['admin_operativo','ejecutivo_comercial'].includes(rol)) return res.status(400).json({error:'Rol empresarial inválido.'});
+    db.prepare(`INSERT INTO permisos_empresariales(usuario_id,rol,activo,asignado_por,actualizado_en) VALUES(?,?,1,?,datetime('now'))
+      ON CONFLICT(usuario_id) DO UPDATE SET rol=excluded.rol,activo=1,asignado_por=excluded.asignado_por,actualizado_en=datetime('now')`).run(destino.id,rol,req.usuario.id);
+  }
+  if(rol==='ejecutivo_comercial') db.prepare(`INSERT INTO modo_demo_usuario(usuario_id,activo,actualizado_en) VALUES(?,1,datetime('now')) ON CONFLICT(usuario_id) DO UPDATE SET activo=1,actualizado_en=datetime('now')`).run(destino.id);
+  audit({req,action:'asignar_rol_empresarial',entityType:'usuario',entityId:destino.id,metadata:{rol}});
+  res.json({ok:true,usuarioId:destino.id,rolEmpresarial:rol==='ninguno'?null:rol});
+});
+router.post('/impersonar/:id', (req,res)=>{
+  if(!esSuperAdmin(req.usuario)) return res.status(403).json({error:'Solo el Super Administrador puede usar Entrar como.'});
+  const destino=db.prepare('SELECT * FROM usuarios WHERE id=? AND activo=1').get(req.params.id);
+  if(!destino) return res.status(404).json({error:'Usuario no encontrado o bloqueado.'});
+  if(destino.rol==='admin') return res.status(400).json({error:'No es necesario impersonar otra cuenta administradora.'});
+  audit({req,action:'impersonar_usuario',entityType:'usuario',entityId:destino.id,metadata:{admin:req.usuario.id}});
+  const {password_hash,...usuario}=destino;
+  res.json({token:firmarToken(destino,{impersonadoPor:req.usuario.id}),usuario:{...usuario,rol_empresarial:rolEmpresarial(destino.id)},impersonadoPor:req.usuario.id});
 });
 
 module.exports = router;

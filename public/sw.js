@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c3-admin-ux';
+const CACHE_NAME = 'dr-plants-v8c5-enterprise-demo-erp';
 const APP_SHELL = [
   '/',
   '/manifest.json',

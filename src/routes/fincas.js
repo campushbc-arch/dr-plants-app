@@ -2,10 +2,13 @@ const express = require('express');
 const { requiereSuscripcionCultivos } = require('../subscription');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
+const { esEjecutivoComercial, modoDemo } = require('../enterprise');
 
 const router = express.Router();
 router.use(requiereAuth);
 router.use(requiereSuscripcionCultivos);
+function esEjecutivo(usuario){ return esEjecutivoComercial(usuario); }
+function filtroDemo(usuario, alias='f'){ return esEjecutivo(usuario) && modoDemo(usuario.id) ? ` AND ${alias}.es_demo=1` : ''; }
 
 function fincaPorId(id) {
   return db.prepare('SELECT * FROM fincas WHERE id = ? AND eliminado_en IS NULL').get(id);
@@ -13,11 +16,11 @@ function fincaPorId(id) {
 function fincasVisiblesPara(usuario) {
   const base=`SELECT f.*, c.nombre AS cliente_nombre, c.telefono AS cliente_telefono, c.email AS cliente_email
               FROM fincas f LEFT JOIN clientes_agronomicos c ON c.id=f.cliente_id`;
-  if (usuario.rol === 'admin') return db.prepare(`${base} WHERE f.eliminado_en IS NULL ORDER BY f.creado_en DESC`).all();
+  if (usuario.rol === 'admin') return db.prepare(`${base} WHERE f.eliminado_en IS NULL${filtroDemo(usuario)} ORDER BY f.creado_en DESC`).all();
   if (usuario.rol === 'agronomo') return db.prepare(`${base}
-    WHERE f.eliminado_en IS NULL AND (f.gestor_id=? OR f.productor_id=? OR EXISTS(SELECT 1 FROM agronomo_asignacion a WHERE a.finca_id=f.id AND a.agronomo_id=?))
+    WHERE f.eliminado_en IS NULL${filtroDemo(usuario)} AND (f.gestor_id=? OR f.productor_id=? OR EXISTS(SELECT 1 FROM agronomo_asignacion a WHERE a.finca_id=f.id AND a.agronomo_id=?))
     ORDER BY f.creado_en DESC`).all(usuario.id,usuario.id,usuario.id);
-  return db.prepare(`${base} WHERE f.productor_id=? AND f.eliminado_en IS NULL ORDER BY f.creado_en DESC`).all(usuario.id);
+  return db.prepare(`${base} WHERE f.productor_id=? AND f.eliminado_en IS NULL${filtroDemo(usuario)} ORDER BY f.creado_en DESC`).all(usuario.id);
 }
 function puedeVerFinca(usuario, fincaId) {
   const finca=fincaPorId(fincaId); if(!finca) return null;
@@ -43,16 +46,16 @@ router.get('/',(req,res)=>res.json(fincasVisiblesPara(req.usuario)));
 // V8A · clientes propios del agrónomo. No mezcla datos entre profesionales.
 router.get('/clientes', (req,res)=>{
   if(req.usuario.rol==='admin') return res.json(db.prepare('SELECT * FROM clientes_agronomicos WHERE activo=1 ORDER BY creado_en DESC').all());
-  if(req.usuario.rol!=='agronomo') return res.json([]);
-  res.json(db.prepare('SELECT * FROM clientes_agronomicos WHERE agronomo_id=? AND activo=1 ORDER BY nombre').all(req.usuario.id));
+  if(req.usuario.rol!=='agronomo' && !esEjecutivo(req.usuario)) return res.json([]);
+  res.json(db.prepare(`SELECT * FROM clientes_agronomicos WHERE agronomo_id=? AND activo=1${esEjecutivo(req.usuario)&&modoDemo(req.usuario.id)?' AND es_demo=1':''} ORDER BY nombre`).all(req.usuario.id));
 });
 router.post('/clientes', (req,res)=>{
-  if(!['agronomo','admin'].includes(req.usuario.rol)) return res.status(403).json({error:'Esta función es para gestión profesional agronómica.'});
+  if(!['agronomo','admin'].includes(req.usuario.rol) && !esEjecutivo(req.usuario)) return res.status(403).json({error:'Esta función es para gestión profesional agronómica.'});
   const nombre=limpiarTexto(req.body.nombre,140); if(!nombre) return res.status(400).json({error:'El nombre del cliente es obligatorio.'});
-  const id=nuevoId('cli'); const agronomoId=req.usuario.rol==='agronomo'?req.usuario.id:(limpiarTexto(req.body.agronomoId,100)||req.usuario.id);
-  db.prepare(`INSERT INTO clientes_agronomicos(id,agronomo_id,nombre,documento,telefono,email,pais,region,ciudad,notas) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(
+  const id=nuevoId('cli'); const agronomoId=(req.usuario.rol==='agronomo'||esEjecutivo(req.usuario))?req.usuario.id:(limpiarTexto(req.body.agronomoId,100)||req.usuario.id); const esDemo=esEjecutivo(req.usuario)&&modoDemo(req.usuario.id)?1:0;
+  db.prepare(`INSERT INTO clientes_agronomicos(id,agronomo_id,nombre,documento,telefono,email,pais,region,ciudad,notas,es_demo) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(
     id,agronomoId,nombre,limpiarTexto(req.body.documento,80)||null,limpiarTexto(req.body.telefono,50)||null,limpiarTexto(req.body.email,160)||null,
-    limpiarTexto(req.body.pais,80)||null,limpiarTexto(req.body.region,120)||null,limpiarTexto(req.body.ciudad,120)||null,limpiarTexto(req.body.notas,600)||null);
+    limpiarTexto(req.body.pais,80)||null,limpiarTexto(req.body.region,120)||null,limpiarTexto(req.body.ciudad,120)||null,limpiarTexto(req.body.notas,600)||null,esDemo);
   res.status(201).json(db.prepare('SELECT * FROM clientes_agronomicos WHERE id=?').get(id));
 });
 router.patch('/clientes/:id', (req,res)=>{
@@ -72,7 +75,7 @@ router.delete('/clientes/:id', (req,res)=>{
 router.get('/resumen-profesional',(req,res)=>{
   const fincas=fincasVisiblesPara(req.usuario); const ids=fincas.map(f=>f.id);
   let hectareas=0,lotes=0; for(const id of ids){const r=db.prepare('SELECT COUNT(*) n,COALESCE(SUM(area_ha),0) ha FROM lotes WHERE finca_id=? AND eliminado_en IS NULL').get(id);lotes+=r.n;hectareas+=r.ha;}
-  const clientes=req.usuario.rol==='agronomo'?db.prepare('SELECT COUNT(*) n FROM clientes_agronomicos WHERE agronomo_id=? AND activo=1').get(req.usuario.id).n:0;
+  const clientes=(req.usuario.rol==='agronomo'||esEjecutivo(req.usuario))?db.prepare(`SELECT COUNT(*) n FROM clientes_agronomicos WHERE agronomo_id=? AND activo=1${esEjecutivo(req.usuario)&&modoDemo(req.usuario.id)?' AND es_demo=1':''}`).get(req.usuario.id).n:0;
   res.json({clientes,fincas:fincas.length,lotes,hectareas:Number(hectareas.toFixed(2))});
 });
 
@@ -86,7 +89,7 @@ router.post('/crear-lote-completo',(req,res)=>{
   if(req.suscripcion?.suscripcion?.max_ha_plan!=null && Number(req.suscripcion.hectareas||0)+area>Number(req.suscripcion.suscripcion.max_ha_plan))
     return res.status(422).json({error:`Con este lote superarías el límite de ${req.suscripcion.suscripcion.max_ha_plan} ha de tu plan. Actualiza la suscripción antes de agregar más área.`});
   let cid=null,clienteCache=null,gestor=null,relacion='propia';
-  if(req.usuario.rol==='agronomo'){
+  if(req.usuario.rol==='agronomo'||esEjecutivo(req.usuario)){
     cid=limpiarTexto(clienteId,100)||null;
     if(!cid) return res.status(400).json({error:'Selecciona el cliente al que pertenece la finca asistida.'});
     const c=db.prepare('SELECT * FROM clientes_agronomicos WHERE id=? AND agronomo_id=? AND activo=1').get(cid,req.usuario.id);
@@ -95,12 +98,12 @@ router.post('/crear-lote-completo',(req,res)=>{
   }
   const tx=db.transaction(()=>{
     let finca;
-    if(req.usuario.rol==='agronomo') finca=db.prepare(`SELECT * FROM fincas WHERE gestor_id=? AND cliente_id=? AND lower(nombre)=lower(?) AND eliminado_en IS NULL ORDER BY creado_en DESC LIMIT 1`).get(req.usuario.id,cid,limpiarTexto(fincaNombre,120));
+    if(req.usuario.rol==='agronomo'||esEjecutivo(req.usuario)) finca=db.prepare(`SELECT * FROM fincas WHERE gestor_id=? AND cliente_id=? AND lower(nombre)=lower(?) AND eliminado_en IS NULL ORDER BY creado_en DESC LIMIT 1`).get(req.usuario.id,cid,limpiarTexto(fincaNombre,120));
     else finca=db.prepare(`SELECT * FROM fincas WHERE productor_id=? AND lower(nombre)=lower(?) AND eliminado_en IS NULL ORDER BY creado_en DESC LIMIT 1`).get(req.usuario.id,limpiarTexto(fincaNombre,120));
     if(!finca){
       const fid=nuevoId('finca');
-      db.prepare(`INSERT INTO fincas(id,productor_id,nombre,ubicacion_id,pais,region,ciudad,cliente_id,gestor_id,relacion_tipo,cliente_nombre_cache,latitud,longitud,altitud) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
-        fid,req.usuario.id,limpiarTexto(fincaNombre,120),limpiarTexto(ubicacionId,180),limpiarTexto(pais,80)||null,limpiarTexto(region,120)||null,limpiarTexto(ciudad,120)||null,cid,gestor,relacion,clienteCache,Number.isFinite(Number(latitud))?Number(latitud):null,Number.isFinite(Number(longitud))?Number(longitud):null,Number.isFinite(Number(altitud))?Number(altitud):null);
+      db.prepare(`INSERT INTO fincas(id,productor_id,nombre,ubicacion_id,pais,region,ciudad,cliente_id,gestor_id,relacion_tipo,cliente_nombre_cache,latitud,longitud,altitud,es_demo) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+        fid,req.usuario.id,limpiarTexto(fincaNombre,120),limpiarTexto(ubicacionId,180),limpiarTexto(pais,80)||null,limpiarTexto(region,120)||null,limpiarTexto(ciudad,120)||null,cid,gestor,relacion,clienteCache,Number.isFinite(Number(latitud))?Number(latitud):null,Number.isFinite(Number(longitud))?Number(longitud):null,Number.isFinite(Number(altitud))?Number(altitud):null,(esEjecutivo(req.usuario)&&modoDemo(req.usuario.id))?1:0);
       finca=fincaPorId(fid);
     } else {
       db.prepare(`UPDATE fincas SET ubicacion_id=?,pais=?,region=?,ciudad=?,latitud=COALESCE(?,latitud),longitud=COALESCE(?,longitud),altitud=COALESCE(?,altitud),actualizado_en=datetime('now') WHERE id=?`).run(
@@ -108,8 +111,8 @@ router.post('/crear-lote-completo',(req,res)=>{
       finca=fincaPorId(finca.id);
     }
     const lid=nuevoId('lote');
-    db.prepare(`INSERT INTO lotes(id,finca_id,nombre,cultivo_id,cultivo_nombre,variedad,area_ha,fecha_siembra) VALUES(?,?,?,?,?,?,?,?)`).run(
-      lid,finca.id,limpiarTexto(nombre,120),limpiarTexto(cultivoId,120),limpiarTexto(cultivoNombre,160)||null,limpiarTexto(variedad,160)||null,area,fechaSiembra);
+    db.prepare(`INSERT INTO lotes(id,finca_id,nombre,cultivo_id,cultivo_nombre,variedad,area_ha,fecha_siembra,es_demo) VALUES(?,?,?,?,?,?,?,?,?)`).run(
+      lid,finca.id,limpiarTexto(nombre,120),limpiarTexto(cultivoId,120),limpiarTexto(cultivoNombre,160)||null,limpiarTexto(variedad,160)||null,area,fechaSiembra,(esEjecutivo(req.usuario)&&modoDemo(req.usuario.id))?1:0);
     return {finca,lote:db.prepare('SELECT * FROM lotes WHERE id=?').get(lid)};
   });
   try{return res.status(201).json(tx());}catch(e){console.error('crear-lote-completo:',e);return res.status(500).json({error:'No fue posible guardar la finca y el lote. Intenta nuevamente.'});}
@@ -119,15 +122,15 @@ router.post('/',(req,res)=>{
   const {nombre,ubicacionId,pais,region,ciudad,clienteId,clienteNombre,latitud,longitud,altitud}=req.body;
   if(!limpiarTexto(nombre,120) || !limpiarTexto(ubicacionId,180)) return res.status(400).json({error:'nombre y ubicación son obligatorios.'});
   let cid=null, relacion='propia', gestor=null, clienteCache=null;
-  if(req.usuario.rol==='agronomo'){
+  if(req.usuario.rol==='agronomo'||esEjecutivo(req.usuario)){
     cid=limpiarTexto(clienteId,100)||null;
     if(cid){const c=db.prepare('SELECT * FROM clientes_agronomicos WHERE id=? AND agronomo_id=? AND activo=1').get(cid,req.usuario.id);if(!c)return res.status(400).json({error:'Selecciona un cliente válido.'});clienteCache=c.nombre;}
     else {clienteCache=limpiarTexto(clienteNombre,140)||null; if(!clienteCache)return res.status(400).json({error:'Selecciona o registra el cliente atendido.'});}
     relacion='asistida'; gestor=req.usuario.id;
   }
   const id=nuevoId('finca');
-  db.prepare(`INSERT INTO fincas(id,productor_id,nombre,ubicacion_id,pais,region,ciudad,cliente_id,gestor_id,relacion_tipo,cliente_nombre_cache,latitud,longitud,altitud) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-    .run(id,req.usuario.id,limpiarTexto(nombre,120),limpiarTexto(ubicacionId,180),limpiarTexto(pais,80)||null,limpiarTexto(region,120)||null,limpiarTexto(ciudad,120)||null,cid,gestor,relacion,clienteCache,Number.isFinite(Number(latitud))?Number(latitud):null,Number.isFinite(Number(longitud))?Number(longitud):null,Number.isFinite(Number(altitud))?Number(altitud):null);
+  db.prepare(`INSERT INTO fincas(id,productor_id,nombre,ubicacion_id,pais,region,ciudad,cliente_id,gestor_id,relacion_tipo,cliente_nombre_cache,latitud,longitud,altitud,es_demo) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id,req.usuario.id,limpiarTexto(nombre,120),limpiarTexto(ubicacionId,180),limpiarTexto(pais,80)||null,limpiarTexto(region,120)||null,limpiarTexto(ciudad,120)||null,cid,gestor,relacion,clienteCache,Number.isFinite(Number(latitud))?Number(latitud):null,Number.isFinite(Number(longitud))?Number(longitud):null,Number.isFinite(Number(altitud))?Number(altitud):null,(esEjecutivo(req.usuario)&&modoDemo(req.usuario.id))?1:0);
   res.status(201).json(fincasVisiblesPara(req.usuario).find(f=>f.id===id)||fincaPorId(id));
 });
 router.patch('/:id',(req,res)=>{
@@ -161,8 +164,8 @@ router.post('/:id/lotes',(req,res)=>{
   const {nombre,cultivoId,cultivoNombre,variedad,areaHa,fechaSiembra}=req.body;
   if(!limpiarTexto(nombre,120)||!limpiarTexto(cultivoId,120)||!Number(areaHa)||!fechaSiembra) return res.status(400).json({error:'nombre, cultivo, área y fecha son obligatorios.'});
   const id=nuevoId('lote');
-  db.prepare(`INSERT INTO lotes(id,finca_id,nombre,cultivo_id,cultivo_nombre,variedad,area_ha,fecha_siembra) VALUES(?,?,?,?,?,?,?,?)`)
-   .run(id,finca.id,limpiarTexto(nombre,120),limpiarTexto(cultivoId,120),limpiarTexto(cultivoNombre,160)||null,limpiarTexto(variedad,160)||null,Number(areaHa),fechaSiembra);
+  db.prepare(`INSERT INTO lotes(id,finca_id,nombre,cultivo_id,cultivo_nombre,variedad,area_ha,fecha_siembra,es_demo) VALUES(?,?,?,?,?,?,?,?,?)`)
+   .run(id,finca.id,limpiarTexto(nombre,120),limpiarTexto(cultivoId,120),limpiarTexto(cultivoNombre,160)||null,limpiarTexto(variedad,160)||null,Number(areaHa),fechaSiembra,(esEjecutivo(req.usuario)&&modoDemo(req.usuario.id))?1:0);
   res.status(201).json(db.prepare('SELECT * FROM lotes WHERE id=?').get(id));
 });
 router.patch('/lotes/:id',(req,res)=>{

@@ -594,3 +594,27 @@ CREATE TABLE IF NOT EXISTS cobros_suscripcion (
   estado TEXT NOT NULL, wompi_transaccion_id TEXT, respuesta_wompi TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')), actualizado_en TEXT DEFAULT NULL
 );
+
+-- V8C.5 · Roles empresariales y entorno de demostración
+CREATE TABLE IF NOT EXISTS permisos_empresariales (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+  rol TEXT NOT NULL CHECK(rol IN ('super_admin','admin_operativo','ejecutivo_comercial')),
+  activo INTEGER NOT NULL DEFAULT 1 CHECK(activo IN (0,1)),
+  asignado_por TEXT DEFAULT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT DEFAULT NULL
+);
+CREATE TABLE IF NOT EXISTS modo_demo_usuario (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+  activo INTEGER NOT NULL DEFAULT 0 CHECK(activo IN (0,1)),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS demo_eventos (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL,
+  escenario TEXT,
+  detalle_json TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_demo_eventos_usuario ON demo_eventos(usuario_id,creado_en);

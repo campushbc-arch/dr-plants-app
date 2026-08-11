@@ -404,10 +404,25 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 .admin-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}.admin-modal-actions button{border-radius:11px;padding:10px 14px;font-size:.86rem;font-weight:700;cursor:pointer}
 .admin-primary{background:#1b5e20;color:#fff;border:none}.admin-secondary{background:var(--color-background-primary);color:var(--color-text-primary);border:1px solid var(--v7-border)}
 @media(max-width:560px){.admin-quicknav{top:64px;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px 10px 12px}.admin-section-anchor{scroll-margin-top:190px}}
+
+/* V8C.5 · ERP Admin + entorno demo */
+.admin-erp-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;padding:0 14px 20px;align-items:start}
+.admin-erp-sidebar{position:sticky;top:72px;border:1px solid var(--v7-border);border-radius:18px;background:var(--color-background-primary);box-shadow:0 10px 28px rgba(18,74,44,.08);padding:10px;display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 90px);overflow:auto}
+.admin-erp-brand{padding:8px 8px 10px;border-bottom:1px solid var(--v7-border);margin-bottom:4px}.admin-erp-brand b{display:block;font-size:.9rem}.admin-erp-brand span{font-size:.7rem;color:var(--color-text-secondary)}
+.admin-erp-sidebar button{width:100%;display:flex;align-items:center;gap:8px;text-align:left;border:0;background:transparent;color:var(--color-text-primary);border-radius:11px;padding:10px;font-size:.79rem;font-weight:650;cursor:pointer}
+.admin-erp-sidebar button:hover,.admin-erp-sidebar button.on{background:rgba(27,94,32,.09);color:#1b5e20}
+.admin-erp-main{min-width:0}.admin-erp-top{display:flex;gap:8px;align-items:center;padding:0 0 10px}.admin-erp-top input{flex:1;min-width:0;border:1px solid var(--v7-border);border-radius:12px;padding:10px 12px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.admin-erp-top .badge{white-space:nowrap;border-radius:999px;background:#EAF4DC;color:#275D10;padding:7px 10px;font-size:.7rem;font-weight:750}
+.admin-module-hidden{display:none!important}
+.demo-console{border:1px solid rgba(201,162,39,.45);background:linear-gradient(135deg,rgba(201,162,39,.08),rgba(27,94,32,.05));border-radius:16px;padding:14px;margin:0 0 12px}.demo-console h3{font-size:.95rem;margin:0 0 4px}.demo-console p{font-size:.75rem;color:var(--color-text-secondary);margin:0 0 10px;line-height:1.45}.demo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.demo-grid input,.demo-grid select{width:100%;border:1px solid var(--v7-border);border-radius:10px;padding:9px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.impersonation-banner{display:none;position:sticky;top:0;z-index:20000;background:#7A3E00;color:#fff;padding:8px 12px;font-size:.78rem;align-items:center;justify-content:space-between;gap:10px}.impersonation-banner button{border:0;border-radius:9px;background:#fff;color:#7A3E00;padding:6px 9px;font-weight:700;cursor:pointer}
+.role-chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 7px;font-size:.68rem;font-weight:750;background:#EEF5FF;color:#174EA6;margin-top:5px}
+@media(max-width:900px){.admin-erp-layout{grid-template-columns:1fr;padding:0 10px 18px}.admin-erp-sidebar{position:sticky;top:64px;z-index:30;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-height:none;overflow:visible}.admin-erp-brand{grid-column:1/-1}.admin-erp-sidebar button{justify-content:center;font-size:.68rem;padding:8px 5px}.admin-erp-sidebar button span{display:none}.admin-erp-top{position:sticky;top:156px;z-index:20;background:var(--color-background-primary);padding:8px 0}}
 </style>
 
 </head>
 <body>
+<div id="impersonation-banner" class="impersonation-banner"><span id="impersonation-text">Vista como usuario</span><button type="button" onclick="volverASuperAdmin()">Volver a Super Admin</button></div>
 
 <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden">Dr Plants — prototipo interactivo de aplicación agrícola con 5 módulos: agrónomo IA, tienda, precios, cultivo y reciclaje</h2>
 
@@ -1168,29 +1183,41 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="phdr-t">Panel ejecutivo</div>
     <div class="phdr-s">Indicadores en tiempo real de ventas, usuarios, laboratorio, consultas y documentos.</div>
   </div>
-  <div id="admin-dashboard" style="padding:0 14px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px"></div>
-  <div class="admin-quicknav" aria-label="Navegación rápida del administrador">
-    <button type="button" onclick="adminIrA('admin-sec-alertas')"><i class="ti ti-bell"></i> Alertas</button>
-    <button type="button" onclick="adminIrA('admin-sec-usuarios')"><i class="ti ti-users"></i> Usuarios</button>
-    <button type="button" onclick="adminIrA('admin-sec-suscripciones')"><i class="ti ti-credit-card"></i> Suscripciones</button>
-    <button type="button" onclick="adminIrA('admin-sec-operacion')"><i class="ti ti-settings"></i> Operación</button>
-    <button type="button" onclick="adminIrA('admin-sec-formacion')"><i class="ti ti-school"></i> Formación</button>
-    <button type="button" onclick="adminIrA('admin-sec-ia')"><i class="ti ti-brain"></i> IA y contenido</button>
-  </div>
+  <div id="admin-dashboard" data-admin-module="resumen" style="padding:0 14px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px"></div>
+  <div class="admin-erp-layout">
+    <aside class="admin-erp-sidebar" aria-label="Módulos administrativos">
+      <div class="admin-erp-brand"><b>Dr. Plants ERP</b><span>Administración empresarial</span></div>
+      <button id="admin-nav-resumen" class="on" onclick="adminMostrarModulo('resumen',this)"><i class="ti ti-layout-dashboard"></i><span>Resumen</span></button>
+      <button id="admin-nav-alertas" onclick="adminMostrarModulo('alertas',this)"><i class="ti ti-bell"></i><span>Alertas</span></button>
+      <button id="admin-nav-usuarios" onclick="adminMostrarModulo('usuarios',this)"><i class="ti ti-users"></i><span>Usuarios y roles</span></button>
+      <button id="admin-nav-suscripciones" onclick="adminMostrarModulo('suscripciones',this)"><i class="ti ti-credit-card"></i><span>Suscripciones</span></button>
+      <button id="admin-nav-operacion" onclick="adminMostrarModulo('operacion',this)"><i class="ti ti-settings"></i><span>Operación</span></button>
+      <button id="admin-nav-formacion" onclick="adminMostrarModulo('formacion',this)"><i class="ti ti-school"></i><span>Formación</span></button>
+      <button id="admin-nav-ia" onclick="adminMostrarModulo('ia',this)"><i class="ti ti-brain"></i><span>IA y conocimiento</span></button>
+      <button id="admin-nav-demo" onclick="adminMostrarModulo('demo',this)"><i class="ti ti-presentation"></i><span>Demostraciones</span></button>
+    </aside>
+    <main class="admin-erp-main">
+      <div class="admin-erp-top"><input id="admin-global-search" type="search" placeholder="Buscar usuario, correo o teléfono…" onkeydown="if(event.key==='Enter')adminBuscarGlobal()"><button class="mini-btn" onclick="adminBuscarGlobal()">Buscar</button><span class="badge">V8C.5</span></div>
+      <div id="admin-super-demo" class="demo-console" data-admin-module="demo">
+        <h3>Entorno de demostración</h3><p>Crea escenarios de ejemplo sin suscripción ni límite de hectáreas. Los datos se marcan como demo y pueden restablecerse sin afectar la operación real.</p>
+        <div class="demo-grid"><select id="admin-demo-escenario"><option value="cafe">Café de montaña</option><option value="cana">Caña tecnificada</option><option value="cacao">Cacao productivo</option><option value="arroz">Arroz tecnificado</option><option value="maiz">Maíz comercial</option><option value="banano">Banano exportación</option><option value="aguacate">Aguacate Hass</option><option value="palma">Palma productiva</option></select><input id="admin-demo-hectareas" type="number" min="1" value="80" placeholder="Hectáreas"><input id="admin-demo-cliente" value="Cliente demostración" placeholder="Cliente"><input id="admin-demo-finca" placeholder="Nombre de finca"><input id="admin-demo-problema" placeholder="Problema principal del cliente"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="mini-btn" onclick="generarDemoDesdeAdmin()">Generar finca ejemplo</button><button class="mini-btn" onclick="resetDemoActual()">Restablecer mis datos demo</button><button class="mini-btn" onclick="generarBibliotecaDemoCompleta()">Cargar biblioteca 50/120/350</button><button class="mini-btn" onclick="go('cultivo','cultivo')">Abrir Cultivo</button></div>
+        <div id="admin-demo-status" class="lab-desc" style="margin-top:8px"></div>
+      </div>
 
-  <div id="admin-sec-alertas" class="admin-section-anchor" style="padding:18px 14px 0;display:flex;justify-content:space-between;align-items:center">
+  <div id="admin-sec-alertas" data-admin-module="alertas" class="admin-section-anchor" style="padding:18px 14px 0;display:flex;justify-content:space-between;align-items:center">
     <div class="sec-lbl" style="padding:0">Centro de alertas</div>
     <button onclick="marcarTodasNotificacionesLeidas()" style="border:none;background:transparent;color:#1b5e20;font-size:10px;cursor:pointer">Marcar todas leídas</button>
   </div>
-  <div class="admin-notif-toolbar">
+  <div class="admin-notif-toolbar" data-admin-module="alertas">
     <button id="admin-notif-pendientes-btn" class="on" type="button" onclick="setAdminNotifModo('pendientes')">Pendientes</button>
     <button id="admin-notif-todas-btn" type="button" onclick="setAdminNotifModo('todas')">Historial</button>
     <span id="admin-notif-resumen" style="font-size:.76rem;color:var(--color-text-secondary)"></span>
   </div>
-  <div class="admin-section-note">Se muestran primero las alertas que requieren atención. El historial completo queda disponible sin llenar el panel principal.</div>
-  <div id="admin-notificaciones-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:7px"></div>
+  <div class="admin-section-note" data-admin-module="alertas">Se muestran primero las alertas que requieren atención. El historial completo queda disponible sin llenar el panel principal.</div>
+  <div id="admin-notificaciones-list" data-admin-module="alertas" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:7px"></div>
 
-  <div id="admin-sec-operacion" class="phdr-card admin-section-anchor" style="margin-top:12px">
+  <div id="admin-sec-operacion" data-admin-module="operacion" class="phdr-card admin-section-anchor" style="margin-top:12px">
     <div class="phdr-t">Operación · solicitudes de recolección circular</div>
     <div class="phdr-s">Consulta todos los datos enviados por el productor, responde, asigna gestor y programa la recolección.</div>
   </div>
@@ -1200,9 +1227,9 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     </select>
     <button class="mini-btn" onclick="renderAdminSolicitudesCircular()">Actualizar</button>
   </div>
-  <div id="admin-circular-solicitudes-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-circular-solicitudes-list" data-admin-module="operacion" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
-  <div id="admin-sec-usuarios" class="phdr-card admin-section-anchor">
+  <div id="admin-sec-usuarios" data-admin-module="usuarios" class="phdr-card admin-section-anchor">
     <div class="phdr-t">Usuarios y accesos</div>
     <div class="phdr-s">Consulta las cuentas registradas y controla quién puede acceder a los contenidos y herramientas.</div>
   </div>
@@ -1213,28 +1240,28 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     </select>
     <button type="button" onclick="renderAdminUsuarios()" style="border:none;border-radius:8px;padding:9px 13px;background:#1b5e20;color:#fff;font-size:11px;font-weight:500;font-family:inherit;cursor:pointer">Buscar</button>
   </div>
-  <div id="admin-usuarios-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-usuarios-list" data-admin-module="usuarios" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div class="phdr-card" style="margin-top:12px">
     <div class="phdr-t">Solicitudes de agrónomos</div>
     <div class="phdr-s">Verifica la tarjeta profesional antes de aprobar el acceso a fincas de productores.</div>
   </div>
-  <div id="admin-solicitudes-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-solicitudes-list" data-admin-module="usuarios" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
 
-  <div id="admin-sec-suscripciones" class="phdr-card admin-section-anchor" style="margin-top:12px">
+  <div id="admin-sec-suscripciones" data-admin-module="suscripciones" class="phdr-card admin-section-anchor" style="margin-top:12px">
     <div class="phdr-t">Suscripciones Dr. Plants Professional · V8C.4</div>
     <div class="phdr-s">Pruebas gratuitas, planes activos, hectáreas, renovaciones y cobros recurrentes.</div>
   </div>
   <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminSuscripciones()">Actualizar</button><button class="mini-btn" onclick="procesarRenovacionesAdmin()">Procesar renovaciones</button></div>
-  <div id="admin-suscripciones-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-suscripciones-list" data-admin-module="suscripciones" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div class="phdr-card" style="margin-top:12px">
     <div class="phdr-t">Centro de Retención · V8C.4</div>
     <div class="phdr-s">Revisa solicitudes de cancelación, contacta al usuario, aplica cortesías, descuentos, cambios de plan o congelaciones y aprueba la cancelación cuando corresponda.</div>
   </div>
-  <div id="admin-retencion-metricas" style="padding:0 14px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px"></div>
+  <div id="admin-retencion-metricas" data-admin-module="suscripciones" style="padding:0 14px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px"></div>
   <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminRetencionV8C2()">Actualizar</button></div>
-  <div id="admin-retencion-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-retencion-list" data-admin-module="suscripciones" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
 
   <div class="phdr-card" style="margin-top:12px">
@@ -1242,43 +1269,43 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="phdr-s">Habilita Cultivo Professional sin pago para pruebas, cortesías, soporte o ejecutivos comerciales. El acceso vence automáticamente.</div>
   </div>
   <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminAccesosTemporales()">Actualizar</button></div>
-  <div id="admin-accesos-temporales-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-accesos-temporales-list" data-admin-module="usuarios" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
-  <div id="admin-sec-formacion" class="phdr-card admin-section-anchor" style="margin-top:12px">
+  <div id="admin-sec-formacion" data-admin-module="formacion" class="phdr-card admin-section-anchor" style="margin-top:12px">
     <div class="phdr-t">Formación · matrículas de cursos</div>
     <div class="phdr-s">Revisa pagos aprobados y activa el acceso de los estudiantes al contenido.</div>
   </div>
-  <div id="admin-matriculas-cursos-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-matriculas-cursos-list" data-admin-module="formacion" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div style="padding:20px 14px 0">
     <div class="sec-lbl" style="padding:0">Pedidos de AgroTienda</div>
   </div>
-  <div id="admin-pedidos-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-pedidos-list" data-admin-module="operacion" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
 
   <div style="padding:20px 14px 0">
     <div class="sec-lbl" style="padding:0">Solicitudes de análisis de laboratorio</div>
   </div>
-  <div id="admin-sollab-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-sollab-list" data-admin-module="operacion" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
 
   <div style="padding:20px 14px 0">
     <div class="sec-lbl" style="padding:0">Conversaciones y análisis enviados desde Laboratorio</div>
   </div>
-  <div id="admin-conversaciones-lab-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-conversaciones-lab-list" data-admin-module="operacion" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
 
   <div style="padding:20px 14px 0">
     <div class="sec-lbl" style="padding:0">Pagos Wompi</div>
   </div>
-  <div id="admin-pagos-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-pagos-list" data-admin-module="suscripciones" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
 
   <div style="padding:20px 14px 0">
     <div class="sec-lbl" style="padding:0">Solicitudes de teleconsulta</div>
   </div>
-  <div id="admin-soltele-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-soltele-list" data-admin-module="operacion" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
 
-  <div id="admin-sec-ia" class="admin-section-anchor" style="padding:20px 14px 0">
+  <div id="admin-sec-ia" data-admin-module="ia" class="admin-section-anchor" style="padding:20px 14px 0">
     <div class="sec-lbl" style="padding:0">IA y trazabilidad</div>
   </div>
-  <div id="admin-auditoria-ia-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-auditoria-ia-list" data-admin-module="ia" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
 
   <div class="phdr-card" style="margin-top:12px">
     <div class="phdr-t">Base de conocimiento agronómico · V8B</div>
@@ -1292,7 +1319,7 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="fgrp"><label>Enlace de fuente (opcional)</label><input id="kb-url" placeholder="https://..."></div>
     <button class="cta-btn" onclick="guardarConocimientoV8B()"><i class="ti ti-brain"></i> Guardar en conocimiento de Dr. Agro</button>
   </div>
-  <div id="admin-kb-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:7px"></div>
+  <div id="admin-kb-list" data-admin-module="ia" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:7px"></div>
 
   <div style="padding:20px 14px 0;display:flex;justify-content:space-between;align-items:center">
     <div class="sec-lbl" style="padding:0">Catálogo de AgroTienda</div>
@@ -1326,7 +1353,9 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <input type="text" id="np-nueva-cat" placeholder="Ej. Bioinsumos" style="flex:1;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:9px 10px;font-size:12.5px;color:var(--color-text-primary);font-family:inherit">
     <button class="cta-btn" style="width:auto;margin:0;padding:9px 16px" onclick="crearCategoriaAdmin()">Agregar</button>
   </div>
-  <div id="admin-productos-list" style="padding:16px 14px 20px;display:flex;flex-direction:column;gap:8px"></div>
+  <div id="admin-productos-list" style="padding:16px 14px 20px;display:flex;flex-direction:column;gap:8px" data-admin-module="operacion"></div>
+    </main>
+  </div>
 </div>
 
 <div id="s-panel-agronomo" class="screen">
@@ -1339,6 +1368,21 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="phdr-s">Seguimiento de las fincas donde eres el agrónomo acompañante. Toca una para ver sus lotes en detalle.</div>
   </div>
   <div id="panel-fincas-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
+</div>
+
+
+<div id="s-demo-hub" class="screen">
+  <div class="pg-hdr"><button class="back" onclick="go('perfil','')"><i class="ti ti-arrow-left"></i> Mi Perfil</button><span class="pg-title">Centro de Demostración</span></div>
+  <div class="phdr-card"><div class="phdr-t">Dr. Plants Demo Studio</div><div class="phdr-s">Genera escenarios agrícolas coherentes para presentaciones, capacitación y ventas. Este entorno no requiere suscripción.</div></div>
+  <div class="fform">
+    <div class="frow2"><div class="fgrp"><label>Escenario</label><select id="demo-hub-escenario"><option value="cafe">Café de montaña</option><option value="cana">Caña tecnificada</option><option value="cacao">Cacao productivo</option><option value="arroz">Arroz tecnificado</option><option value="maiz">Maíz comercial</option><option value="banano">Banano exportación</option><option value="aguacate">Aguacate Hass</option><option value="palma">Palma productiva</option></select></div><div class="fgrp"><label>Hectáreas</label><input id="demo-hub-hectareas" type="number" min="1" value="80"></div></div>
+    <div class="frow2"><div class="fgrp"><label>Cliente</label><input id="demo-hub-cliente" value="Cliente demostración"></div><div class="fgrp"><label>Finca</label><input id="demo-hub-finca" placeholder="Ej. Hacienda El Futuro"></div></div>
+    <div class="frow2"><div class="fgrp"><label>País</label><select id="demo-hub-pais"><option>Colombia</option><option>Perú</option><option>Chile</option></select></div><div class="fgrp"><label>Región / departamento</label><input id="demo-hub-region" placeholder="Opcional"></div></div>
+    <div class="fgrp"><label>Ciudad</label><input id="demo-hub-ciudad" placeholder="Opcional"></div><div class="fgrp"><label>Problema principal del cliente</label><input id="demo-hub-problema" placeholder="Ej. baja productividad, costos altos, estrés hídrico"></div>
+    <button class="cta-btn gold" onclick="generarDemoHub()"><i class="ti ti-sparkles"></i> Preparar demostración</button>
+    <button class="cta-btn" style="margin-top:8px;background:var(--color-background-secondary);color:var(--color-text-primary);border:1px solid var(--v7-border)" onclick="resetDemoActual()">Restablecer mis datos demo</button>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="mini-btn" onclick="toggleModoDemoUsuario(true)">Modo demo ON</button><button class="mini-btn" onclick="toggleModoDemoUsuario(false)">Modo demo OFF</button></div><div id="demo-hub-status" class="lab-desc" style="margin-top:10px"></div>
+  </div>
 </div>
 
 <div id="s-perfil" class="screen">
@@ -1384,6 +1428,11 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
       <div class="lab-card" id="perfil-panel-admin" style="cursor:pointer;display:none" onclick="go('panel-admin','')">
         <div class="lab-ico" style="background:#FAEEDA;color:#854F0B"><i class="ti ti-report-analytics"></i></div>
         <div style="flex:1"><div class="lab-name">Panel de Administrador</div><div class="lab-desc">Aprobar agrónomos y gestionar catálogo</div></div>
+        <i class="ti ti-arrow-left" style="transform:scaleX(-1);color:var(--color-text-secondary)"></i>
+      </div>
+      <div class="lab-card" id="perfil-demo-hub" style="cursor:pointer;display:none" onclick="go('demo-hub','')">
+        <div class="lab-ico" style="background:#FFF4D7;color:#7A5200"><i class="ti ti-presentation"></i></div>
+        <div style="flex:1"><div class="lab-name">Centro de Demostración</div><div class="lab-desc">Escenarios comerciales y ejemplos sin límites</div></div>
         <i class="ti ti-arrow-left" style="transform:scaleX(-1);color:var(--color-text-secondary)"></i>
       </div>
     </div>
@@ -1898,7 +1947,7 @@ let FINCAS_META={};
 let CLIENTES_PRO=[];
 
 let renovandoTokenPromise=null;
-async function renovarTokenSesion(){if(!renovandoTokenPromise)renovandoTokenPromise=fetch(BACKEND_URL+'/api/auth/refresh',{method:'POST',credentials:'include'}).then(async r=>{if(!r.ok)return null;const d=await r.json();SESION={...SESION,autenticado:true,id:d.usuario.id,nombre:d.usuario.nombre,email:d.usuario.email,telefono:d.usuario.telefono,tipoProductor:d.usuario.tipo_productor,pais:d.usuario.pais,region:d.usuario.region,rol:d.usuario.rol,token:d.token};guardarEstado();actualizarUIsesion();return d.token;}).finally(()=>renovandoTokenPromise=null);return renovandoTokenPromise;}
+async function renovarTokenSesion(){if(!renovandoTokenPromise)renovandoTokenPromise=fetch(BACKEND_URL+'/api/auth/refresh',{method:'POST',credentials:'include'}).then(async r=>{if(!r.ok)return null;const d=await r.json();SESION={...SESION,autenticado:true,id:d.usuario.id,nombre:d.usuario.nombre,email:d.usuario.email,telefono:d.usuario.telefono,tipoProductor:d.usuario.tipo_productor,pais:d.usuario.pais,region:d.usuario.region,rol:d.usuario.rol,rolEmpresarial:d.usuario.rol_empresarial||null,modoDemo:Boolean(d.usuario.modo_demo),token:d.token};guardarEstado();actualizarUIsesion();return d.token;}).finally(()=>renovandoTokenPromise=null);return renovandoTokenPromise;}
 async function apiFetch(path,opciones={},reintento=true){let token=await obtenerSesionValida();const headers=Object.assign({'Content-Type':'application/json'},opciones.headers||{});if(token)headers['Authorization']='Bearer '+token;const resp=await fetch(BACKEND_URL+path,Object.assign({credentials:'include'},opciones,{headers}));if(resp.status===401&&reintento){const nuevo=await renovarTokenSesion();if(nuevo)return apiFetch(path,opciones,false);}const data=await resp.json().catch(()=>null);if(!resp.ok)throw new Error((data&&data.error)||('Error '+resp.status));return data;}
 
 // === V8C · SUSCRIPCIONES PROFESIONALES ===
@@ -2697,7 +2746,7 @@ async function go(sid,nid){
   if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
-  if(sid==='panel-admin'){setTimeout(cargarConocimientoAdminV8B,0);setTimeout(renderAdminSuscripciones,0);setTimeout(renderAdminAccesosTemporales,0);setTimeout(renderAdminRetencionV8C2,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
+  if(sid==='panel-admin'){setTimeout(()=>adminMostrarModulo('resumen',document.getElementById('admin-nav-resumen')),0);setTimeout(cargarConocimientoAdminV8B,0);setTimeout(renderAdminSuscripciones,0);setTimeout(renderAdminAccesosTemporales,0);setTimeout(renderAdminRetencionV8C2,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
   if(sid==='lote-nuevo')actualizarHintPiso();
   if(sid==='home')renderHomeStats();
 }
@@ -3359,7 +3408,7 @@ function lecNav(dir){
 // tener backend configurado, solo pierde la persistencia real.
 const BACKEND_URL = window.location.origin;
 
-let SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',token:null};
+let SESION={autenticado:false,nombre:null,telefono:null,tipoProductor:null,pais:null,region:null,rol:'agricultor',rolEmpresarial:null,modoDemo:false,token:null};
 
 function guardarEstado(){
   if(SESION.token){
@@ -3381,7 +3430,7 @@ async function cargarEstado(){
     SESION={
       autenticado:true,id:usuario.id,nombre:usuario.nombre,email:usuario.email,
       telefono:usuario.telefono,tipoProductor:usuario.tipo_productor,
-      pais:usuario.pais,region:usuario.region,rol:usuario.rol,token
+      pais:usuario.pais,region:usuario.region,rol:usuario.rol,rolEmpresarial:usuario.rol_empresarial||null,modoDemo:Boolean(usuario.modo_demo),token
     };
     actualizarUIsesion();
     await cargarFincasDesdeBackend();
@@ -3416,6 +3465,7 @@ function actualizarUIsesion(){
   const btn=document.getElementById('perfil-sesion-btn');
   const panelLink=document.getElementById('perfil-panel-agronomo');
   const adminLink=document.getElementById('perfil-panel-admin');
+  const demoLink=document.getElementById('perfil-demo-hub');
   if(SESION.autenticado){
     if(avatar)avatar.textContent=SESION.nombre.charAt(0).toUpperCase();
     if(nombreEl)nombreEl.textContent=SESION.nombre;
@@ -3423,6 +3473,8 @@ function actualizarUIsesion(){
     if(btn){btn.textContent='Cerrar sesión';btn.onclick=cerrarSesion;}
     if(panelLink)panelLink.style.display=SESION.rol==='agronomo'?'flex':'none';
     if(adminLink)adminLink.style.display=SESION.rol==='admin'?'flex':'none';
+    if(demoLink)demoLink.style.display=(SESION.rol==='admin'||SESION.rolEmpresarial==='ejecutivo_comercial')?'flex':'none';
+    actualizarBannerImpersonacion();
   }else{
     if(avatar)avatar.textContent='P';
     if(nombreEl)nombreEl.textContent='Productor Demo';
@@ -3430,6 +3482,8 @@ function actualizarUIsesion(){
     if(btn){btn.textContent='Iniciar sesión';btn.onclick=openReg;}
     if(panelLink)panelLink.style.display='none';
     if(adminLink)adminLink.style.display='none';
+    if(demoLink)demoLink.style.display='none';
+    actualizarBannerImpersonacion();
   }
 }
 
@@ -3571,7 +3625,7 @@ async function doReg(){
         go('agronomo-pendiente','');
         return;
       }
-      SESION={autenticado:true,id:data.usuario.id,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,token:data.token};
+      SESION={autenticado:true,id:data.usuario.id,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,rolEmpresarial:data.usuario.rol_empresarial||null,modoDemo:Boolean(data.usuario.modo_demo),token:data.token};
       guardarEstado();
       actualizarUIsesion();
       cargarFincasDesdeBackend();
@@ -3619,7 +3673,7 @@ async function doLogin(){
     });
     const data=await resp.json();
     if(!resp.ok)throw new Error(data.error||'No se pudo iniciar sesión');
-    SESION={autenticado:true,id:data.usuario.id,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,token:data.token};
+    SESION={autenticado:true,id:data.usuario.id,nombre:data.usuario.nombre,email:data.usuario.email,telefono:data.usuario.telefono,tipoProductor:data.usuario.tipo_productor,pais:data.usuario.pais,region:data.usuario.region,rol:data.usuario.rol,rolEmpresarial:data.usuario.rol_empresarial||null,modoDemo:Boolean(data.usuario.modo_demo),token:data.token};
     guardarEstado();
     actualizarUIsesion();
     cargarFincasDesdeBackend();
@@ -3699,6 +3753,31 @@ async function abrirHistorialIntegralAdmin(id){
   }catch(e){cont.innerHTML='<div style="color:#c62828">'+escapeHtml(e.message)+'</div>';}
 }
 
+
+function adminMostrarModulo(modulo,btn){
+  document.querySelectorAll('#s-panel-admin [data-admin-module]').forEach(el=>el.classList.toggle('admin-module-hidden',el.dataset.adminModule!==modulo));
+  document.querySelectorAll('.admin-erp-sidebar button').forEach(b=>b.classList.remove('on')); if(btn)btn.classList.add('on');
+  if(modulo==='resumen') document.getElementById('admin-dashboard')?.classList.remove('admin-module-hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function adminBuscarGlobal(){const q=document.getElementById('admin-global-search')?.value||'';const u=document.getElementById('admin-usuarios-buscar');if(u)u.value=q;adminMostrarModulo('usuarios',document.getElementById('admin-nav-usuarios'));renderAdminUsuarios();}
+async function asignarRolEmpresarial(id,actual){
+  const opcion=prompt('Rol empresarial: ejecutivo_comercial, admin_operativo o ninguno',actual||'ejecutivo_comercial');if(opcion===null)return;
+  const rol=opcion.trim().toLowerCase();if(!['ejecutivo_comercial','admin_operativo','ninguno'].includes(rol)){alert('Rol inválido.');return;}
+  try{await apiFetch('/api/admin/usuarios/'+encodeURIComponent(id)+'/rol-empresarial',{method:'PATCH',body:JSON.stringify({rol})});await renderAdminUsuarios();alert('Rol empresarial actualizado.');}catch(e){alert(e.message);}
+}
+async function entrarComoUsuario(id){
+  const nombre=ADMIN_USUARIOS_CACHE.find(x=>x.id===id)?.nombre||'este usuario';
+  if(!confirm('Entrar temporalmente como '+nombre+'? La acción quedará auditada.'))return;
+  try{sessionStorage.setItem('drplants_admin_original_token',SESION.token);sessionStorage.setItem('drplants_admin_original_name',SESION.nombre||'Super Admin');const d=await apiFetch('/api/admin/impersonar/'+encodeURIComponent(id),{method:'POST',body:'{}'});localStorage.setItem('drplants_token',d.token);SESION={autenticado:true,id:d.usuario.id,nombre:d.usuario.nombre,email:d.usuario.email,telefono:d.usuario.telefono,tipoProductor:d.usuario.tipo_productor,pais:d.usuario.pais,region:d.usuario.region,rol:d.usuario.rol,rolEmpresarial:d.usuario.rol_empresarial||null,modoDemo:Boolean(d.usuario.modo_demo),token:d.token};actualizarUIsesion();await cargarFincasDesdeBackend();go('home','home');}catch(e){alert(e.message);sessionStorage.removeItem('drplants_admin_original_token');}
+}
+async function volverASuperAdmin(){const token=sessionStorage.getItem('drplants_admin_original_token');if(!token)return;localStorage.setItem('drplants_token',token);sessionStorage.removeItem('drplants_admin_original_token');sessionStorage.removeItem('drplants_admin_original_name');await cargarEstado();go('panel-admin','');}
+function actualizarBannerImpersonacion(){const b=document.getElementById('impersonation-banner'),t=document.getElementById('impersonation-text');const orig=sessionStorage.getItem('drplants_admin_original_token');if(!b)return;b.style.display=orig?'flex':'none';if(orig&&t)t.textContent='Vista como '+(SESION.nombre||'usuario')+' · cambios auditados';}
+async function generarDemoPayload(prefix){const el=id=>document.getElementById(prefix+id);return {escenario:el('-escenario')?.value||'cafe',hectareas:Number(el('-hectareas')?.value)||80,clienteNombre:el('-cliente')?.value||'Cliente demostración',fincaNombre:el('-finca')?.value||'',pais:el('-pais')?.value||undefined,region:el('-region')?.value||undefined,ciudad:el('-ciudad')?.value||undefined,problema:el('-problema')?.value||undefined};}
+async function generarDemoDesdeAdmin(){const status=document.getElementById('admin-demo-status');try{if(status)status.textContent='Generando escenario…';const payload=await generarDemoPayload('admin-demo');const d=await apiFetch('/api/demo/generar',{method:'POST',body:JSON.stringify(payload)});if(status)status.textContent=`Listo: ${d.escenario} · ${d.hectareas} ha · ${d.lotes} lotes.`;await cargarFincasDesdeBackend();}catch(e){if(status)status.textContent=e.message;}}
+async function generarDemoHub(){const st=document.getElementById('demo-hub-status');try{if(st)st.textContent='Preparando demostración…';const payload=await generarDemoPayload('demo-hub');const d=await apiFetch('/api/demo/generar',{method:'POST',body:JSON.stringify(payload)});if(st)st.textContent=`Escenario listo: ${d.escenario} · ${d.hectareas} ha.`;await cargarFincasDesdeBackend();setTimeout(()=>go('cultivo','cultivo'),500);}catch(e){if(st)st.textContent=e.message;}}
+async function resetDemoActual(){if(!confirm('¿Eliminar únicamente tus datos de demostración? Los datos reales no se tocarán.'))return;try{await apiFetch('/api/demo/datos',{method:'DELETE'});await cargarFincasDesdeBackend();alert('Datos de demostración restablecidos.');}catch(e){alert(e.message);}}
+
 async function renderAdminUsuarios(){
   const wrap=document.getElementById('admin-usuarios-list');
   if(!wrap)return;
@@ -3722,14 +3801,14 @@ async function renderAdminUsuarios(){
             <div class="lab-name" style="overflow-wrap:anywhere">${escapeHtml(u.nombre||'Sin nombre')}</div>
             <span style="font-size:9.5px;border-radius:999px;padding:3px 7px;white-space:nowrap;${estiloEstado}">${estado}</span>
           </div>
-          <div class="lab-desc" style="overflow-wrap:anywhere">${escapeHtml(u.email||'')} · ${escapeHtml(rol)}</div>
+          <div class="lab-desc" style="overflow-wrap:anywhere">${escapeHtml(u.email||'')} · ${escapeHtml(rol)}</div>${u.rol_empresarial?`<div class="role-chip"><i class="ti ti-shield"></i>${escapeHtml(u.rol_empresarial.replaceAll('_',' '))}</div>`:''}
           <div class="lab-desc">${escapeHtml(u.telefono||'Sin teléfono')} · ${escapeHtml(u.pais||'')} ${u.region?'· '+escapeHtml(u.region):''}</div>
           ${!activo&&u.motivo_bloqueo?`<div class="lab-desc" style="color:#9B1C1C">Motivo: ${escapeHtml(u.motivo_bloqueo)}</div>`:''}
           <button type="button" onclick="abrirExpedienteAdmin('${u.id}')" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;background:var(--color-background-primary);color:#1b5e20;border:0.5px solid #C0DD97">Ver expediente y documentos</button>
           <button type="button" onclick="abrirHistorialIntegralAdmin('${u.id}')" style="margin-top:6px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;background:#1b5e20;color:#fff;border:none">Ver historial integral</button>
           ${u.acceso_temp_vence?`<div class="admin-temp-status"><i class="ti ti-clock"></i> ${escapeHtml(u.acceso_temp_tipo||'temporal')} hasta ${new Date(u.acceso_temp_vence).toLocaleDateString('es-CO')}</div>`:''}
           <button type="button" onclick="abrirAccesoTemporalAdmin('${u.id}')" style="margin-top:6px;width:100%;border-radius:8px;padding:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;background:#C9A227;color:#173d18;border:none">${u.acceso_temp_vence?'Editar acceso temporal':'Habilitar acceso temporal'}</button>
-          <button type="button" onclick="cambiarAccesoUsuario('${u.id}',${activo?'false':'true'})" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;${activo?'background:var(--color-background-primary);color:#c62828;border:0.5px solid #F09595':'background:#1b5e20;color:#fff;border:none'}">${activo?'Bloquear acceso':'Desbloquear acceso'}</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px"><button type="button" class="mini-btn" onclick="asignarRolEmpresarial('${u.id}','${u.rol_empresarial||''}')">Rol empresarial</button><button type="button" class="mini-btn" onclick="entrarComoUsuario('${u.id}')">Entrar como</button></div><button type="button" onclick="cambiarAccesoUsuario('${u.id}',${activo?'false':'true'})" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;${activo?'background:var(--color-background-primary);color:#c62828;border:0.5px solid #F09595':'background:#1b5e20;color:#fff;border:none'}">${activo?'Bloquear acceso':'Desbloquear acceso'}</button>
         </div>
       </div>`;
     }).join('');

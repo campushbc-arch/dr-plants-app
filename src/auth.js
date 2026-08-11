@@ -16,9 +16,9 @@ function nuevoId(prefijo) {
   return `${prefijo}_${crypto.randomBytes(12).toString('hex')}`;
 }
 
-function firmarToken(usuario) {
+function firmarToken(usuario, extra = {}) {
   return jwt.sign(
-    { id: usuario.id, rol: usuario.rol },
+    { id: usuario.id, rol: usuario.rol, ...extra },
     JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '12h', issuer: JWT_ISSUER, audience: JWT_AUDIENCE }
   );
@@ -39,7 +39,7 @@ function requiereAuth(req, res, next) {
       return res.status(403).json({ error: 'Tu cuenta está bloqueada. Comunícate con el administrador.' });
     }
     // Se toma el rol vigente en la base, no el rol antiguo incluido en el token.
-    req.usuario = { id: usuarioActual.id, rol: usuarioActual.rol };
+    req.usuario = { id: usuarioActual.id, rol: usuarioActual.rol, impersonadoPor: payload.impersonadoPor || null };
     next();
   } catch (err) {
     return res.status(401).json({ code: 'AUTH_REQUIRED', error: 'Token inválido o expirado.' });

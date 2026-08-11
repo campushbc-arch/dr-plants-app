@@ -9,6 +9,7 @@ const { flattenFiles, multerFileFilter, safeDeleteMany, uploadLimits, validateSt
 const { cleanString, email: validarEmail, phone: validarTelefono, strongPassword } = require('../validation');
 const { audit } = require('../audit');
 const crypto = require('crypto');
+const { rolEmpresarial, modoDemo } = require('../enterprise');
 
 const router = express.Router();
 function parseCookies(req) {
@@ -148,5 +149,5 @@ router.get('/me', requiereAuth, (req, res) => {
   res.json(sinPassword(usuario));
 });
 
-function sinPassword(usuario) { const { password_hash, ...resto } = usuario; return resto; }
+function sinPassword(usuario) { const { password_hash, ...resto } = usuario; return { ...resto, rol_empresarial: rolEmpresarial(usuario.id), modo_demo: modoDemo(usuario.id) }; }
 module.exports = router;

@@ -149,3 +149,11 @@ for(const p of planesV8C){db.prepare(`INSERT INTO planes_suscripcion(id,nombre,m
 
 console.log(`Base de datos activa: ${DB_PATH}`);
 module.exports = db;
+
+// V8C.5 · separación lógica de datos demo y permisos empresariales.
+migrarColumnas('fincas', { es_demo: "INTEGER NOT NULL DEFAULT 0 CHECK(es_demo IN (0,1))" });
+migrarColumnas('lotes', { es_demo: "INTEGER NOT NULL DEFAULT 0 CHECK(es_demo IN (0,1))" });
+migrarColumnas('clientes_agronomicos', { es_demo: "INTEGER NOT NULL DEFAULT 0 CHECK(es_demo IN (0,1))" });
+for (const a of db.prepare("SELECT id FROM usuarios WHERE rol='admin'").all()) {
+  db.prepare(`INSERT OR IGNORE INTO permisos_empresariales(usuario_id,rol,activo) VALUES(?, 'super_admin', 1)`).run(a.id);
+}
