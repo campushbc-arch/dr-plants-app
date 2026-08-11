@@ -542,6 +542,52 @@ CREATE TABLE IF NOT EXISTS accesos_temporales_cultivo (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_acceso_temporal_usuario ON accesos_temporales_cultivo(usuario_id,vence_en,revocado_en);
+
+
+-- V8C.2 · Customer Success, solicitudes de cancelación y retención
+CREATE TABLE IF NOT EXISTS solicitudes_cancelacion_suscripcion (
+  id TEXT PRIMARY KEY,
+  suscripcion_id TEXT NOT NULL REFERENCES suscripciones(id) ON DELETE CASCADE,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  motivo TEXT NOT NULL,
+  explicacion TEXT NOT NULL,
+  recomendaria INTEGER DEFAULT NULL CHECK(recomendaria BETWEEN 1 AND 5),
+  mejoras TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente_revision' CHECK(estado IN ('pendiente_revision','pendiente_contacto','en_negociacion','retenida','aprobada_cancelacion','rechazada','retirada')),
+  nota_admin TEXT DEFAULT NULL,
+  gestionado_por TEXT DEFAULT NULL REFERENCES usuarios(id),
+  solicitado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT DEFAULT NULL,
+  resuelto_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cancelacion_usuario ON solicitudes_cancelacion_suscripcion(usuario_id,estado,solicitado_en);
+CREATE INDEX IF NOT EXISTS idx_cancelacion_suscripcion ON solicitudes_cancelacion_suscripcion(suscripcion_id,estado);
+
+CREATE TABLE IF NOT EXISTS acciones_retencion_suscripcion (
+  id TEXT PRIMARY KEY,
+  suscripcion_id TEXT NOT NULL REFERENCES suscripciones(id) ON DELETE CASCADE,
+  solicitud_id TEXT DEFAULT NULL REFERENCES solicitudes_cancelacion_suscripcion(id) ON DELETE SET NULL,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL CHECK(tipo IN ('contacto','cortesia','descuento','cambio_plan','congelacion','reactivacion','nota')),
+  valor TEXT DEFAULT NULL,
+  detalle TEXT DEFAULT NULL,
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_retencion_suscripcion ON acciones_retencion_suscripcion(suscripcion_id,creado_en);
+
+CREATE TABLE IF NOT EXISTS descuentos_suscripcion (
+  id TEXT PRIMARY KEY,
+  suscripcion_id TEXT NOT NULL REFERENCES suscripciones(id) ON DELETE CASCADE,
+  porcentaje INTEGER NOT NULL CHECK(porcentaje BETWEEN 1 AND 100),
+  inicia_en TEXT NOT NULL,
+  vence_en TEXT NOT NULL,
+  activo INTEGER NOT NULL DEFAULT 1 CHECK(activo IN (0,1)),
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_descuento_suscripcion ON descuentos_suscripcion(suscripcion_id,activo,vence_en);
+
 CREATE TABLE IF NOT EXISTS cobros_suscripcion (
   id TEXT PRIMARY KEY, suscripcion_id TEXT NOT NULL REFERENCES suscripciones(id) ON DELETE CASCADE,
   usuario_id TEXT NOT NULL REFERENCES usuarios(id), referencia TEXT NOT NULL UNIQUE, monto_cop INTEGER NOT NULL,

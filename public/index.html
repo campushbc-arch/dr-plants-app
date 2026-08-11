@@ -746,6 +746,21 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   <div class="pg-hdr"><button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button><span class="pg-title">Dr. Plants Professional</span></div>
   <div class="phdr-card"><div class="phdr-t">7 días gratis · Gestión profesional de cultivos</div><div class="phdr-s">Administra clientes, fincas, lotes, aplicaciones, clima, proyecciones y Dr. Agro. La prueba comienza cuando registras tu tarjeta y puedes cancelar antes del primer cobro.</div></div>
   <div id="sub-estado-box" style="padding:0 14px 10px"></div>
+  <div id="sub-mi-suscripcion" style="padding:0 14px 10px"></div>
+  <div id="sub-cancel-form" style="display:none;padding:0 14px 14px">
+    <div class="unit-card" style="padding:14px">
+      <div style="font-weight:700;margin-bottom:4px">Solicitar cancelación</div>
+      <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.45;margin-bottom:10px">Tu solicitud será revisada por administración. Mientras esté pendiente, los cobros automáticos quedan en pausa. Tu suscripción no se cancela hasta que administración la apruebe.</div>
+      <div class="fgrp"><label>Motivo principal</label><select id="sub-cancel-motivo"><option value="">Selecciona…</option><option value="precio">Precio</option><option value="no_uso">Ya no utilizo la plataforma</option><option value="venta_finca">Vendí la finca</option><option value="cierre_empresa">Cerré mi empresa o actividad</option><option value="problemas_tecnicos">Problemas técnicos</option><option value="competencia">Encontré otra solución</option><option value="no_cumplio_expectativas">No cumplió mis expectativas</option><option value="otro">Otro</option></select></div>
+      <div class="fgrp"><label>Explícanos qué te impulsa a salir</label><textarea id="sub-cancel-explicacion" rows="4" placeholder="Cuéntanos el motivo con detalle…"></textarea></div>
+      <div class="fgrp"><label>¿Recomendarías Dr. Plants?</label><select id="sub-cancel-recomienda"><option value="">Selecciona…</option><option value="5">5 · Sí, totalmente</option><option value="4">4 · Probablemente sí</option><option value="3">3 · Tal vez</option><option value="2">2 · Probablemente no</option><option value="1">1 · No</option></select></div>
+      <div class="fgrp"><label>¿Qué deberíamos mejorar?</label><textarea id="sub-cancel-mejoras" rows="3" placeholder="Tu retroalimentación es obligatoria y nos ayuda a mejorar."></textarea></div>
+      <label class="form-check"><input id="sub-cancel-confirm" class="form-check-input" type="checkbox"><span class="form-check-label">Confirmo que deseo solicitar la cancelación.</span></label>
+      <div id="sub-cancel-msg" style="font-size:11px;color:var(--color-text-secondary);margin:8px 0"></div>
+      <button class="cta-btn" style="background:#b42318" onclick="enviarSolicitudCancelacionV8C2()">Enviar solicitud de cancelación</button>
+      <button class="mini-btn" style="width:100%;margin-top:8px" onclick="document.getElementById('sub-cancel-form').style.display='none'">Volver</button>
+    </div>
+  </div>
   <div id="sub-planes" style="padding:0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"></div>
   <div id="sub-card-form" style="display:none;padding:14px">
     <div class="phdr-card" style="margin:0"><div class="phdr-t">Activa tu prueba gratuita</div><div class="phdr-s">La tarjeta se tokeniza directamente con Wompi. Dr. Plants no almacena número de tarjeta ni CVC.</div></div>
@@ -1161,11 +1176,19 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   <div id="admin-solicitudes-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div class="phdr-card" style="margin-top:12px">
-    <div class="phdr-t">Suscripciones Dr. Plants Professional · V8C</div>
+    <div class="phdr-t">Suscripciones Dr. Plants Professional · V8C.2</div>
     <div class="phdr-s">Pruebas gratuitas, planes activos, hectáreas, renovaciones y cobros recurrentes.</div>
   </div>
   <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminSuscripciones()">Actualizar</button><button class="mini-btn" onclick="procesarRenovacionesAdmin()">Procesar renovaciones</button></div>
   <div id="admin-suscripciones-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+
+  <div class="phdr-card" style="margin-top:12px">
+    <div class="phdr-t">Centro de Retención · V8C.2</div>
+    <div class="phdr-s">Revisa solicitudes de cancelación, contacta al usuario, aplica cortesías, descuentos, cambios de plan o congelaciones y aprueba la cancelación cuando corresponda.</div>
+  </div>
+  <div id="admin-retencion-metricas" style="padding:0 14px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px"></div>
+  <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminRetencionV8C2()">Actualizar</button></div>
+  <div id="admin-retencion-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
 
   <div class="phdr-card" style="margin-top:12px">
@@ -1846,6 +1869,7 @@ async function renderSuscripcionesV8C(){
     estadoBox.innerHTML=`<div class="unit-card" style="padding:12px"><b>Área actualmente administrada:</b> ${ha.toFixed(1)} ha<br><span style="font-size:11px;color:var(--color-text-secondary)">${e.estado==='sin_suscripcion'?'Selecciona un plan y registra tu tarjeta para comenzar la prueba gratuita.':e.estado==='acceso_temporal'?`Acceso temporal habilitado hasta ${new Date(e.venceEn).toLocaleDateString('es-CO')}`:`Estado: ${e.estado}`}</span></div>`;
     planesBox.innerHTML=SUB_V8C.planes.map(x=>`<div class="unit-card" style="padding:14px;border:${x.id===recomendado?'1.5px solid #3B6D11':'0.5px solid var(--color-border-tertiary)'}"><div style="display:flex;justify-content:space-between;gap:8px"><b>${x.nombre}</b>${x.id===recomendado?'<span class="viz-badge">Recomendado</span>':''}</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px">${x.minHa}–${x.maxHa||'∞'} hectáreas</div><div style="font-size:18px;font-weight:700;margin-top:9px">${dineroCOP(x.mensual)}<span style="font-size:10px;font-weight:400"> / mes</span></div><div style="font-size:11px;margin-top:4px">Anual: <b>${dineroCOP(x.anual)}</b> · 30% menos</div><button class="mini-btn" style="width:100%;margin-top:10px" onclick="seleccionarPlanV8C('${x.id}')">Elegir plan</button></div>`).join('');
     if(a?.terminos?.permalink)document.getElementById('sub-terms-link').href=a.terminos.permalink;if(a?.datos?.permalink)document.getElementById('sub-data-link').href=a.datos.permalink;
+    await renderMiSuscripcionV8C2();
   }catch(err){estadoBox.innerHTML=`<div class="unit-card" style="padding:12px;color:#b42318">${err.message}</div>`;}
 }
 function seleccionarPlanV8C(id){const p=SUB_V8C.planes.find(x=>x.id===id);if(!p)return;SUB_V8C.seleccion=p;document.getElementById('sub-plan-label').value=`${p.nombre} · ${p.minHa}–${p.maxHa||'∞'} ha`;document.getElementById('sub-card-holder').value=SESION.nombre||'';document.getElementById('sub-card-form').style.display='block';document.getElementById('sub-card-form').scrollIntoView({behavior:'smooth'});}
@@ -1863,6 +1887,39 @@ async function activarTrialSuscripcion(){
    alert('Prueba gratuita activada hasta '+new Date(r.pruebaHasta).toLocaleDateString('es-CO')+'.');await cargarFincasDesdeBackend();go('cultivo','cultivo');
  }catch(e){msg.textContent=e.message||'No fue posible activar la prueba.';}finally{btn.disabled=false;}
 }
+async function renderMiSuscripcionV8C2(){
+  const box=document.getElementById('sub-mi-suscripcion');if(!box||!SESION.autenticado)return;
+  try{
+    const d=await apiFetch('/api/suscripciones/mi-suscripcion');const s=d.suscripcion,sol=d.solicitudCancelacion;
+    if(!s){box.innerHTML='';return;}
+    const estadoSol=sol?`<div style="margin-top:8px;padding:9px;border-radius:8px;background:var(--color-background-secondary);font-size:11px"><b>Solicitud de cancelación:</b> ${escapeHtml(sol.estado||'')}<br>${sol.nota_admin?`<span style="color:var(--color-text-secondary)">${escapeHtml(sol.nota_admin)}</span>`:''}</div>`:'';
+    box.innerHTML=`<div class="unit-card" style="padding:14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><div style="font-size:10px;color:var(--color-text-secondary)">Mi suscripción</div><div style="font-size:16px;font-weight:700">${escapeHtml(s.plan_nombre||s.plan_id)}</div></div><span class="viz-badge">${escapeHtml(s.estado)}</span></div><div style="font-size:11px;margin-top:7px;line-height:1.55">Periodicidad: <b>${escapeHtml(s.periodicidad)}</b><br>Área administrada: <b>${Number(d.hectareas||0).toFixed(1)} ha</b><br>Próximo cobro: <b>${s.proximo_cobro?new Date(s.proximo_cobro).toLocaleDateString('es-CO'):'—'}</b>${s.marca||s.ultimos4?`<br>Medio de pago: <b>${escapeHtml(s.marca||'Tarjeta')} •••• ${escapeHtml(s.ultimos4||'')}</b>`:''}${d.descuento?`<br>Descuento vigente: <b>${d.descuento.porcentaje}%</b> hasta ${new Date(d.descuento.vence_en).toLocaleDateString('es-CO')}`:''}</div>${estadoSol}<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">${!sol||!['pendiente_revision','pendiente_contacto','en_negociacion'].includes(sol.estado)?'<button class="mini-btn" style="color:#b42318" onclick="abrirSolicitudCancelacionV8C2()">Solicitar cancelación</button>':''}</div></div>`;
+  }catch(e){box.innerHTML=`<div class="unit-card" style="padding:10px">${escapeHtml(e.message)}</div>`;}
+}
+function abrirSolicitudCancelacionV8C2(){document.getElementById('sub-cancel-form').style.display='block';document.getElementById('sub-cancel-form').scrollIntoView({behavior:'smooth'});}
+async function enviarSolicitudCancelacionV8C2(){
+  const msg=document.getElementById('sub-cancel-msg');const motivo=document.getElementById('sub-cancel-motivo').value;const explicacion=document.getElementById('sub-cancel-explicacion').value.trim();const recomendaria=Number(document.getElementById('sub-cancel-recomienda').value);const mejoras=document.getElementById('sub-cancel-mejoras').value.trim();
+  if(!document.getElementById('sub-cancel-confirm').checked){msg.textContent='Debes confirmar que deseas enviar la solicitud.';return;}
+  try{msg.textContent='Enviando solicitud…';const r=await apiFetch('/api/suscripciones/solicitar-cancelacion',{method:'POST',body:JSON.stringify({motivo,explicacion,recomendaria,mejoras})});alert(r.mensaje||'Solicitud enviada.');document.getElementById('sub-cancel-form').style.display='none';await renderMiSuscripcionV8C2();}catch(e){msg.textContent=e.message||'No fue posible enviar la solicitud.';}
+}
+
+function estadoCancelacionLabel(e){return ({pendiente_revision:'Pendiente de revisión',pendiente_contacto:'Pendiente de contacto',en_negociacion:'En negociación',retenida:'Retenida',aprobada_cancelacion:'Cancelación aprobada',rechazada:'Rechazada',retirada:'Retirada'})[e]||e;}
+async function renderAdminRetencionV8C2(){
+  const list=document.getElementById('admin-retencion-list'),metrics=document.getElementById('admin-retencion-metricas');if(!list||SESION.rol!=='admin')return;
+  try{
+    const [rows,m]=await Promise.all([apiFetch('/api/suscripciones/admin/cancelaciones'),apiFetch('/api/suscripciones/admin/customer-success-metricas')]);
+    metrics.innerHTML=[['Activos',m.activos],['Solicitudes',m.solicitudes],['Abiertas',m.abiertas],['Retenidos',m.retenidas],['Cancelados',m.canceladas],['Retención',m.retencion+'%']].map(x=>`<div class="metric-card"><div style="font-size:10px;color:var(--color-text-secondary)">${x[0]}</div><div class="viz-stat-value">${x[1]}</div></div>`).join('');
+    list.innerHTML=rows.length?rows.map(c=>`<div class="unit-card" style="padding:12px"><div style="display:flex;justify-content:space-between;gap:8px"><div><b>${escapeHtml(c.nombre)}</b> · ${escapeHtml(c.plan_nombre)}</div><span class="viz-badge">${escapeHtml(estadoCancelacionLabel(c.estado))}</span></div><div style="font-size:10.5px;color:var(--color-text-secondary)">${escapeHtml(c.email||'')} · ${escapeHtml(c.telefono||'')}</div><div style="font-size:11px;margin-top:7px"><b>Motivo:</b> ${escapeHtml(c.motivo)}<br><b>Explicación:</b> ${escapeHtml(c.explicacion)}<br><b>Recomendaría:</b> ${Number(c.recomendaria||0)}/5<br><b>Mejoraría:</b> ${escapeHtml(c.mejoras)}<br><b>Total pagado:</b> ${dineroCOP(Number(c.total_pagado_cop||0))}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px">${['pendiente_revision','pendiente_contacto','en_negociacion'].includes(c.estado)?`<button class="mini-btn" onclick="gestionarEstadoCancelacionV8C2('${c.id}','pendiente_contacto')">Contactar</button><button class="mini-btn" onclick="gestionarEstadoCancelacionV8C2('${c.id}','en_negociacion')">Negociar</button><button class="mini-btn" onclick="darCortesiaV8C2('${c.id}')">Cortesía</button><button class="mini-btn" onclick="darDescuentoV8C2('${c.id}')">Descuento</button><button class="mini-btn" onclick="cambiarPlanV8C2('${c.id}')">Cambiar plan</button><button class="mini-btn" onclick="congelarSuscripcionV8C2('${c.id}')">Congelar</button><button class="mini-btn" style="color:#1b5e20" onclick="retenerSuscripcionV8C2('${c.id}')">Marcar retenida</button><button class="mini-btn" style="color:#b42318" onclick="aprobarCancelacionV8C2('${c.id}')">Aprobar cancelación</button>`:''}</div></div>`).join(''):'<div class="unit-card" style="padding:10px">No hay solicitudes de cancelación.</div>';
+  }catch(e){list.innerHTML=`<div class="unit-card" style="padding:10px">${escapeHtml(e.message)}</div>`;}
+}
+async function gestionarEstadoCancelacionV8C2(id,estado){const nota=prompt('Nota de gestión para el usuario (opcional):','')||'';try{await apiFetch(`/api/suscripciones/admin/cancelaciones/${id}/estado`,{method:'PATCH',body:JSON.stringify({estado,nota})});renderAdminRetencionV8C2();}catch(e){alert(e.message)}}
+async function aprobarCancelacionV8C2(id){const nota=prompt('Nota de aprobación:','Cancelación aprobada por administración.')||'';if(!confirm('¿Aprobar la cancelación? No se generarán nuevas renovaciones.'))return;try{await apiFetch(`/api/suscripciones/admin/cancelaciones/${id}/aprobar`,{method:'POST',body:JSON.stringify({nota})});renderAdminRetencionV8C2();renderAdminSuscripciones();}catch(e){alert(e.message)}}
+async function retenerSuscripcionV8C2(id){const nota=prompt('¿Qué acuerdo permitió retener al usuario?','')||'';try{await apiFetch(`/api/suscripciones/admin/cancelaciones/${id}/retener`,{method:'POST',body:JSON.stringify({nota})});renderAdminRetencionV8C2();renderAdminSuscripciones();}catch(e){alert(e.message)}}
+async function darCortesiaV8C2(id){const dias=Number(prompt('Días de cortesía: 30, 60, 90 o 180','30'));const nota=prompt('Nota (opcional):','')||'';try{await apiFetch(`/api/suscripciones/admin/cancelaciones/${id}/cortesia`,{method:'POST',body:JSON.stringify({dias,nota})});renderAdminRetencionV8C2();}catch(e){alert(e.message)}}
+async function darDescuentoV8C2(id){const porcentaje=Number(prompt('Descuento: 10, 20, 30 o 50','20'));const meses=Number(prompt('Duración en meses: 1, 3 o 6','3'));const nota=prompt('Nota (opcional):','')||'';try{await apiFetch(`/api/suscripciones/admin/cancelaciones/${id}/descuento`,{method:'POST',body:JSON.stringify({porcentaje,meses,nota})});renderAdminRetencionV8C2();}catch(e){alert(e.message)}}
+async function cambiarPlanV8C2(id){const planId=(prompt('Nuevo plan: starter, professional, business, enterprise o corporate','starter')||'').trim().toLowerCase();const nota=prompt('Nota (opcional):','')||'';try{await apiFetch(`/api/suscripciones/admin/cancelaciones/${id}/cambiar-plan`,{method:'POST',body:JSON.stringify({planId,nota})});renderAdminRetencionV8C2();renderAdminSuscripciones();}catch(e){alert(e.message)}}
+async function congelarSuscripcionV8C2(id){const dias=Number(prompt('Congelar 30, 60 o 90 días','30'));const nota=prompt('Nota (opcional):','')||'';try{await apiFetch(`/api/suscripciones/admin/cancelaciones/${id}/congelar`,{method:'POST',body:JSON.stringify({dias,nota})});renderAdminRetencionV8C2();}catch(e){alert(e.message)}}
+
 async function renderAdminSuscripciones(){const box=document.getElementById('admin-suscripciones-list');if(!box||SESION.rol!=='admin')return;try{const rows=await apiFetch('/api/suscripciones/admin');box.innerHTML=rows.length?rows.map(s=>`<div class="unit-card" style="padding:11px"><b>${s.nombre}</b> · ${s.plan_nombre}<div style="font-size:10.5px;color:var(--color-text-secondary)">${s.email||''} · ${s.periodicidad} · <b>${s.estado}</b></div><div style="font-size:10.5px;margin-top:3px">Prueba hasta: ${s.prueba_hasta?new Date(s.prueba_hasta).toLocaleDateString('es-CO'):'—'} · Próximo cobro: ${s.proximo_cobro?new Date(s.proximo_cobro).toLocaleDateString('es-CO'):'—'}</div></div>`).join(''):'<div class="unit-card" style="padding:10px">Aún no hay suscripciones.</div>';}catch(e){box.innerHTML='<div class="unit-card" style="padding:10px">'+e.message+'</div>';}}
 async function procesarRenovacionesAdmin(){try{const r=await apiFetch('/api/suscripciones/procesar-renovaciones',{method:'POST',body:'{}'});alert(`Proceso terminado. ${r.procesadas} suscripciones revisadas.`);renderAdminSuscripciones();}catch(e){alert(e.message)}}
 
@@ -2548,7 +2605,7 @@ async function go(sid,nid){
   if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
-  if(sid==='panel-admin'){setTimeout(cargarConocimientoAdminV8B,0);setTimeout(renderAdminSuscripciones,0);setTimeout(renderAdminAccesosTemporales,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
+  if(sid==='panel-admin'){setTimeout(cargarConocimientoAdminV8B,0);setTimeout(renderAdminSuscripciones,0);setTimeout(renderAdminAccesosTemporales,0);setTimeout(renderAdminRetencionV8C2,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
   if(sid==='lote-nuevo')actualizarHintPiso();
   if(sid==='home')renderHomeStats();
 }

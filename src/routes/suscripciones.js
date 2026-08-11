@@ -43,10 +43,46 @@ router.post('/activar-prueba',requiereAuth,async(req,res,next)=>{try{
   res.status(201).json({ok:true,suscripcionId:sid,pruebaHasta:trialEnd,plan,periodicidad});
 }catch(e){next(e)}});
 
-router.post('/cancelar',requiereAuth,(req,res)=>{const s=db.prepare(`SELECT * FROM suscripciones WHERE usuario_id=? AND estado IN ('trial','activa','morosa') ORDER BY creado_en DESC LIMIT 1`).get(req.usuario.id);if(!s)return res.status(404).json({error:'No tienes una suscripción cancelable.'});db.prepare(`UPDATE suscripciones SET cancelar_al_final=1,actualizado_en=datetime('now') WHERE id=?`).run(s.id);res.json({ok:true,mensaje:'La suscripción no se renovará al finalizar el periodo vigente.'});});
+router.get('/mi-suscripcion',requiereAuth,(req,res)=>{
+ const s=db.prepare(`SELECT s.*,p.nombre plan_nombre,p.min_ha,p.max_ha,p.precio_mensual_cop,p.precio_anual_cop,f.marca,f.ultimos4 FROM suscripciones s JOIN planes_suscripcion p ON p.id=s.plan_id LEFT JOIN fuentes_pago_suscripcion f ON f.id=s.fuente_pago_id WHERE s.usuario_id=? ORDER BY s.creado_en DESC LIMIT 1`).get(req.usuario.id);
+ if(!s)return res.json({suscripcion:null,solicitudCancelacion:null,hectareas:hectareasUsuario(req.usuario.id,req.usuario.rol),pagos:[]});
+ const solicitud=solicitudCancelacionAbierta(s.id)||db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE suscripcion_id=? ORDER BY solicitado_en DESC LIMIT 1`).get(s.id)||null;
+ const pagos=db.prepare(`SELECT referencia,monto_cop,estado,creado_en,wompi_transaccion_id FROM cobros_suscripcion WHERE suscripcion_id=? ORDER BY creado_en DESC LIMIT 20`).all(s.id);
+ const descuento=descuentoVigente(s.id);
+ res.json({suscripcion:s,solicitudCancelacion:solicitud,hectareas:hectareasUsuario(req.usuario.id,req.usuario.rol),pagos,descuento});
+});
+
+router.post('/solicitar-cancelacion',requiereAuth,(req,res)=>{
+ const s=db.prepare(`SELECT * FROM suscripciones WHERE usuario_id=? AND estado IN ('trial','activa','morosa') ORDER BY creado_en DESC LIMIT 1`).get(req.usuario.id);
+ if(!s)return res.status(404).json({error:'No tienes una suscripción que pueda solicitar cancelación.'});
+ if(solicitudCancelacionAbierta(s.id))return res.status(409).json({error:'Ya tienes una solicitud de cancelación en revisión.'});
+ const motivos=['precio','no_uso','venta_finca','cierre_empresa','problemas_tecnicos','competencia','no_cumplio_expectativas','otro'];
+ const motivo=String(req.body?.motivo||'').trim();const explicacion=String(req.body?.explicacion||'').trim();const mejoras=String(req.body?.mejoras||'').trim();const recomendaria=Number(req.body?.recomendaria);
+ if(!motivos.includes(motivo))return res.status(400).json({error:'Selecciona un motivo válido.'});
+ if(explicacion.length<10)return res.status(400).json({error:'Explica el motivo con al menos 10 caracteres.'});
+ if(mejoras.length<5)return res.status(400).json({error:'Cuéntanos qué podríamos mejorar.'});
+ if(!Number.isInteger(recomendaria)||recomendaria<1||recomendaria>5)return res.status(400).json({error:'Califica de 1 a 5.'});
+ const id=nuevoId('can');db.prepare(`INSERT INTO solicitudes_cancelacion_suscripcion(id,suscripcion_id,usuario_id,motivo,explicacion,recomendaria,mejoras,estado,solicitado_en) VALUES(?,?,?,?,?,?,?,'pendiente_revision',datetime('now'))`).run(id,s.id,req.usuario.id,motivo,explicacion,recomendaria,mejoras);
+ crearNotificacionAdmin({tipo:'cancelacion_suscripcion',titulo:'Nueva solicitud de cancelación',mensaje:`${req.usuario.nombre||'Un usuario'} solicitó cancelar su suscripción. Motivo: ${motivo}.`,usuarioId:req.usuario.id,entidadTipo:'solicitud_cancelacion',entidadId:id,prioridad:'alta'});
+ crearNotificacionUsuario({usuarioId:req.usuario.id,tipo:'cancelacion_suscripcion',titulo:'Solicitud recibida',mensaje:'Recibimos tu solicitud de cancelación. La renovación automática queda en pausa mientras administración revisa tu caso.',entidadTipo:'solicitud_cancelacion',entidadId:id,prioridad:'normal'});
+ audit({req,action:'solicitar_cancelacion_suscripcion',entityType:'suscripcion',entityId:s.id,metadata:{solicitudId:id,motivo,recomendaria}});
+ res.status(201).json({ok:true,id,estado:'pendiente_revision',mensaje:'Solicitud enviada. No se generarán cobros automáticos mientras esté en revisión.'});
+});
+
+function solicitudCancelacionAbierta(suscripcionId){
+ return db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE suscripcion_id=? AND estado IN ('pendiente_revision','pendiente_contacto','en_negociacion') ORDER BY solicitado_en DESC LIMIT 1`).get(suscripcionId)||null;
+}
+function descuentoVigente(suscripcionId){
+ return db.prepare(`SELECT * FROM descuentos_suscripcion WHERE suscripcion_id=? AND activo=1 AND datetime(inicia_en)<=datetime('now') AND datetime(vence_en)>datetime('now') ORDER BY porcentaje DESC, creado_en DESC LIMIT 1`).get(suscripcionId)||null;
+}
+function registrarAccionRetencion({suscripcionId,solicitudId=null,usuarioId,tipo,valor=null,detalle=null,creadoPor=null}){
+ const id=nuevoId('ret');
+ db.prepare(`INSERT INTO acciones_retencion_suscripcion(id,suscripcion_id,solicitud_id,usuario_id,tipo,valor,detalle,creado_por,creado_en) VALUES(?,?,?,?,?,?,?,?,datetime('now'))`).run(id,suscripcionId,solicitudId,usuarioId,tipo,valor,detalle,creadoPor);
+ return id;
+}
 
 async function cobrarSuscripcion(s){
- const plan=PLANES.find(p=>p.id===s.plan_id);if(!plan)throw new Error('Plan no encontrado');const monto=s.periodicidad==='anual'?plan.anual:plan.mensual;const fuente=db.prepare('SELECT * FROM fuentes_pago_suscripcion WHERE id=?').get(s.fuente_pago_id);const u=db.prepare('SELECT * FROM usuarios WHERE id=?').get(s.usuario_id);if(!fuente||!u)throw new Error('Fuente o usuario no encontrado');
+ const plan=PLANES.find(p=>p.id===s.plan_id);if(!plan)throw new Error('Plan no encontrado');let monto=s.periodicidad==='anual'?plan.anual:plan.mensual;const descuento=descuentoVigente(s.id);if(descuento)monto=Math.max(0,Math.round(monto*(100-Number(descuento.porcentaje))/100));const fuente=db.prepare('SELECT * FROM fuentes_pago_suscripcion WHERE id=?').get(s.fuente_pago_id);const u=db.prepare('SELECT * FROM usuarios WHERE id=?').get(s.usuario_id);if(!fuente||!u)throw new Error('Fuente o usuario no encontrado');
  const ref=`DRP-SUB-${Date.now()}-${Math.random().toString(16).slice(2,10)}`;const body={amount_in_cents:monto*100,currency:'COP',customer_email:u.email,reference:ref,payment_source_id:Number(fuente.wompi_payment_source_id),recurrent:true,payment_method:{installments:1}};
  const r=await wompi('/transactions',{private:true,method:'POST',body});const trx=r.data||r;const id=nuevoId('chg');db.prepare(`INSERT INTO cobros_suscripcion(id,suscripcion_id,usuario_id,referencia,monto_cop,estado,wompi_transaccion_id,respuesta_wompi,creado_en) VALUES(?,?,?,?,?,?,?,?,datetime('now'))`).run(id,s.id,s.usuario_id,ref,monto,String(trx.status||'PENDING').toUpperCase(),trx.id||null,JSON.stringify(trx));return {id,trx,monto};
 }
@@ -54,6 +90,7 @@ async function cobrarSuscripcion(s){
 async function procesarRenovaciones(){
  const now=new Date().toISOString();const pendientes=db.prepare(`SELECT * FROM suscripciones WHERE estado IN ('trial','activa','morosa') AND proximo_cobro IS NOT NULL AND proximo_cobro<=?`).all(now);
  for(const s of pendientes){try{
+   if(solicitudCancelacionAbierta(s.id)){continue;}
    if(s.cancelar_al_final){db.prepare(`UPDATE suscripciones SET estado='cancelada',actualizado_en=datetime('now') WHERE id=?`).run(s.id);continue;}
    const {trx,monto}=await cobrarSuscripcion(s);const estado=String(trx.status||'PENDING').toUpperCase();
    if(estado==='APPROVED'){
@@ -107,5 +144,70 @@ router.delete('/admin/accesos-temporales/:id',requiereAuth,requiereRol('admin'),
   audit({req,action:'revocar_acceso_temporal',entityType:'usuario',entityId:a.usuario_id,metadata:{accesoId:a.id}});
   res.json({ok:true});
 });
+
+
+
+// V8C.2 · Centro de Retención y Customer Success
+router.get('/admin/cancelaciones',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const rows=db.prepare(`SELECT c.*,u.nombre,u.email,u.telefono,s.plan_id,s.periodicidad,s.estado AS suscripcion_estado,s.prueba_hasta,s.periodo_hasta,s.proximo_cobro,p.nombre plan_nombre,p.precio_mensual_cop,p.precio_anual_cop,
+   (SELECT COALESCE(SUM(monto_cop),0) FROM cobros_suscripcion co WHERE co.suscripcion_id=s.id AND co.estado='APPROVED') total_pagado_cop,
+   (SELECT COUNT(*) FROM acciones_retencion_suscripcion ar WHERE ar.solicitud_id=c.id) acciones_count
+   FROM solicitudes_cancelacion_suscripcion c JOIN usuarios u ON u.id=c.usuario_id JOIN suscripciones s ON s.id=c.suscripcion_id JOIN planes_suscripcion p ON p.id=s.plan_id ORDER BY CASE c.estado WHEN 'pendiente_revision' THEN 1 WHEN 'pendiente_contacto' THEN 2 WHEN 'en_negociacion' THEN 3 ELSE 4 END,c.solicitado_en DESC`).all();
+ res.json(rows);
+});
+
+router.get('/admin/customer-success-metricas',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const activos=Number(db.prepare(`SELECT COUNT(*) n FROM suscripciones WHERE estado IN ('trial','activa','morosa')`).get()?.n||0);
+ const solicitudes=Number(db.prepare(`SELECT COUNT(*) n FROM solicitudes_cancelacion_suscripcion`).get()?.n||0);
+ const canceladas=Number(db.prepare(`SELECT COUNT(*) n FROM solicitudes_cancelacion_suscripcion WHERE estado='aprobada_cancelacion'`).get()?.n||0);
+ const retenidas=Number(db.prepare(`SELECT COUNT(*) n FROM solicitudes_cancelacion_suscripcion WHERE estado='retenida'`).get()?.n||0);
+ const abiertas=Number(db.prepare(`SELECT COUNT(*) n FROM solicitudes_cancelacion_suscripcion WHERE estado IN ('pendiente_revision','pendiente_contacto','en_negociacion')`).get()?.n||0);
+ const retencion=(retenidas+canceladas)>0?Math.round((retenidas/(retenidas+canceladas))*100):0;
+ const motivos=db.prepare(`SELECT motivo,COUNT(*) cantidad FROM solicitudes_cancelacion_suscripcion GROUP BY motivo ORDER BY cantidad DESC`).all();
+ res.json({activos,solicitudes,canceladas,retenidas,abiertas,retencion,motivos});
+});
+
+router.patch('/admin/cancelaciones/:id/estado',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const c=db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE id=?`).get(req.params.id);if(!c)return res.status(404).json({error:'Solicitud no encontrada.'});
+ const estados=['pendiente_revision','pendiente_contacto','en_negociacion'];const estado=String(req.body?.estado||'');if(!estados.includes(estado))return res.status(400).json({error:'Estado inválido.'});
+ const nota=String(req.body?.nota||'').trim()||null;db.prepare(`UPDATE solicitudes_cancelacion_suscripcion SET estado=?,nota_admin=?,gestionado_por=?,actualizado_en=datetime('now') WHERE id=?`).run(estado,nota,req.usuario.id,c.id);
+ registrarAccionRetencion({suscripcionId:c.suscripcion_id,solicitudId:c.id,usuarioId:c.usuario_id,tipo:'contacto',valor:estado,detalle:nota,creadoPor:req.usuario.id});
+ crearNotificacionUsuario({usuarioId:c.usuario_id,tipo:'cancelacion_suscripcion',titulo:'Actualización de tu solicitud',mensaje:estado==='pendiente_contacto'?'Nuestro equipo se pondrá en contacto contigo para revisar tu solicitud.':'Tu solicitud está siendo revisada por nuestro equipo.',entidadTipo:'solicitud_cancelacion',entidadId:c.id});
+ res.json({ok:true});
+});
+
+router.post('/admin/cancelaciones/:id/aprobar',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const c=db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE id=?`).get(req.params.id);if(!c)return res.status(404).json({error:'Solicitud no encontrada.'});
+ const nota=String(req.body?.nota||'').trim()||'Cancelación aprobada por administración.';
+ const tx=db.transaction(()=>{db.prepare(`UPDATE solicitudes_cancelacion_suscripcion SET estado='aprobada_cancelacion',nota_admin=?,gestionado_por=?,actualizado_en=datetime('now'),resuelto_en=datetime('now') WHERE id=?`).run(nota,req.usuario.id,c.id);db.prepare(`UPDATE suscripciones SET cancelar_al_final=1,actualizado_en=datetime('now') WHERE id=?`).run(c.suscripcion_id);});tx();
+ registrarAccionRetencion({suscripcionId:c.suscripcion_id,solicitudId:c.id,usuarioId:c.usuario_id,tipo:'nota',valor:'cancelacion_aprobada',detalle:nota,creadoPor:req.usuario.id});
+ crearNotificacionUsuario({usuarioId:c.usuario_id,tipo:'cancelacion_aprobada',titulo:'Cancelación aprobada',mensaje:'Tu cancelación fue aprobada. Mantendrás acceso hasta finalizar el periodo vigente y no se generarán nuevas renovaciones.',entidadTipo:'suscripcion',entidadId:c.suscripcion_id,prioridad:'alta'});
+ audit({req,action:'aprobar_cancelacion_suscripcion',entityType:'suscripcion',entityId:c.suscripcion_id,metadata:{solicitudId:c.id}});res.json({ok:true});
+});
+
+router.post('/admin/cancelaciones/:id/retener',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const c=db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE id=?`).get(req.params.id);if(!c)return res.status(404).json({error:'Solicitud no encontrada.'});
+ const nota=String(req.body?.nota||'').trim()||'El usuario decidió continuar.';db.prepare(`UPDATE solicitudes_cancelacion_suscripcion SET estado='retenida',nota_admin=?,gestionado_por=?,actualizado_en=datetime('now'),resuelto_en=datetime('now') WHERE id=?`).run(nota,req.usuario.id,c.id);db.prepare(`UPDATE suscripciones SET cancelar_al_final=0,actualizado_en=datetime('now') WHERE id=?`).run(c.suscripcion_id);
+ registrarAccionRetencion({suscripcionId:c.suscripcion_id,solicitudId:c.id,usuarioId:c.usuario_id,tipo:'nota',valor:'retenida',detalle:nota,creadoPor:req.usuario.id});crearNotificacionUsuario({usuarioId:c.usuario_id,tipo:'suscripcion_retenida',titulo:'Tu suscripción continúa activa',mensaje:'Gracias por continuar con Dr. Plants. Tu renovación automática volvió a quedar activa.',entidadTipo:'suscripcion',entidadId:c.suscripcion_id});res.json({ok:true});
+});
+
+router.post('/admin/cancelaciones/:id/cortesia',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const c=db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE id=?`).get(req.params.id);if(!c)return res.status(404).json({error:'Solicitud no encontrada.'});const dias=Math.floor(Number(req.body?.dias));if(![30,60,90,180].includes(dias))return res.status(400).json({error:'Cortesía permitida: 30, 60, 90 o 180 días.'});
+ const s=db.prepare(`SELECT * FROM suscripciones WHERE id=?`).get(c.suscripcion_id);const base=s.proximo_cobro&&new Date(s.proximo_cobro)>new Date()?new Date(s.proximo_cobro):new Date();const nuevo=addDays(base,dias);db.prepare(`UPDATE suscripciones SET proximo_cobro=?,periodo_hasta=CASE WHEN periodo_hasta IS NULL THEN ? ELSE ? END,actualizado_en=datetime('now') WHERE id=?`).run(nuevo,nuevo,nuevo,s.id);registrarAccionRetencion({suscripcionId:s.id,solicitudId:c.id,usuarioId:c.usuario_id,tipo:'cortesia',valor:String(dias),detalle:String(req.body?.nota||''),creadoPor:req.usuario.id});db.prepare(`UPDATE solicitudes_cancelacion_suscripcion SET estado='en_negociacion',gestionado_por=?,actualizado_en=datetime('now') WHERE id=?`).run(req.usuario.id,c.id);crearNotificacionUsuario({usuarioId:c.usuario_id,tipo:'cortesia_suscripcion',titulo:'Cortesía aplicada',mensaje:`Administración agregó ${dias} días sin cobro a tu suscripción.`,entidadTipo:'suscripcion',entidadId:s.id});res.json({ok:true,proximoCobro:nuevo});
+});
+
+router.post('/admin/cancelaciones/:id/descuento',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const c=db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE id=?`).get(req.params.id);if(!c)return res.status(404).json({error:'Solicitud no encontrada.'});const porcentaje=Math.floor(Number(req.body?.porcentaje));const meses=Math.floor(Number(req.body?.meses));if(![10,20,30,50].includes(porcentaje)||![1,3,6].includes(meses))return res.status(400).json({error:'Descuento o duración inválidos.'});const inicio=new Date(),fin=addMonths(inicio,meses),id=nuevoId('dsc');db.prepare(`UPDATE descuentos_suscripcion SET activo=0 WHERE suscripcion_id=? AND activo=1`).run(c.suscripcion_id);db.prepare(`INSERT INTO descuentos_suscripcion(id,suscripcion_id,porcentaje,inicia_en,vence_en,activo,creado_por,creado_en) VALUES(?,?,?,?,?,1,?,datetime('now'))`).run(id,c.suscripcion_id,porcentaje,inicio.toISOString(),fin,req.usuario.id);registrarAccionRetencion({suscripcionId:c.suscripcion_id,solicitudId:c.id,usuarioId:c.usuario_id,tipo:'descuento',valor:`${porcentaje}%/${meses}m`,detalle:String(req.body?.nota||''),creadoPor:req.usuario.id});db.prepare(`UPDATE solicitudes_cancelacion_suscripcion SET estado='en_negociacion',gestionado_por=?,actualizado_en=datetime('now') WHERE id=?`).run(req.usuario.id,c.id);crearNotificacionUsuario({usuarioId:c.usuario_id,tipo:'descuento_suscripcion',titulo:'Oferta especial aplicada',mensaje:`Tienes un ${porcentaje}% de descuento durante ${meses} mes(es).`,entidadTipo:'suscripcion',entidadId:c.suscripcion_id});res.json({ok:true,porcentaje,venceEn:fin});
+});
+
+router.post('/admin/cancelaciones/:id/cambiar-plan',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const c=db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE id=?`).get(req.params.id);if(!c)return res.status(404).json({error:'Solicitud no encontrada.'});const plan=PLANES.find(x=>x.id===String(req.body?.planId||''));if(!plan)return res.status(400).json({error:'Plan inválido.'});const ha=hectareasUsuario(c.usuario_id,db.prepare('SELECT rol FROM usuarios WHERE id=?').get(c.usuario_id)?.rol||'productor');if(plan.maxHa!=null&&ha>plan.maxHa)return res.status(422).json({error:`El usuario administra ${ha.toFixed(1)} ha y supera el límite de ${plan.nombre}.`});db.prepare(`UPDATE suscripciones SET plan_id=?,max_ha_plan=?,cancelar_al_final=0,actualizado_en=datetime('now') WHERE id=?`).run(plan.id,plan.maxHa,c.suscripcion_id);registrarAccionRetencion({suscripcionId:c.suscripcion_id,solicitudId:c.id,usuarioId:c.usuario_id,tipo:'cambio_plan',valor:plan.id,detalle:String(req.body?.nota||''),creadoPor:req.usuario.id});db.prepare(`UPDATE solicitudes_cancelacion_suscripcion SET estado='en_negociacion',gestionado_por=?,actualizado_en=datetime('now') WHERE id=?`).run(req.usuario.id,c.id);crearNotificacionUsuario({usuarioId:c.usuario_id,tipo:'cambio_plan',titulo:'Plan actualizado',mensaje:`Tu suscripción fue cambiada al plan ${plan.nombre}.`,entidadTipo:'suscripcion',entidadId:c.suscripcion_id});res.json({ok:true,plan});
+});
+
+router.post('/admin/cancelaciones/:id/congelar',requiereAuth,requiereRol('admin'),(req,res)=>{
+ const c=db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE id=?`).get(req.params.id);if(!c)return res.status(404).json({error:'Solicitud no encontrada.'});const dias=Math.floor(Number(req.body?.dias));if(![30,60,90].includes(dias))return res.status(400).json({error:'Congelación permitida: 30, 60 o 90 días.'});const s=db.prepare(`SELECT * FROM suscripciones WHERE id=?`).get(c.suscripcion_id);const base=s.proximo_cobro?new Date(s.proximo_cobro):new Date();const proximo=addDays(base,dias);const hasta=s.periodo_hasta?addDays(new Date(s.periodo_hasta),dias):proximo;db.prepare(`UPDATE suscripciones SET proximo_cobro=?,periodo_hasta=?,actualizado_en=datetime('now') WHERE id=?`).run(proximo,hasta,s.id);registrarAccionRetencion({suscripcionId:s.id,solicitudId:c.id,usuarioId:c.usuario_id,tipo:'congelacion',valor:String(dias),detalle:String(req.body?.nota||''),creadoPor:req.usuario.id});db.prepare(`UPDATE solicitudes_cancelacion_suscripcion SET estado='en_negociacion',gestionado_por=?,actualizado_en=datetime('now') WHERE id=?`).run(req.usuario.id,c.id);crearNotificacionUsuario({usuarioId:c.usuario_id,tipo:'suscripcion_congelada',titulo:'Suscripción congelada',mensaje:`Tu próximo cobro fue aplazado ${dias} días. Tus datos permanecen guardados.`,entidadTipo:'suscripcion',entidadId:s.id});res.json({ok:true,proximoCobro:proximo});
+});
+
+router.get('/admin/cancelaciones/:id/historial',requiereAuth,requiereRol('admin'),(req,res)=>{const c=db.prepare(`SELECT * FROM solicitudes_cancelacion_suscripcion WHERE id=?`).get(req.params.id);if(!c)return res.status(404).json({error:'Solicitud no encontrada.'});res.json(db.prepare(`SELECT a.*,u.nombre admin_nombre FROM acciones_retencion_suscripcion a LEFT JOIN usuarios u ON u.id=a.creado_por WHERE a.solicitud_id=? ORDER BY a.creado_en DESC`).all(c.id));});
 
 module.exports={router,procesarRenovaciones};

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c-suscripciones';
+const CACHE_NAME = 'dr-plants-v8c2-retencion';
 const APP_SHELL = [
   '/',
   '/manifest.json',
