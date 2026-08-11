@@ -1167,6 +1167,14 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminSuscripciones()">Actualizar</button><button class="mini-btn" onclick="procesarRenovacionesAdmin()">Procesar renovaciones</button></div>
   <div id="admin-suscripciones-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
+
+  <div class="phdr-card" style="margin-top:12px">
+    <div class="phdr-t">Accesos temporales y demostraciones</div>
+    <div class="phdr-s">Habilita Cultivo Professional sin pago para pruebas, cortesías, soporte o ejecutivos comerciales. El acceso vence automáticamente.</div>
+  </div>
+  <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminAccesosTemporales()">Actualizar</button></div>
+  <div id="admin-accesos-temporales-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
+
   <div class="phdr-card" style="margin-top:12px">
     <div class="phdr-t">Matrículas de cursos</div>
     <div class="phdr-s">Revisa pagos aprobados y activa el acceso de los estudiantes al contenido.</div>
@@ -1835,7 +1843,7 @@ async function renderSuscripcionesV8C(){
   try{
     const [p,e,a]=await Promise.all([apiFetch('/api/suscripciones/planes'),apiFetch('/api/suscripciones/estado'),apiFetch('/api/suscripciones/wompi-aceptacion')]);SUB_V8C.planes=p.planes||[];SUB_V8C.estado=e;SUB_V8C.aceptacion=a;
     const ha=Number(p.hectareas||0);const recomendado=p.recomendado?.id;
-    estadoBox.innerHTML=`<div class="unit-card" style="padding:12px"><b>Área actualmente administrada:</b> ${ha.toFixed(1)} ha<br><span style="font-size:11px;color:var(--color-text-secondary)">${e.estado==='sin_suscripcion'?'Selecciona un plan y registra tu tarjeta para comenzar la prueba gratuita.':`Estado: ${e.estado}`}</span></div>`;
+    estadoBox.innerHTML=`<div class="unit-card" style="padding:12px"><b>Área actualmente administrada:</b> ${ha.toFixed(1)} ha<br><span style="font-size:11px;color:var(--color-text-secondary)">${e.estado==='sin_suscripcion'?'Selecciona un plan y registra tu tarjeta para comenzar la prueba gratuita.':e.estado==='acceso_temporal'?`Acceso temporal habilitado hasta ${new Date(e.venceEn).toLocaleDateString('es-CO')}`:`Estado: ${e.estado}`}</span></div>`;
     planesBox.innerHTML=SUB_V8C.planes.map(x=>`<div class="unit-card" style="padding:14px;border:${x.id===recomendado?'1.5px solid #3B6D11':'0.5px solid var(--color-border-tertiary)'}"><div style="display:flex;justify-content:space-between;gap:8px"><b>${x.nombre}</b>${x.id===recomendado?'<span class="viz-badge">Recomendado</span>':''}</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px">${x.minHa}–${x.maxHa||'∞'} hectáreas</div><div style="font-size:18px;font-weight:700;margin-top:9px">${dineroCOP(x.mensual)}<span style="font-size:10px;font-weight:400"> / mes</span></div><div style="font-size:11px;margin-top:4px">Anual: <b>${dineroCOP(x.anual)}</b> · 30% menos</div><button class="mini-btn" style="width:100%;margin-top:10px" onclick="seleccionarPlanV8C('${x.id}')">Elegir plan</button></div>`).join('');
     if(a?.terminos?.permalink)document.getElementById('sub-terms-link').href=a.terminos.permalink;if(a?.datos?.permalink)document.getElementById('sub-data-link').href=a.datos.permalink;
   }catch(err){estadoBox.innerHTML=`<div class="unit-card" style="padding:12px;color:#b42318">${err.message}</div>`;}
@@ -1857,6 +1865,31 @@ async function activarTrialSuscripcion(){
 }
 async function renderAdminSuscripciones(){const box=document.getElementById('admin-suscripciones-list');if(!box||SESION.rol!=='admin')return;try{const rows=await apiFetch('/api/suscripciones/admin');box.innerHTML=rows.length?rows.map(s=>`<div class="unit-card" style="padding:11px"><b>${s.nombre}</b> · ${s.plan_nombre}<div style="font-size:10.5px;color:var(--color-text-secondary)">${s.email||''} · ${s.periodicidad} · <b>${s.estado}</b></div><div style="font-size:10.5px;margin-top:3px">Prueba hasta: ${s.prueba_hasta?new Date(s.prueba_hasta).toLocaleDateString('es-CO'):'—'} · Próximo cobro: ${s.proximo_cobro?new Date(s.proximo_cobro).toLocaleDateString('es-CO'):'—'}</div></div>`).join(''):'<div class="unit-card" style="padding:10px">Aún no hay suscripciones.</div>';}catch(e){box.innerHTML='<div class="unit-card" style="padding:10px">'+e.message+'</div>';}}
 async function procesarRenovacionesAdmin(){try{const r=await apiFetch('/api/suscripciones/procesar-renovaciones',{method:'POST',body:'{}'});alert(`Proceso terminado. ${r.procesadas} suscripciones revisadas.`);renderAdminSuscripciones();}catch(e){alert(e.message)}}
+
+async function renderAdminAccesosTemporales(){
+  const box=document.getElementById('admin-accesos-temporales-list');if(!box||SESION.rol!=='admin')return;
+  try{
+    const rows=await apiFetch('/api/suscripciones/admin/accesos-temporales');
+    const vigentes=rows.filter(x=>Number(x.vigente)===1);
+    box.innerHTML=vigentes.length?vigentes.map(a=>`<div class="unit-card" style="padding:11px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${escapeHtml(a.nombre)}</b><span class="viz-badge">${escapeHtml(a.tipo)}</span></div><div style="font-size:10.5px;color:var(--color-text-secondary)">${escapeHtml(a.email||'')} · ${escapeHtml(a.rol||'')}</div><div style="font-size:10.5px;margin-top:3px">Vence: <b>${new Date(a.vence_en).toLocaleString('es-CO')}</b>${a.motivo?' · '+escapeHtml(a.motivo):''}</div><button class="mini-btn" style="margin-top:8px;color:#b42318" onclick="revocarAccesoTemporalAdmin('${a.id}')">Finalizar acceso</button></div>`).join(''):'<div class="unit-card" style="padding:10px">No hay accesos temporales vigentes.</div>';
+  }catch(e){box.innerHTML='<div class="unit-card" style="padding:10px">'+escapeHtml(e.message)+'</div>';}
+}
+async function otorgarAccesoTemporalAdmin(usuarioId,nombre){
+  const diasRaw=prompt(`¿Cuántos días de acceso sin pago quieres habilitar para ${nombre}?
+Ejemplos: 1, 3, 7, 15, 30`,`7`);
+  if(diasRaw===null)return;const dias=Math.floor(Number(diasRaw));if(!Number.isFinite(dias)||dias<1||dias>365){alert('Ingresa una duración entre 1 y 365 días.');return;}
+  const tipoRaw=(prompt('Tipo de acceso: demo, cortesia, comercial o soporte','demo')||'demo').trim().toLowerCase();
+  const tipo=['demo','cortesia','comercial','soporte'].includes(tipoRaw)?tipoRaw:'demo';
+  const motivo=prompt('Motivo o nota interna (opcional):','')||'';
+  if(!confirm(`Habilitar ${dias} día(s) de acceso ${tipo} para ${nombre}, sin cobro?`))return;
+  try{const r=await apiFetch('/api/suscripciones/admin/accesos-temporales',{method:'POST',body:JSON.stringify({usuarioId,dias,tipo,motivo})});alert('Acceso habilitado hasta '+new Date(r.venceEn).toLocaleString('es-CO')+'.');renderAdminAccesosTemporales();renderAdminNotificaciones();}
+  catch(e){alert('No se pudo habilitar el acceso: '+e.message);}
+}
+async function revocarAccesoTemporalAdmin(id){
+  if(!confirm('¿Finalizar este acceso temporal ahora?'))return;
+  try{await apiFetch('/api/suscripciones/admin/accesos-temporales/'+encodeURIComponent(id),{method:'DELETE'});renderAdminAccesosTemporales();renderAdminNotificaciones();}
+  catch(e){alert('No se pudo finalizar el acceso: '+e.message);}
+}
 
 
 // Se llama justo después de un login/registro exitoso contra el backend real. Reemplaza
@@ -2515,7 +2548,7 @@ async function go(sid,nid){
   if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
-  if(sid==='panel-admin'){setTimeout(cargarConocimientoAdminV8B,0);setTimeout(renderAdminSuscripciones,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
+  if(sid==='panel-admin'){setTimeout(cargarConocimientoAdminV8B,0);setTimeout(renderAdminSuscripciones,0);setTimeout(renderAdminAccesosTemporales,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
   if(sid==='lote-nuevo')actualizarHintPiso();
   if(sid==='home')renderHomeStats();
 }
@@ -3538,6 +3571,7 @@ async function renderAdminUsuarios(){
           ${!activo&&u.motivo_bloqueo?`<div class="lab-desc" style="color:#9B1C1C">Motivo: ${escapeHtml(u.motivo_bloqueo)}</div>`:''}
           <button type="button" onclick="abrirExpedienteAdmin('${u.id}')" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;background:var(--color-background-primary);color:#1b5e20;border:0.5px solid #C0DD97">Ver expediente y documentos</button>
           <button type="button" onclick="abrirHistorialIntegralAdmin('${u.id}')" style="margin-top:6px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;background:#1b5e20;color:#fff;border:none">Ver historial integral</button>
+          <button type="button" onclick="otorgarAccesoTemporalAdmin('${u.id}',${JSON.stringify(u.nombre||'Usuario')})" style="margin-top:6px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;background:#C9A227;color:#173d18;border:none">Habilitar acceso temporal</button>
           <button type="button" onclick="cambiarAccesoUsuario('${u.id}',${activo?'false':'true'})" style="margin-top:8px;width:100%;border-radius:8px;padding:7px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;${activo?'background:var(--color-background-primary);color:#c62828;border:0.5px solid #F09595':'background:#1b5e20;color:#fff;border:none'}">${activo?'Bloquear acceso':'Desbloquear acceso'}</button>
         </div>
       </div>`;

@@ -528,6 +528,20 @@ CREATE TABLE IF NOT EXISTS suscripciones (
 );
 CREATE INDEX IF NOT EXISTS idx_suscripciones_usuario ON suscripciones(usuario_id,creado_en);
 CREATE INDEX IF NOT EXISTS idx_suscripciones_cobro ON suscripciones(estado,proximo_cobro);
+
+-- V8C.1 · Accesos temporales / demostración otorgados por administración.
+CREATE TABLE IF NOT EXISTS accesos_temporales_cultivo (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL DEFAULT 'demo' CHECK(tipo IN ('demo','cortesia','comercial','soporte')),
+  motivo TEXT DEFAULT NULL,
+  inicia_en TEXT NOT NULL,
+  vence_en TEXT NOT NULL,
+  revocado_en TEXT DEFAULT NULL,
+  creado_por TEXT DEFAULT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_acceso_temporal_usuario ON accesos_temporales_cultivo(usuario_id,vence_en,revocado_en);
 CREATE TABLE IF NOT EXISTS cobros_suscripcion (
   id TEXT PRIMARY KEY, suscripcion_id TEXT NOT NULL REFERENCES suscripciones(id) ON DELETE CASCADE,
   usuario_id TEXT NOT NULL REFERENCES usuarios(id), referencia TEXT NOT NULL UNIQUE, monto_cop INTEGER NOT NULL,

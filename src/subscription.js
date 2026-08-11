@@ -21,9 +21,16 @@ function planPorHectareas(ha){
 function suscripcionActual(usuarioId){
   return db.prepare(`SELECT s.*,p.nombre plan_nombre,p.max_ha,p.precio_mensual_cop,p.precio_anual_cop FROM suscripciones s JOIN planes_suscripcion p ON p.id=s.plan_id WHERE s.usuario_id=? ORDER BY s.creado_en DESC LIMIT 1`).get(usuarioId);
 }
+function accesoTemporalActivo(usuarioId){
+  return db.prepare(`SELECT * FROM accesos_temporales_cultivo WHERE usuario_id=? AND revocado_en IS NULL AND datetime(vence_en)>datetime('now') ORDER BY vence_en DESC LIMIT 1`).get(usuarioId) || null;
+}
 function estadoAcceso(usuarioId, rol){
   if(rol==='admin') return {permitido:true,estado:'admin',hectareas:0};
   const ha=hectareasUsuario(usuarioId,rol);
+  const accesoTemporal=accesoTemporalActivo(usuarioId);
+  if(accesoTemporal){
+    return {permitido:true,estado:'acceso_temporal',hectareas:ha,accesoTemporal,venceEn:accesoTemporal.vence_en,tipoAcceso:accesoTemporal.tipo};
+  }
   const recomendado=planPorHectareas(ha);
   const s=suscripcionActual(usuarioId);
   const ahora=Date.now();
@@ -38,4 +45,4 @@ function requiereSuscripcionCultivos(req,res,next){
   if(e.permitido){req.suscripcion=e;return next();}
   return res.status(402).json({code:'SUBSCRIPTION_REQUIRED',error:e.excedePlan?'Superaste las hectáreas incluidas en tu plan. Actualiza tu suscripción para registrar o administrar más área.':'Esta sección requiere una suscripción activa o una prueba gratuita vigente.',...e});
 }
-module.exports={PLANES,hectareasUsuario,planPorHectareas,suscripcionActual,estadoAcceso,requiereSuscripcionCultivos};
+module.exports={PLANES,hectareasUsuario,planPorHectareas,suscripcionActual,accesoTemporalActivo,estadoAcceso,requiereSuscripcionCultivos};

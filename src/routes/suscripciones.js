@@ -72,4 +72,40 @@ async function procesarRenovaciones(){
 router.post('/procesar-renovaciones',requiereAuth,requiereRol('admin'),async(req,res,next)=>{try{res.json({ok:true,procesadas:await procesarRenovaciones()})}catch(e){next(e)}});
 router.get('/admin',requiereAuth,requiereRol('admin'),(req,res)=>res.json(db.prepare(`SELECT s.*,u.nombre,u.email,p.nombre plan_nombre,p.precio_mensual_cop,p.precio_anual_cop FROM suscripciones s JOIN usuarios u ON u.id=s.usuario_id JOIN planes_suscripcion p ON p.id=s.plan_id ORDER BY s.creado_en DESC`).all()));
 
+// V8C.1 · Accesos temporales / comerciales sin pago.
+router.get('/admin/accesos-temporales',requiereAuth,requiereRol('admin'),(req,res)=>{
+  res.json(db.prepare(`SELECT a.*,u.nombre,u.email,u.rol,
+    CASE WHEN a.revocado_en IS NULL AND datetime(a.vence_en)>datetime('now') THEN 1 ELSE 0 END AS vigente
+    FROM accesos_temporales_cultivo a JOIN usuarios u ON u.id=a.usuario_id
+    ORDER BY a.creado_en DESC`).all());
+});
+
+router.post('/admin/accesos-temporales',requiereAuth,requiereRol('admin'),(req,res)=>{
+  const {usuarioId,dias,tipo,motivo}=req.body||{};
+  const u=db.prepare(`SELECT id,nombre,email,rol,activo FROM usuarios WHERE id=?`).get(usuarioId);
+  if(!u)return res.status(404).json({error:'Usuario no encontrado.'});
+  if(u.rol==='admin')return res.status(400).json({error:'Los administradores ya tienen acceso completo.'});
+  if(Number(u.activo)===0)return res.status(409).json({error:'El usuario está bloqueado. Desbloquéalo antes de otorgar acceso temporal.'});
+  const n=Math.floor(Number(dias));
+  if(!Number.isFinite(n)||n<1||n>365)return res.status(400).json({error:'La duración debe estar entre 1 y 365 días.'});
+  const tipos=['demo','cortesia','comercial','soporte'];
+  const clase=tipos.includes(String(tipo||''))?String(tipo):'demo';
+  const now=new Date(); const vence=addDays(now,n); const id=nuevoId('tmp');
+  db.prepare(`UPDATE accesos_temporales_cultivo SET revocado_en=datetime('now') WHERE usuario_id=? AND revocado_en IS NULL AND datetime(vence_en)>datetime('now')`).run(u.id);
+  db.prepare(`INSERT INTO accesos_temporales_cultivo(id,usuario_id,tipo,motivo,inicia_en,vence_en,creado_por,creado_en) VALUES(?,?,?,?,?,?,?,datetime('now'))`)
+    .run(id,u.id,clase,String(motivo||'').trim()||null,now.toISOString(),vence,req.usuario.id);
+  crearNotificacionUsuario({usuarioId:u.id,tipo:'acceso_temporal',titulo:'Acceso temporal habilitado',mensaje:`Dr. Plants Professional fue habilitado sin pago hasta ${new Date(vence).toLocaleDateString('es-CO')}.`,entidadTipo:'acceso_temporal',entidadId:id,prioridad:'alta'});
+  audit({req,action:'otorgar_acceso_temporal',entityType:'usuario',entityId:u.id,metadata:{dias:n,tipo:clase,motivo:String(motivo||'').trim()||null,vence}});
+  res.status(201).json({ok:true,id,usuarioId:u.id,tipo:clase,venceEn:vence});
+});
+
+router.delete('/admin/accesos-temporales/:id',requiereAuth,requiereRol('admin'),(req,res)=>{
+  const a=db.prepare(`SELECT * FROM accesos_temporales_cultivo WHERE id=?`).get(req.params.id);
+  if(!a)return res.status(404).json({error:'Acceso temporal no encontrado.'});
+  if(!a.revocado_en)db.prepare(`UPDATE accesos_temporales_cultivo SET revocado_en=datetime('now') WHERE id=?`).run(a.id);
+  crearNotificacionUsuario({usuarioId:a.usuario_id,tipo:'acceso_temporal',titulo:'Acceso temporal finalizado',mensaje:'El acceso temporal a Dr. Plants Professional fue finalizado por administración.',entidadTipo:'acceso_temporal',entidadId:a.id,prioridad:'normal'});
+  audit({req,action:'revocar_acceso_temporal',entityType:'usuario',entityId:a.usuario_id,metadata:{accesoId:a.id}});
+  res.json({ok:true});
+});
+
 module.exports={router,procesarRenovaciones};

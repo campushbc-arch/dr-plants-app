@@ -1,6 +1,6 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.3.0",
+  "version": "8.3.1",
   "description": "Dr Plants V8C — CRM, inteligencia agronómica y suscripciones recurrentes por hectáreas",
   "main": "app.js",
   "type": "commonjs",
