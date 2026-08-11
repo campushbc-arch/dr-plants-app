@@ -743,11 +743,16 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button>
     <span class="pg-title">Mis Lotes</span>
   </div>
-  <div style="margin:12px 14px 0;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;display:flex;gap:8px;align-items:flex-start">
-    <i class="ti ti-user-circle" style="color:#3B6D11;flex-shrink:0;margin-top:1px" aria-hidden="true"></i>
-    <div style="font-size:10px;color:var(--color-text-secondary);line-height:1.4">
-      <b style="color:var(--color-text-primary)">Espacio privado.</b> En la versión real, aquí solo ves tu propia finca y lotes — nadie más, ni siquiera otro productor, puede verlos. Solo tú y tu agrónomo asignado tienen acceso. Estas 4 fincas son datos de ejemplo para mostrar cómo funciona el módulo.
+  <div style="margin:12px 14px 0;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;display:flex;gap:9px;align-items:flex-start">
+    <i class="ti ti-shield-check" style="color:#3B6D11;flex-shrink:0;margin-top:1px" aria-hidden="true"></i>
+    <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.5">
+      <b style="color:var(--color-text-primary)">Gestión privada de cultivos.</b> Productores administran sus propias fincas. Los ingenieros agrónomos pueden registrar clientes, fincas asistidas, lotes, aplicaciones, costos, análisis y visitas técnicas manteniendo separados los datos de cada cliente.
     </div>
+  </div>
+  <div id="cultivo-prof-stats" class="mstats" style="margin-top:10px"></div>
+  <div id="cultivo-pro-actions" style="display:none;padding:0 14px 4px;gap:8px">
+    <button class="mini-btn" onclick="crearClienteProfesional()"><i class="ti ti-user-plus"></i> Nuevo cliente</button>
+    <button class="mini-btn" onclick="verClientesProfesionales()"><i class="ti ti-users"></i> Mis clientes</button>
   </div>
   <div id="lotes-filtro-banner" style="display:none;margin:0 14px 10px;background:#EAF3DE;border-radius:8px;padding:8px 10px;align-items:center;justify-content:space-between;gap:8px">
     <span style="font-size:11px;color:#1b5e20;font-weight:500"></span>
@@ -765,6 +770,14 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <span class="pg-title">Nuevo lote</span>
   </div>
   <div class="fform">
+    <div id="nl-cliente-wrap" class="fgrp" style="display:none">
+      <label>Cliente asistido</label>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
+        <select id="nl-cliente"><option value="">Selecciona un cliente…</option></select>
+        <button type="button" class="mini-btn" onclick="crearClienteProfesional()">+ Cliente</button>
+      </div>
+      <div style="font-size:9.5px;color:var(--color-text-secondary);margin-top:4px">Cada finca del agrónomo queda asociada al cliente para diferenciar su asistencia técnica.</div>
+    </div>
     <div class="fgrp"><label>Finca</label><input id="nl-finca" placeholder="Ej. Finca La Esperanza"></div>
     <div class="fgrp"><label>Nombre del lote</label><input id="nl-nombre" placeholder="Ej. Lote Alto"></div>
     <div class="fgrp"><label>Tipo de cultivo</label>
@@ -1735,7 +1748,9 @@ function isoDaysAgo(n){return new Date(Date.now()-n*86400000).toISOString().slic
 // y la app sigue funcionando con los datos de demo de siempre. Cuando esté configurado y
 // haya sesión real (SESION.token), estas funciones sincronizan con la base de datos real
 // del backend en vez de solo guardar en memoria del navegador.
-let FINCA_IDS={}; // nombre de finca (como lo ve el usuario) -> id real en el backend
+let FINCA_IDS={}; // nombre de finca -> id real
+let FINCAS_META={};
+let CLIENTES_PRO=[];
 
 let renovandoTokenPromise=null;
 async function renovarTokenSesion(){if(!renovandoTokenPromise)renovandoTokenPromise=fetch(BACKEND_URL+'/api/auth/refresh',{method:'POST',credentials:'include'}).then(async r=>{if(!r.ok)return null;const d=await r.json();SESION={...SESION,autenticado:true,id:d.usuario.id,nombre:d.usuario.nombre,email:d.usuario.email,telefono:d.usuario.telefono,tipoProductor:d.usuario.tipo_productor,pais:d.usuario.pais,region:d.usuario.region,rol:d.usuario.rol,token:d.token};guardarEstado();actualizarUIsesion();return d.token;}).finally(()=>renovandoTokenPromise=null);return renovandoTokenPromise;}
@@ -1747,30 +1762,18 @@ async function cargarFincasDesdeBackend(){
   if(!BACKEND_URL||!SESION.token)return;
   try{
     const fincas=await apiFetch('/api/fincas');
-    const nuevosLotes=[];
-    FINCA_IDS={};
+    if(SESION.rol==='agronomo'){try{CLIENTES_PRO=await apiFetch('/api/fincas/clientes');}catch(_e){CLIENTES_PRO=[];}}
+    const nuevosLotes=[]; FINCA_IDS={}; FINCAS_META={};
     for(const f of fincas){
-      FINCA_IDS[f.nombre]=f.id;
+      FINCA_IDS[f.nombre]=f.id; FINCAS_META[f.nombre]=f;
       const lotes=await apiFetch('/api/fincas/'+f.id+'/lotes');
       for(const l of lotes){
-        let detalle=null;
-        try{detalle=await apiFetch('/api/fincas/lotes/'+l.id);}catch(_e){}
-        nuevosLotes.push({
-          id:l.id,finca:f.nombre,nombre:l.nombre,cultivoId:l.cultivo_id,cultivoNombre:l.cultivo_nombre||l.cultivo_id,variedad:l.variedad||'',area:l.area_ha,
-          fechaSiembra:l.fecha_siembra,ubicacionId:f.ubicacion_id,salud:l.salud_pct,
-          aplicaciones:(detalle?.aplicaciones||[]).map(a=>({...a,costo:a.costo_cop})),
-          analisis:detalle?.analisis||[],
-          costosOperativos:(detalle?.costosOperativos||[]).map(c=>({...c,costo:c.costo_cop})),
-          observaciones:detalle?.observaciones||[]
-        });
+        let detalle=null; try{detalle=await apiFetch('/api/fincas/lotes/'+l.id);}catch(_e){}
+        nuevosLotes.push({id:l.id,finca:f.nombre,clienteId:f.cliente_id||null,clienteNombre:f.cliente_nombre||f.cliente_nombre_cache||'',nombre:l.nombre,cultivoId:l.cultivo_id,cultivoNombre:l.cultivo_nombre||l.cultivo_id,variedad:l.variedad||'',area:l.area_ha,fechaSiembra:l.fecha_siembra,ubicacionId:f.ubicacion_id,salud:l.salud_pct,aplicaciones:(detalle?.aplicaciones||[]).map(a=>({...a,costo:a.costo_cop})),analisis:detalle?.analisis||[],costosOperativos:(detalle?.costosOperativos||[]).map(c=>({...c,costo:c.costo_cop})),observaciones:detalle?.observaciones||[],visitas:detalle?.visitas||[]});
       }
     }
-    LOTES=nuevosLotes;
-    renderLotesList();
-    renderHomeStats();
-  }catch(e){
-    console.warn('No se pudieron cargar fincas del backend, se sigue en modo demo:',e.message);
-  }
+    LOTES=nuevosLotes; renderLotesList(); renderHomeStats(); renderResumenCultivoProfesional(); prepararFormularioCultivoProfesional();
+  }catch(e){console.warn('No se pudieron cargar fincas del backend:',e.message);}
 }
 
 let LOTES=[
@@ -1951,7 +1954,7 @@ function renderLotesList(){
     const ubic=LOCATIONS[ubicacionId];
     const fslug=slugify(f);
     return `<div class="unit-card">
-      <div class="unit-hdr">${f} · ${ubic.label} <span style="opacity:0.75;font-weight:400">(${lotesFinca.length} lotes · ${areaTotal.toFixed(1)} ha)</span></div>
+      <div class="unit-hdr">${f} · ${ubic.label} <span style="opacity:0.75;font-weight:400">(${lotesFinca.length} lotes · ${areaTotal.toFixed(1)} ha)</span>${(FINCAS_META[f]?.cliente_nombre||FINCAS_META[f]?.cliente_nombre_cache)?`<div style="font-size:10px;font-weight:500;opacity:.9;margin-top:3px"><i class="ti ti-user"></i> Cliente: ${FINCAS_META[f].cliente_nombre||FINCAS_META[f].cliente_nombre_cache}</div>`:''}</div>
       <div id="fwx-${fslug}" style="padding:10px 12px 0"><div class="wx-mini-loading">Cargando clima de la zona…</div></div>
       ${lotesFinca.map(l=>{
         const crop=CROPS[l.cultivoId];
@@ -1982,6 +1985,22 @@ function quitarFiltroFinca(){
   filtroFinca=null;
   renderLotesList();
 }
+
+function prepararFormularioCultivoProfesional(){
+  const esAgro=SESION.rol==='agronomo'; const wrap=document.getElementById('nl-cliente-wrap'); if(wrap)wrap.style.display=esAgro?'block':'none';
+  const actions=document.getElementById('cultivo-pro-actions');if(actions)actions.style.display=esAgro?'flex':'none';
+  const sel=document.getElementById('nl-cliente');if(sel&&esAgro)sel.innerHTML='<option value="">Selecciona un cliente…</option>'+CLIENTES_PRO.map(c=>`<option value="${c.id}">${c.nombre}${c.ciudad?' · '+c.ciudad:''}</option>`).join('');
+}
+async function renderResumenCultivoProfesional(){
+  const box=document.getElementById('cultivo-prof-stats');if(!box)return;let r={clientes:SESION.rol==='agronomo'?CLIENTES_PRO.length:0,fincas:new Set(LOTES.map(l=>l.finca)).size,lotes:LOTES.length,hectareas:LOTES.reduce((a,l)=>a+Number(l.area||0),0)};
+  try{if(BACKEND_URL&&SESION.token)r=await apiFetch('/api/fincas/resumen-profesional');}catch(_e){}
+  box.innerHTML=`${SESION.rol==='agronomo'?`<div class="ms2"><div class="ms2v">${r.clientes||0}</div><div class="ms2l">Clientes</div></div>`:''}<div class="ms2"><div class="ms2v">${r.fincas||0}</div><div class="ms2l">Fincas</div></div><div class="ms2"><div class="ms2v">${r.lotes||0}</div><div class="ms2l">Lotes</div></div><div class="ms2"><div class="ms2v">${Number(r.hectareas||0).toFixed(1)}</div><div class="ms2l">Hectáreas</div></div>`;prepararFormularioCultivoProfesional();
+}
+async function crearClienteProfesional(){
+  if(SESION.rol!=='agronomo')return;const nombre=prompt('Nombre completo o razón social del cliente:');if(!nombre)return;const telefono=prompt('Teléfono (opcional):')||'';const email=prompt('Correo (opcional):')||'';const documento=prompt('Documento/NIT (opcional):')||'';
+  try{const c=await apiFetch('/api/fincas/clientes',{method:'POST',body:JSON.stringify({nombre,telefono,email,documento,pais:SESION.pais||'',region:SESION.region||''})});CLIENTES_PRO.push(c);prepararFormularioCultivoProfesional();renderResumenCultivoProfesional();alert('Cliente creado. Ya puedes asociarle una finca y sus cultivos.');}catch(e){alert(e.message)}
+}
+function verClientesProfesionales(){if(!CLIENTES_PRO.length){alert('Aún no tienes clientes registrados.');return;}alert(CLIENTES_PRO.map((c,i)=>`${i+1}. ${c.nombre}${c.telefono?' · '+c.telefono:''}${c.ciudad?' · '+c.ciudad:''}`).join('\n'));}
 
 function renderPanelAgronomo(){
   const wrap=document.getElementById('panel-fincas-list');
@@ -2220,6 +2239,8 @@ function actualizarHintPiso(){
 }
 async function crearLote(){
   const finca=document.getElementById('nl-finca').value.trim()||'Mi finca';
+  const clienteId=SESION.rol==='agronomo'?(document.getElementById('nl-cliente')?.value||''):'';
+  if(SESION.rol==='agronomo'&&!clienteId){alert('Selecciona el cliente al que pertenece la finca asistida.');return;}
   const nombre=document.getElementById('nl-nombre').value.trim()||'Nuevo lote';
   const cultivoNombre=document.getElementById('nl-cultivo').value.trim();
   const variedad=document.getElementById('nl-variedad').value.trim();
@@ -2231,8 +2252,8 @@ async function crearLote(){
   if(!ubicacionId){await resolverUbicacionSeleccionada();ubicacionId=document.getElementById('nl-ubicacion').value;}
   const {id:cultivoId}=cropDataPorNombre(cultivoNombre,variedad);
   let id='lote'+(LOTES.length+1)+'_'+Date.now();
-  if(BACKEND_URL&&SESION.token){try{let fincaId=FINCA_IDS[finca];if(!fincaId){const fc=await apiFetch('/api/fincas',{method:'POST',body:JSON.stringify({nombre,ubicacionId,pais,region,ciudad})});fincaId=fc.id;FINCA_IDS[finca]=fincaId;}const lc=await apiFetch('/api/fincas/'+fincaId+'/lotes',{method:'POST',body:JSON.stringify({nombre,cultivoId,cultivoNombre,variedad,areaHa:area,fechaSiembra})});id=lc.id;}catch(e){alert('No se pudo guardar: '+e.message);return;}}
-  LOTES.push({id,finca,nombre,cultivoId,cultivoNombre,variedad,area,fechaSiembra,ubicacionId,salud:90,aplicaciones:[],analisis:[],costosOperativos:[],observaciones:[]});guardarEstado();renderLotesList();openLote(id);
+  if(BACKEND_URL&&SESION.token){try{let fincaId=FINCA_IDS[finca];if(fincaId&&SESION.rol==='agronomo'&&FINCAS_META[finca]?.cliente_id!==clienteId)fincaId=null;if(!fincaId){const fc=await apiFetch('/api/fincas',{method:'POST',body:JSON.stringify({nombre:finca,ubicacionId,pais,region,ciudad,clienteId})});fincaId=fc.id;FINCA_IDS[finca]=fincaId;FINCAS_META[finca]=fc;}const lc=await apiFetch('/api/fincas/'+fincaId+'/lotes',{method:'POST',body:JSON.stringify({nombre,cultivoId,cultivoNombre,variedad,areaHa:area,fechaSiembra})});id=lc.id;}catch(e){alert('No se pudo guardar: '+e.message);return;}}
+  const clienteNombre=CLIENTES_PRO.find(c=>c.id===clienteId)?.nombre||'';LOTES.push({id,finca,clienteId,clienteNombre,nombre,cultivoId,cultivoNombre,variedad,area,fechaSiembra,ubicacionId,salud:90,aplicaciones:[],analisis:[],costosOperativos:[],observaciones:[],visitas:[]});guardarEstado();renderLotesList();renderResumenCultivoProfesional();openLote(id);
 }
 
 async function editarLoteActual(){const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;const nombre=prompt('Nombre del lote:',lote.nombre);if(!nombre)return;const area=Number(prompt('Área en hectáreas:',lote.area));if(!area)return;const cultivoNombre=prompt('Cultivo:',lote.cultivoNombre||CROPS[lote.cultivoId]?.label||lote.cultivoId)||'';const variedad=prompt('Variedad:',lote.variedad||'')||'';try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/lotes/'+lote.id,{method:'PATCH',body:JSON.stringify({nombre,areaHa:area,cultivoId:slugCultivo(cultivoNombre),cultivoNombre,variedad,fechaSiembra:lote.fechaSiembra})});Object.assign(lote,{nombre,area,cultivoId:slugCultivo(cultivoNombre),cultivoNombre,variedad});guardarEstado();openLote(lote.id);}catch(e){alert(e.message)}}
@@ -2408,7 +2429,7 @@ async function go(sid,nid){
   bnav.style.display=(sid==='reg'||sid==='carrito'||sid==='pedido-confirmado'||sid==='notif'||sid==='perfil'||sid==='pedidos'||sid==='panel-agronomo'||sid==='panel-admin'||sid==='agronomo-pendiente'||sid==='splash'||sid==='curso-detalle'||sid==='curso-contenido')?'none':'flex';
   if(sid==='reg')renderRegMode();
   if(sid==='carrito')renderCart();
-  if(sid==='cultivo')renderLotesList();
+  if(sid==='cultivo'){renderLotesList();renderResumenCultivoProfesional();prepararFormularioCultivoProfesional();}
   if(sid==='precios')renderMarketList();
   if(sid==='rec-puntos')renderRecPoints();
   if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}

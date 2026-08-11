@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v7-1-master-ventas';
+const CACHE_NAME = 'dr-plants-v8a-crm-agronomico';
 const APP_SHELL = [
   '/',
   '/manifest.json',

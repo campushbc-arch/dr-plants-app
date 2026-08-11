@@ -47,7 +47,9 @@ function migrarColumnas(tabla, columnas) {
 
 migrarColumnas('fincas', {
   pais: "TEXT DEFAULT NULL", region: "TEXT DEFAULT NULL", ciudad: "TEXT DEFAULT NULL",
-  actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL"
+  actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL",
+  cliente_id: "TEXT DEFAULT NULL", gestor_id: "TEXT DEFAULT NULL",
+  relacion_tipo: "TEXT DEFAULT 'propia'", cliente_nombre_cache: "TEXT DEFAULT NULL"
 });
 migrarColumnas('lotes', {
   cultivo_nombre: "TEXT DEFAULT NULL", variedad: "TEXT DEFAULT NULL",

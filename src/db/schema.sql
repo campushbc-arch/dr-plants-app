@@ -410,3 +410,37 @@ CREATE TABLE IF NOT EXISTS matriculas_curso (
   UNIQUE(curso_id,usuario_id)
 );
 CREATE INDEX IF NOT EXISTS idx_matriculas_usuario ON matriculas_curso(usuario_id,creado_en);
+
+
+-- V8A · CRM agronómico profesional
+CREATE TABLE IF NOT EXISTS clientes_agronomicos (
+  id TEXT PRIMARY KEY,
+  agronomo_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  nombre TEXT NOT NULL,
+  documento TEXT DEFAULT NULL,
+  telefono TEXT DEFAULT NULL,
+  email TEXT DEFAULT NULL,
+  pais TEXT DEFAULT NULL,
+  region TEXT DEFAULT NULL,
+  ciudad TEXT DEFAULT NULL,
+  notas TEXT DEFAULT NULL,
+  activo INTEGER NOT NULL DEFAULT 1 CHECK(activo IN (0,1)),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_clientes_agronomo ON clientes_agronomicos(agronomo_id, activo, creado_en);
+
+CREATE TABLE IF NOT EXISTS visitas_tecnicas (
+  id TEXT PRIMARY KEY,
+  lote_id TEXT NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  profesional_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  fecha TEXT NOT NULL,
+  objetivo TEXT DEFAULT NULL,
+  observaciones TEXT DEFAULT NULL,
+  recomendaciones TEXT DEFAULT NULL,
+  proxima_visita TEXT DEFAULT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT DEFAULT NULL,
+  eliminado_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_visitas_lote ON visitas_tecnicas(lote_id, fecha);
