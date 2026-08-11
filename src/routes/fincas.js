@@ -76,6 +76,45 @@ router.get('/resumen-profesional',(req,res)=>{
   res.json({clientes,fincas:fincas.length,lotes,hectareas:Number(hectareas.toFixed(2))});
 });
 
+
+router.post('/crear-lote-completo',(req,res)=>{
+  const {fincaNombre,nombre,ubicacionId,pais,region,ciudad,clienteId,cultivoId,cultivoNombre,variedad,areaHa,fechaSiembra,latitud,longitud,altitud}=req.body||{};
+  const area=Number(areaHa);
+  if(!limpiarTexto(fincaNombre,120)||!limpiarTexto(nombre,120)||!limpiarTexto(ubicacionId,180)||!limpiarTexto(cultivoId,120)||!area||!fechaSiembra)
+    return res.status(400).json({error:'Finca, lote, ubicación, cultivo, área y fecha son obligatorios.'});
+  if(area<=0) return res.status(400).json({error:'El área debe ser mayor que cero.'});
+  if(req.suscripcion?.suscripcion?.max_ha_plan!=null && Number(req.suscripcion.hectareas||0)+area>Number(req.suscripcion.suscripcion.max_ha_plan))
+    return res.status(422).json({error:`Con este lote superarías el límite de ${req.suscripcion.suscripcion.max_ha_plan} ha de tu plan. Actualiza la suscripción antes de agregar más área.`});
+  let cid=null,clienteCache=null,gestor=null,relacion='propia';
+  if(req.usuario.rol==='agronomo'){
+    cid=limpiarTexto(clienteId,100)||null;
+    if(!cid) return res.status(400).json({error:'Selecciona el cliente al que pertenece la finca asistida.'});
+    const c=db.prepare('SELECT * FROM clientes_agronomicos WHERE id=? AND agronomo_id=? AND activo=1').get(cid,req.usuario.id);
+    if(!c) return res.status(400).json({error:'Selecciona un cliente válido.'});
+    clienteCache=c.nombre;gestor=req.usuario.id;relacion='asistida';
+  }
+  const tx=db.transaction(()=>{
+    let finca;
+    if(req.usuario.rol==='agronomo') finca=db.prepare(`SELECT * FROM fincas WHERE gestor_id=? AND cliente_id=? AND lower(nombre)=lower(?) AND eliminado_en IS NULL ORDER BY creado_en DESC LIMIT 1`).get(req.usuario.id,cid,limpiarTexto(fincaNombre,120));
+    else finca=db.prepare(`SELECT * FROM fincas WHERE productor_id=? AND lower(nombre)=lower(?) AND eliminado_en IS NULL ORDER BY creado_en DESC LIMIT 1`).get(req.usuario.id,limpiarTexto(fincaNombre,120));
+    if(!finca){
+      const fid=nuevoId('finca');
+      db.prepare(`INSERT INTO fincas(id,productor_id,nombre,ubicacion_id,pais,region,ciudad,cliente_id,gestor_id,relacion_tipo,cliente_nombre_cache,latitud,longitud,altitud) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+        fid,req.usuario.id,limpiarTexto(fincaNombre,120),limpiarTexto(ubicacionId,180),limpiarTexto(pais,80)||null,limpiarTexto(region,120)||null,limpiarTexto(ciudad,120)||null,cid,gestor,relacion,clienteCache,Number.isFinite(Number(latitud))?Number(latitud):null,Number.isFinite(Number(longitud))?Number(longitud):null,Number.isFinite(Number(altitud))?Number(altitud):null);
+      finca=fincaPorId(fid);
+    } else {
+      db.prepare(`UPDATE fincas SET ubicacion_id=?,pais=?,region=?,ciudad=?,latitud=COALESCE(?,latitud),longitud=COALESCE(?,longitud),altitud=COALESCE(?,altitud),actualizado_en=datetime('now') WHERE id=?`).run(
+        limpiarTexto(ubicacionId,180),limpiarTexto(pais,80)||null,limpiarTexto(region,120)||null,limpiarTexto(ciudad,120)||null,Number.isFinite(Number(latitud))?Number(latitud):null,Number.isFinite(Number(longitud))?Number(longitud):null,Number.isFinite(Number(altitud))?Number(altitud):null,finca.id);
+      finca=fincaPorId(finca.id);
+    }
+    const lid=nuevoId('lote');
+    db.prepare(`INSERT INTO lotes(id,finca_id,nombre,cultivo_id,cultivo_nombre,variedad,area_ha,fecha_siembra) VALUES(?,?,?,?,?,?,?,?)`).run(
+      lid,finca.id,limpiarTexto(nombre,120),limpiarTexto(cultivoId,120),limpiarTexto(cultivoNombre,160)||null,limpiarTexto(variedad,160)||null,area,fechaSiembra);
+    return {finca,lote:db.prepare('SELECT * FROM lotes WHERE id=?').get(lid)};
+  });
+  try{return res.status(201).json(tx());}catch(e){console.error('crear-lote-completo:',e);return res.status(500).json({error:'No fue posible guardar la finca y el lote. Intenta nuevamente.'});}
+});
+
 router.post('/',(req,res)=>{
   const {nombre,ubicacionId,pais,region,ciudad,clienteId,clienteNombre,latitud,longitud,altitud}=req.body;
   if(!limpiarTexto(nombre,120) || !limpiarTexto(ubicacionId,180)) return res.status(400).json({error:'nombre y ubicación son obligatorios.'});

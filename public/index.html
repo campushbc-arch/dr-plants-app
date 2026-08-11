@@ -387,7 +387,7 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 @media(max-width:380px){.grid2{grid-template-columns:1fr}.hdr-sub{letter-spacing:.8px}.ni span{font-size:.64rem}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
-/* V8C.3 · Admin UX */
+/* V8C.4 · Admin UX */
 .admin-quicknav{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px;padding:8px 14px 14px;position:sticky;top:72px;z-index:20;background:linear-gradient(to bottom,var(--color-background-primary) 78%,transparent)}
 .admin-quicknav button{min-height:44px;border:1px solid var(--v7-border);background:var(--color-background-primary);color:var(--color-text-primary);border-radius:13px;padding:9px 10px;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(14,84,49,.05)}
 .admin-quicknav button:hover{border-color:#1b8b51;transform:translateY(-1px)}
@@ -862,7 +862,8 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <input id="nl-ubicacion" type="hidden">
     <div id="geo-estado" style="font-size:9.5px;color:var(--color-text-secondary)">Cargando divisiones territoriales…</div>
     <div id="nl-piso-hint" style="font-size:10.5px;color:var(--color-text-secondary)"></div>
-    <button class="cta-btn" onclick="crearLote()"><i class="ti ti-check" aria-hidden="true"></i> Crear lote y generar plan</button>
+    <button id="btn-crear-lote" class="cta-btn" type="button" onclick="crearLote()"><i class="ti ti-check" aria-hidden="true"></i> <span id="btn-crear-lote-txt">Crear lote y generar plan</span></button>
+    <div id="crear-lote-estado" style="font-size:11px;color:var(--color-text-secondary);padding:8px 2px 0;min-height:18px" aria-live="polite"></div>
   </div>
 </div>
 
@@ -1221,14 +1222,14 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   <div id="admin-solicitudes-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div id="admin-sec-suscripciones" class="phdr-card admin-section-anchor" style="margin-top:12px">
-    <div class="phdr-t">Suscripciones Dr. Plants Professional · V8C.3</div>
+    <div class="phdr-t">Suscripciones Dr. Plants Professional · V8C.4</div>
     <div class="phdr-s">Pruebas gratuitas, planes activos, hectáreas, renovaciones y cobros recurrentes.</div>
   </div>
   <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminSuscripciones()">Actualizar</button><button class="mini-btn" onclick="procesarRenovacionesAdmin()">Procesar renovaciones</button></div>
   <div id="admin-suscripciones-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div class="phdr-card" style="margin-top:12px">
-    <div class="phdr-t">Centro de Retención · V8C.3</div>
+    <div class="phdr-t">Centro de Retención · V8C.4</div>
     <div class="phdr-s">Revisa solicitudes de cancelación, contacta al usuario, aplica cortesías, descuentos, cambios de plan o congelaciones y aprueba la cancelación cuando corresponda.</div>
   </div>
   <div id="admin-retencion-metricas" style="padding:0 14px 8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px"></div>
@@ -2422,22 +2423,51 @@ function actualizarHintPiso(){
   hint.style.color=crop.pisos.includes(piso)?'#2e7d32':'#c9a227';
 }
 async function crearLote(){
-  const finca=document.getElementById('nl-finca').value.trim()||'Mi finca';
-  const clienteId=SESION.rol==='agronomo'?(document.getElementById('nl-cliente')?.value||''):'';
-  if(SESION.rol==='agronomo'&&!clienteId){alert('Selecciona el cliente al que pertenece la finca asistida.');return;}
-  const nombre=document.getElementById('nl-nombre').value.trim()||'Nuevo lote';
-  const cultivoNombre=document.getElementById('nl-cultivo').value.trim();
-  const variedad=document.getElementById('nl-variedad').value.trim();
-  const area=parseFloat(document.getElementById('nl-area').value)||0;
-  const fechaSiembra=document.getElementById('nl-fecha').value;
-  const pais=paisApi(),region=document.getElementById('nl-region').value,ciudad=document.getElementById('nl-ciudad').value;
-  let ubicacionId=document.getElementById('nl-ubicacion').value;
-  if(!cultivoNombre||!area||!fechaSiembra||!region||!ciudad){alert('Completa cultivo, área, fecha, región y ciudad.');return;}
-  if(!ubicacionId){await resolverUbicacionSeleccionada();ubicacionId=document.getElementById('nl-ubicacion').value;}
-  const {id:cultivoId}=cropDataPorNombre(cultivoNombre,variedad);
-  let id='lote'+(LOTES.length+1)+'_'+Date.now();
-  if(BACKEND_URL&&SESION.token){try{let fincaId=FINCA_IDS[finca];if(fincaId&&SESION.rol==='agronomo'&&FINCAS_META[finca]?.cliente_id!==clienteId)fincaId=null;if(!fincaId){const locGeo=LOCATIONS[ubicacionId]||{};const fc=await apiFetch('/api/fincas',{method:'POST',body:JSON.stringify({nombre:finca,ubicacionId,pais,region,ciudad,clienteId,latitud:locGeo.lat,longitud:locGeo.lon,altitud:locGeo.altitud})});fincaId=fc.id;FINCA_IDS[finca]=fincaId;FINCAS_META[finca]=fc;}const lc=await apiFetch('/api/fincas/'+fincaId+'/lotes',{method:'POST',body:JSON.stringify({nombre,cultivoId,cultivoNombre,variedad,areaHa:area,fechaSiembra})});id=lc.id;}catch(e){alert('No se pudo guardar: '+e.message);return;}}
-  const clienteNombre=CLIENTES_PRO.find(c=>c.id===clienteId)?.nombre||'';LOTES.push({id,finca,clienteId,clienteNombre,nombre,cultivoId,cultivoNombre,variedad,area,fechaSiembra,ubicacionId,salud:90,aplicaciones:[],analisis:[],costosOperativos:[],observaciones:[],visitas:[]});guardarEstado();renderLotesList();renderResumenCultivoProfesional();openLote(id);
+  const btn=document.getElementById('btn-crear-lote'),txt=document.getElementById('btn-crear-lote-txt'),estado=document.getElementById('crear-lote-estado');
+  if(btn?.disabled)return;
+  const setEstado=(m,c='var(--color-text-secondary)')=>{if(estado){estado.textContent=m;estado.style.color=c;}};
+  try{
+    const finca=document.getElementById('nl-finca').value.trim()||'Mi finca';
+    const clienteId=SESION.rol==='agronomo'?(document.getElementById('nl-cliente')?.value||''):'';
+    if(SESION.rol==='agronomo'&&!clienteId){alert('Selecciona el cliente al que pertenece la finca asistida.');return;}
+    const nombre=document.getElementById('nl-nombre').value.trim()||'Nuevo lote';
+    const cultivoNombre=document.getElementById('nl-cultivo').value.trim();
+    const variedad=document.getElementById('nl-variedad').value.trim();
+    const area=parseFloat(document.getElementById('nl-area').value)||0;
+    const fechaSiembra=document.getElementById('nl-fecha').value;
+    const pais=paisApi(),region=document.getElementById('nl-region').value,ciudad=document.getElementById('nl-ciudad').value;
+    let ubicacionId=document.getElementById('nl-ubicacion').value;
+    if(!cultivoNombre||!area||!fechaSiembra||!region||!ciudad){alert('Completa cultivo, área, fecha, región y ciudad.');return;}
+    if(area<=0){alert('El área debe ser mayor que cero.');return;}
+    btn.disabled=true;txt.textContent='Guardando lote…';setEstado('Validando ubicación y suscripción…');
+    if(!ubicacionId){
+      await Promise.race([resolverUbicacionSeleccionada(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('No fue posible localizar la finca. Intenta nuevamente.')),12000))]);
+      ubicacionId=document.getElementById('nl-ubicacion').value;
+    }
+    const cropInfo=cropDataPorNombre(cultivoNombre,variedad)||{};
+    const cultivoId=cropInfo.id||slugify(cultivoNombre);
+    const locGeo=LOCATIONS[ubicacionId]||{label:`${ciudad}, ${region}`,pais,lat:0,lon:0,altitud:0};
+    setEstado('Creando finca/lote y guardando el plan…');
+    let id='lote'+(LOTES.length+1)+'_'+Date.now(),fincaId=null;
+    if(BACKEND_URL){
+      const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
+      try{
+        const r=await apiFetch('/api/fincas/crear-lote-completo',{method:'POST',signal:controller.signal,body:JSON.stringify({
+          fincaNombre:finca,nombre,clienteId,cultivoId,cultivoNombre,variedad,areaHa:area,fechaSiembra,ubicacionId,pais,region,ciudad,latitud:locGeo.lat,longitud:locGeo.lon,altitud:locGeo.altitud
+        })});
+        id=r.lote.id;fincaId=r.finca.id;FINCA_IDS[finca]=fincaId;FINCAS_META[finca]=r.finca;
+      }catch(e){
+        if(e?.name==='AbortError')throw new Error('El servidor tardó demasiado en guardar el lote. No vuelvas a pulsar el botón todavía; revisa tu conexión e inténtalo en unos segundos.');
+        throw e;
+      }finally{clearTimeout(timer);}
+    }
+    const clienteNombre=CLIENTES_PRO.find(c=>c.id===clienteId)?.nombre||'';
+    LOTES.push({id,finca,clienteId,clienteNombre,nombre,cultivoId,cultivoNombre,variedad,area,fechaSiembra,ubicacionId,salud:90,aplicaciones:[],analisis:[],costosOperativos:[],observaciones:[],visitas:[]});
+    guardarEstado();renderLotesList();await renderResumenCultivoProfesional();setEstado('✓ Lote creado correctamente.','#2e7d32');
+    openLote(id);
+  }catch(e){
+    console.error('Error creando lote:',e);setEstado('No se pudo crear el lote: '+(e.message||'Error inesperado'),'#c62828');alert('No se pudo crear el lote: '+(e.message||'Error inesperado'));
+  }finally{if(btn)btn.disabled=false;if(txt)txt.textContent='Crear lote y generar plan';}
 }
 
 async function editarLoteActual(){const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;const nombre=prompt('Nombre del lote:',lote.nombre);if(!nombre)return;const area=Number(prompt('Área en hectáreas:',lote.area));if(!area)return;const cultivoNombre=prompt('Cultivo:',lote.cultivoNombre||CROPS[lote.cultivoId]?.label||lote.cultivoId)||'';const variedad=prompt('Variedad:',lote.variedad||'')||'';try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/lotes/'+lote.id,{method:'PATCH',body:JSON.stringify({nombre,areaHa:area,cultivoId:slugCultivo(cultivoNombre),cultivoNombre,variedad,fechaSiembra:lote.fechaSiembra})});Object.assign(lote,{nombre,area,cultivoId:slugCultivo(cultivoNombre),cultivoNombre,variedad});guardarEstado();openLote(lote.id);}catch(e){alert(e.message)}}

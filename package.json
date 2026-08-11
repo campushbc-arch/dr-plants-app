@@ -1,6 +1,6 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.3.3",
+  "version": "8.3.4",
   "description": "Dr Plants V8C.3 — administración organizada, accesos temporales confiables y centro de alertas",
   "main": "app.js",
   "type": "commonjs",
