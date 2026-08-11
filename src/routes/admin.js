@@ -46,7 +46,13 @@ router.get('/usuarios', (req, res) => {
   const usuarios = db.prepare(`
     SELECT id, nombre, email, telefono, rol, tipo_productor, pais, region,
            tarjeta_profesional, especialidad, estado_agronomo, activo,
-           bloqueado_en, motivo_bloqueo, creado_en
+           bloqueado_en, motivo_bloqueo, creado_en,
+           (SELECT a.vence_en FROM accesos_temporales_cultivo a
+              WHERE a.usuario_id=usuarios.id AND a.revocado_en IS NULL AND datetime(a.vence_en)>datetime('now')
+              ORDER BY datetime(a.vence_en) DESC LIMIT 1) AS acceso_temp_vence,
+           (SELECT a.tipo FROM accesos_temporales_cultivo a
+              WHERE a.usuario_id=usuarios.id AND a.revocado_en IS NULL AND datetime(a.vence_en)>datetime('now')
+              ORDER BY datetime(a.vence_en) DESC LIMIT 1) AS acceso_temp_tipo
     FROM usuarios
     WHERE ${condiciones.join(' AND ')}
     ORDER BY activo ASC, creado_en DESC
@@ -336,8 +342,9 @@ router.get('/dashboard', (req, res) => {
 
 router.get('/notificaciones', (req, res) => {
   const soloNoLeidas = String(req.query.noLeidas || 'false') === 'true';
+  const limite = Math.max(1, Math.min(100, Number.parseInt(req.query.limit || '30', 10) || 30));
   res.json(db.prepare(`SELECT n.*,u.nombre usuario_nombre,u.email usuario_email FROM notificaciones_admin n
-    LEFT JOIN usuarios u ON u.id=n.usuario_id ${soloNoLeidas ? 'WHERE n.leida=0' : ''} ORDER BY n.creada_en DESC LIMIT 100`).all());
+    LEFT JOIN usuarios u ON u.id=n.usuario_id ${soloNoLeidas ? 'WHERE n.leida=0' : ''} ORDER BY n.creada_en DESC LIMIT ?`).all(limite));
 });
 router.patch('/notificaciones/:id/leida', (req, res) => {
   const leida = req.body?.leida !== false;
