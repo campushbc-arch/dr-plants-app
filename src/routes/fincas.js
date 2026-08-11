@@ -1,9 +1,11 @@
 const express = require('express');
+const { requiereSuscripcionCultivos } = require('../subscription');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
 
 const router = express.Router();
 router.use(requiereAuth);
+router.use(requiereSuscripcionCultivos);
 
 function fincaPorId(id) {
   return db.prepare('SELECT * FROM fincas WHERE id = ? AND eliminado_en IS NULL').get(id);

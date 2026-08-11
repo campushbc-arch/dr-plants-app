@@ -742,6 +742,28 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 </div>
 
 
+<div id="s-suscripcion-cultivo" class="screen">
+  <div class="pg-hdr"><button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button><span class="pg-title">Dr. Plants Professional</span></div>
+  <div class="phdr-card"><div class="phdr-t">7 días gratis · Gestión profesional de cultivos</div><div class="phdr-s">Administra clientes, fincas, lotes, aplicaciones, clima, proyecciones y Dr. Agro. La prueba comienza cuando registras tu tarjeta y puedes cancelar antes del primer cobro.</div></div>
+  <div id="sub-estado-box" style="padding:0 14px 10px"></div>
+  <div id="sub-planes" style="padding:0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"></div>
+  <div id="sub-card-form" style="display:none;padding:14px">
+    <div class="phdr-card" style="margin:0"><div class="phdr-t">Activa tu prueba gratuita</div><div class="phdr-s">La tarjeta se tokeniza directamente con Wompi. Dr. Plants no almacena número de tarjeta ni CVC.</div></div>
+    <div class="fform" style="padding:12px 0 0">
+      <div class="fgrp"><label>Plan seleccionado</label><input id="sub-plan-label" readonly></div>
+      <div class="fgrp"><label>Periodicidad</label><select id="sub-periodicidad"><option value="mensual">Mensual</option><option value="anual">Anual · 30% de descuento</option></select></div>
+      <div class="fgrp"><label>Nombre del titular</label><input id="sub-card-holder" autocomplete="cc-name"></div>
+      <div class="fgrp"><label>Número de tarjeta</label><input id="sub-card-number" inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242"></div>
+      <div class="frow2"><div class="fgrp"><label>Vencimiento (MM/AA)</label><input id="sub-card-exp" inputmode="numeric" autocomplete="cc-exp" placeholder="08/28"></div><div class="fgrp"><label>CVC</label><input id="sub-card-cvc" inputmode="numeric" autocomplete="cc-csc" type="password" maxlength="4" placeholder="123"></div></div>
+      <label class="form-check" style="margin-top:8px"><input id="sub-accept-terms" class="form-check-input" type="checkbox"><span class="form-check-label">Acepto los <a id="sub-terms-link" href="#" target="_blank" rel="noopener">términos de Wompi</a>.</span></label>
+      <label class="form-check" style="margin-top:8px"><input id="sub-accept-data" class="form-check-input" type="checkbox"><span class="form-check-label">Autorizo el <a id="sub-data-link" href="#" target="_blank" rel="noopener">tratamiento de datos personales</a>.</span></label>
+      <div id="sub-form-msg" style="font-size:11px;color:var(--color-text-secondary);margin:10px 0"></div>
+      <button id="sub-activate-btn" class="cta-btn" onclick="activarTrialSuscripcion()"><i class="ti ti-credit-card"></i> Registrar tarjeta y comenzar 7 días gratis</button>
+      <button class="mini-btn" style="width:100%;margin-top:8px" onclick="cerrarFormularioSuscripcion()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div id="s-cultivo" class="screen">
   <div class="pg-hdr">
     <button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button>
@@ -1137,6 +1159,13 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="phdr-s">Verifica la tarjeta profesional antes de aprobar el acceso a fincas de productores.</div>
   </div>
   <div id="admin-solicitudes-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
+
+  <div class="phdr-card" style="margin-top:12px">
+    <div class="phdr-t">Suscripciones Dr. Plants Professional · V8C</div>
+    <div class="phdr-s">Pruebas gratuitas, planes activos, hectáreas, renovaciones y cobros recurrentes.</div>
+  </div>
+  <div style="padding:0 14px 8px;display:flex;gap:8px"><button class="mini-btn" onclick="renderAdminSuscripciones()">Actualizar</button><button class="mini-btn" onclick="procesarRenovacionesAdmin()">Procesar renovaciones</button></div>
+  <div id="admin-suscripciones-list" style="padding:0 14px 8px;display:flex;flex-direction:column;gap:8px"></div>
 
   <div class="phdr-card" style="margin-top:12px">
     <div class="phdr-t">Matrículas de cursos</div>
@@ -1795,6 +1824,41 @@ let renovandoTokenPromise=null;
 async function renovarTokenSesion(){if(!renovandoTokenPromise)renovandoTokenPromise=fetch(BACKEND_URL+'/api/auth/refresh',{method:'POST',credentials:'include'}).then(async r=>{if(!r.ok)return null;const d=await r.json();SESION={...SESION,autenticado:true,id:d.usuario.id,nombre:d.usuario.nombre,email:d.usuario.email,telefono:d.usuario.telefono,tipoProductor:d.usuario.tipo_productor,pais:d.usuario.pais,region:d.usuario.region,rol:d.usuario.rol,token:d.token};guardarEstado();actualizarUIsesion();return d.token;}).finally(()=>renovandoTokenPromise=null);return renovandoTokenPromise;}
 async function apiFetch(path,opciones={},reintento=true){let token=await obtenerSesionValida();const headers=Object.assign({'Content-Type':'application/json'},opciones.headers||{});if(token)headers['Authorization']='Bearer '+token;const resp=await fetch(BACKEND_URL+path,Object.assign({credentials:'include'},opciones,{headers}));if(resp.status===401&&reintento){const nuevo=await renovarTokenSesion();if(nuevo)return apiFetch(path,opciones,false);}const data=await resp.json().catch(()=>null);if(!resp.ok)throw new Error((data&&data.error)||('Error '+resp.status));return data;}
 
+// === V8C · SUSCRIPCIONES PROFESIONALES ===
+let SUB_V8C={estado:null,planes:[],seleccion:null,aceptacion:null};
+async function verificarAccesoCultivoV8C(){
+  try{const e=await apiFetch('/api/suscripciones/estado');SUB_V8C.estado=e;return !!e.permitido;}catch(e){console.warn('Estado de suscripción:',e.message);return false;}
+}
+function dineroCOP(v){return '$'+Number(v||0).toLocaleString('es-CO')+' COP';}
+async function renderSuscripcionesV8C(){
+  const planesBox=document.getElementById('sub-planes'),estadoBox=document.getElementById('sub-estado-box');if(!planesBox)return;
+  try{
+    const [p,e,a]=await Promise.all([apiFetch('/api/suscripciones/planes'),apiFetch('/api/suscripciones/estado'),apiFetch('/api/suscripciones/wompi-aceptacion')]);SUB_V8C.planes=p.planes||[];SUB_V8C.estado=e;SUB_V8C.aceptacion=a;
+    const ha=Number(p.hectareas||0);const recomendado=p.recomendado?.id;
+    estadoBox.innerHTML=`<div class="unit-card" style="padding:12px"><b>Área actualmente administrada:</b> ${ha.toFixed(1)} ha<br><span style="font-size:11px;color:var(--color-text-secondary)">${e.estado==='sin_suscripcion'?'Selecciona un plan y registra tu tarjeta para comenzar la prueba gratuita.':`Estado: ${e.estado}`}</span></div>`;
+    planesBox.innerHTML=SUB_V8C.planes.map(x=>`<div class="unit-card" style="padding:14px;border:${x.id===recomendado?'1.5px solid #3B6D11':'0.5px solid var(--color-border-tertiary)'}"><div style="display:flex;justify-content:space-between;gap:8px"><b>${x.nombre}</b>${x.id===recomendado?'<span class="viz-badge">Recomendado</span>':''}</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px">${x.minHa}–${x.maxHa||'∞'} hectáreas</div><div style="font-size:18px;font-weight:700;margin-top:9px">${dineroCOP(x.mensual)}<span style="font-size:10px;font-weight:400"> / mes</span></div><div style="font-size:11px;margin-top:4px">Anual: <b>${dineroCOP(x.anual)}</b> · 30% menos</div><button class="mini-btn" style="width:100%;margin-top:10px" onclick="seleccionarPlanV8C('${x.id}')">Elegir plan</button></div>`).join('');
+    if(a?.terminos?.permalink)document.getElementById('sub-terms-link').href=a.terminos.permalink;if(a?.datos?.permalink)document.getElementById('sub-data-link').href=a.datos.permalink;
+  }catch(err){estadoBox.innerHTML=`<div class="unit-card" style="padding:12px;color:#b42318">${err.message}</div>`;}
+}
+function seleccionarPlanV8C(id){const p=SUB_V8C.planes.find(x=>x.id===id);if(!p)return;SUB_V8C.seleccion=p;document.getElementById('sub-plan-label').value=`${p.nombre} · ${p.minHa}–${p.maxHa||'∞'} ha`;document.getElementById('sub-card-holder').value=SESION.nombre||'';document.getElementById('sub-card-form').style.display='block';document.getElementById('sub-card-form').scrollIntoView({behavior:'smooth'});}
+function cerrarFormularioSuscripcion(){document.getElementById('sub-card-form').style.display='none';}
+async function activarTrialSuscripcion(){
+ const msg=document.getElementById('sub-form-msg'),btn=document.getElementById('sub-activate-btn');if(!SUB_V8C.seleccion)return;
+ if(!document.getElementById('sub-accept-terms').checked||!document.getElementById('sub-accept-data').checked){msg.textContent='Debes aceptar ambos contratos antes de continuar.';return;}
+ const number=document.getElementById('sub-card-number').value.replace(/\D/g,''),cvc=document.getElementById('sub-card-cvc').value.replace(/\D/g,''),exp=document.getElementById('sub-card-exp').value.trim().split('/'),holder=document.getElementById('sub-card-holder').value.trim();
+ if(number.length<13||cvc.length<3||exp.length!==2||!holder){msg.textContent='Revisa los datos de la tarjeta.';return;}
+ try{btn.disabled=true;msg.textContent='Tokenizando tarjeta de forma segura con Wompi…';const pk=SUB_V8C.aceptacion?.publicKey;if(!pk)throw new Error('No se encontró la llave pública de Wompi.');const base=pk.startsWith('pub_test_')?'https://sandbox.wompi.co/v1':'https://production.wompi.co/v1';
+   const tr=await fetch(base+'/tokens/cards',{method:'POST',headers:{Authorization:'Bearer '+pk,'Content-Type':'application/json'},body:JSON.stringify({number,cvc,exp_month:String(exp[0]).padStart(2,'0'),exp_year:String(exp[1]).slice(-2),card_holder:holder})});const tj=await tr.json();if(!tr.ok||!tj?.data?.id)throw new Error(tj?.error?.reason||tj?.error?.type||'Wompi no pudo tokenizar la tarjeta.');
+   // Limpiar inmediatamente datos sensibles del DOM.
+   document.getElementById('sub-card-number').value='';document.getElementById('sub-card-cvc').value='';
+   msg.textContent='Creando fuente de pago y activando prueba…';const r=await apiFetch('/api/suscripciones/activar-prueba',{method:'POST',body:JSON.stringify({planId:SUB_V8C.seleccion.id,periodicidad:document.getElementById('sub-periodicidad').value,cardToken:tj.data.id,acceptanceToken:SUB_V8C.aceptacion.terminos.acceptance_token,personalAuth:SUB_V8C.aceptacion.datos.acceptance_token})});
+   alert('Prueba gratuita activada hasta '+new Date(r.pruebaHasta).toLocaleDateString('es-CO')+'.');await cargarFincasDesdeBackend();go('cultivo','cultivo');
+ }catch(e){msg.textContent=e.message||'No fue posible activar la prueba.';}finally{btn.disabled=false;}
+}
+async function renderAdminSuscripciones(){const box=document.getElementById('admin-suscripciones-list');if(!box||SESION.rol!=='admin')return;try{const rows=await apiFetch('/api/suscripciones/admin');box.innerHTML=rows.length?rows.map(s=>`<div class="unit-card" style="padding:11px"><b>${s.nombre}</b> · ${s.plan_nombre}<div style="font-size:10.5px;color:var(--color-text-secondary)">${s.email||''} · ${s.periodicidad} · <b>${s.estado}</b></div><div style="font-size:10.5px;margin-top:3px">Prueba hasta: ${s.prueba_hasta?new Date(s.prueba_hasta).toLocaleDateString('es-CO'):'—'} · Próximo cobro: ${s.proximo_cobro?new Date(s.proximo_cobro).toLocaleDateString('es-CO'):'—'}</div></div>`).join(''):'<div class="unit-card" style="padding:10px">Aún no hay suscripciones.</div>';}catch(e){box.innerHTML='<div class="unit-card" style="padding:10px">'+e.message+'</div>';}}
+async function procesarRenovacionesAdmin(){try{const r=await apiFetch('/api/suscripciones/procesar-renovaciones',{method:'POST',body:'{}'});alert(`Proceso terminado. ${r.procesadas} suscripciones revisadas.`);renderAdminSuscripciones();}catch(e){alert(e.message)}}
+
+
 // Se llama justo después de un login/registro exitoso contra el backend real. Reemplaza
 // los datos de demo por las fincas y lotes reales del usuario autenticado.
 async function cargarFincasDesdeBackend(){
@@ -2433,6 +2497,7 @@ function iniciarActualizacionAdminCircular(){
 }
 async function go(sid,nid){
   const pantallasPublicas=['splash','reg'];
+  if(sid==='cultivo' && SESION.autenticado && SESION.rol!=='admin'){const ok=await verificarAccesoCultivoV8C();if(!ok){sid='suscripcion-cultivo';nid='';}}
   if(!SESION.autenticado && !pantallasPublicas.includes(sid)){const haySesion=await obtenerSesionValida()||await renovarTokenSesion();if(!haySesion){regModo='login';sid='reg';nid='';}}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById('s-'+sid).classList.add('on');
@@ -2444,12 +2509,13 @@ async function go(sid,nid){
   if(sid==='reg')renderRegMode();
   if(sid==='carrito')renderCart();
   if(sid==='cultivo'){renderLotesList();renderResumenCultivoProfesional();prepararFormularioCultivoProfesional();}
+  if(sid==='suscripcion-cultivo')renderSuscripcionesV8C();
   if(sid==='precios')renderMarketList();
   if(sid==='rec-puntos')renderRecPoints();
   if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
-  if(sid==='panel-admin'){setTimeout(cargarConocimientoAdminV8B,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
+  if(sid==='panel-admin'){setTimeout(cargarConocimientoAdminV8B,0);setTimeout(renderAdminSuscripciones,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
   if(sid==='lote-nuevo')actualizarHintPiso();
   if(sid==='home')renderHomeStats();
 }

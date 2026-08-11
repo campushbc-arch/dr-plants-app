@@ -136,5 +136,16 @@ if (!db.prepare('SELECT id FROM cursos WHERE id=?').get(cursoId)) {
   }); tx();
 }
 
+
+// V8C · Catálogo comercial de suscripciones. Anual = 12 meses con 30% de descuento.
+const planesV8C=[
+ ['starter','Starter',1,50,50000,420000],
+ ['professional','Professional',51,200,76000,638400],
+ ['business','Business',201,800,120000,1008000],
+ ['enterprise','Enterprise',801,1600,240000,2016000],
+ ['corporate','Corporate',1601,null,460000,3864000]
+];
+for(const p of planesV8C){db.prepare(`INSERT INTO planes_suscripcion(id,nombre,min_ha,max_ha,precio_mensual_cop,precio_anual_cop,activo) VALUES(?,?,?,?,?,?,1) ON CONFLICT(id) DO UPDATE SET nombre=excluded.nombre,min_ha=excluded.min_ha,max_ha=excluded.max_ha,precio_mensual_cop=excluded.precio_mensual_cop,precio_anual_cop=excluded.precio_anual_cop,activo=1`).run(...p);}
+
 console.log(`Base de datos activa: ${DB_PATH}`);
 module.exports = db;

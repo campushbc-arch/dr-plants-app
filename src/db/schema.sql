@@ -506,3 +506,31 @@ CREATE TABLE IF NOT EXISTS conocimiento_agronomico (
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_conocimiento_cultivo ON conocimiento_agronomico(cultivo,activo,prioridad);
+
+-- V8C · Suscripciones profesionales por hectáreas
+CREATE TABLE IF NOT EXISTS planes_suscripcion (
+  id TEXT PRIMARY KEY, nombre TEXT NOT NULL, min_ha REAL NOT NULL, max_ha REAL DEFAULT NULL,
+  precio_mensual_cop INTEGER NOT NULL, precio_anual_cop INTEGER NOT NULL, activo INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE IF NOT EXISTS fuentes_pago_suscripcion (
+  id TEXT PRIMARY KEY, usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  wompi_payment_source_id TEXT NOT NULL, tipo TEXT NOT NULL DEFAULT 'CARD', marca TEXT, ultimos4 TEXT,
+  estado TEXT NOT NULL DEFAULT 'activa', creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS suscripciones (
+  id TEXT PRIMARY KEY, usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  plan_id TEXT NOT NULL REFERENCES planes_suscripcion(id), periodicidad TEXT NOT NULL CHECK(periodicidad IN ('mensual','anual')),
+  estado TEXT NOT NULL CHECK(estado IN ('trial','activa','morosa','cancelada','vencida')),
+  prueba_inicio TEXT, prueba_hasta TEXT, periodo_desde TEXT, periodo_hasta TEXT, proximo_cobro TEXT,
+  fuente_pago_id TEXT REFERENCES fuentes_pago_suscripcion(id), max_ha_plan REAL DEFAULT NULL,
+  cancelar_al_final INTEGER NOT NULL DEFAULT 0, intentos_fallidos INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')), actualizado_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_suscripciones_usuario ON suscripciones(usuario_id,creado_en);
+CREATE INDEX IF NOT EXISTS idx_suscripciones_cobro ON suscripciones(estado,proximo_cobro);
+CREATE TABLE IF NOT EXISTS cobros_suscripcion (
+  id TEXT PRIMARY KEY, suscripcion_id TEXT NOT NULL REFERENCES suscripciones(id) ON DELETE CASCADE,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id), referencia TEXT NOT NULL UNIQUE, monto_cop INTEGER NOT NULL,
+  estado TEXT NOT NULL, wompi_transaccion_id TEXT, respuesta_wompi TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')), actualizado_en TEXT DEFAULT NULL
+);

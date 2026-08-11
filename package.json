@@ -1,7 +1,7 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.2.0",
-  "description": "Dr Plants V8B — CRM agronómico + inteligencia climática, hídrica, mercado y proyecciones",
+  "version": "8.3.0",
+  "description": "Dr Plants V8C — CRM, inteligencia agronómica y suscripciones recurrentes por hectáreas",
   "main": "app.js",
   "type": "commonjs",
   "engines": {

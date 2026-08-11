@@ -1,9 +1,11 @@
 const express = require('express');
+const { requiereSuscripcionCultivos } = require('../subscription');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
 
 const router = express.Router();
 router.use(requiereAuth);
+router.use(requiereSuscripcionCultivos);
 
 const WEATHER_BASE = (process.env.WEATHER_API_BASE || 'https://api.open-meteo.com').replace(/\/$/, '');
 const WEATHER_GEOCODING_BASE = (process.env.WEATHER_GEOCODING_BASE || 'https://geocoding-api.open-meteo.com').replace(/\/$/, '');

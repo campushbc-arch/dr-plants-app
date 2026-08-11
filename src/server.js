@@ -18,6 +18,7 @@ const pagosRoutes = require('./routes/pagos');
 const circularRoutes = require('./routes/circular');
 const cursosRoutes = require('./routes/cursos');
 const inteligenciaRoutes = require('./routes/inteligencia');
+const { router: suscripcionesRoutes, procesarRenovaciones } = require('./routes/suscripciones');
 const { seedSiVacio } = require('./db/seed');
 const { corsOptions, requestId, originGuard, globalLimiter, loginLimiter, registerLimiter, uploadLimiter, paymentLimiter, webhookLimiter } = require('./security');
 const { sanitizeRequest } = require('./validation');
@@ -80,6 +81,7 @@ app.use('/api/pagos', pagosRoutes);
 app.use('/api/circular', circularRoutes);
 app.use('/api/cursos', cursosRoutes);
 app.use('/api/inteligencia', inteligenciaRoutes);
+app.use('/api/suscripciones', suscripcionesRoutes);
 
 // Sirve la app (dr_plants_v4.html renombrado a public/index.html) desde el mismo dominio
 // y puerto que la API — así todo vive en drplants.campushbc.com sin necesidad de CORS
@@ -108,6 +110,10 @@ app.use((err, req, res, next) => {
 // entrar por terminal a correr "npm run seed" a mano (Hostinger Business no siempre
 // da acceso SSH; en VPS si quieres, puedes seguir corriéndolo manualmente también).
 seedSiVacio();
+
+// V8C: procesa renovaciones al arrancar y luego cada 6 horas.
+setTimeout(()=>procesarRenovaciones().catch(e=>console.error('Renovaciones iniciales:',e.message)),15000);
+setInterval(()=>procesarRenovaciones().catch(e=>console.error('Renovaciones programadas:',e.message)),6*60*60*1000).unref();
 
 app.listen(PORT, () => {
   console.log(`Dr Plants backend escuchando en http://localhost:${PORT}`);
