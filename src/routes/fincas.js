@@ -75,7 +75,7 @@ router.get('/resumen-profesional',(req,res)=>{
 });
 
 router.post('/',(req,res)=>{
-  const {nombre,ubicacionId,pais,region,ciudad,clienteId,clienteNombre}=req.body;
+  const {nombre,ubicacionId,pais,region,ciudad,clienteId,clienteNombre,latitud,longitud,altitud}=req.body;
   if(!limpiarTexto(nombre,120) || !limpiarTexto(ubicacionId,180)) return res.status(400).json({error:'nombre y ubicación son obligatorios.'});
   let cid=null, relacion='propia', gestor=null, clienteCache=null;
   if(req.usuario.rol==='agronomo'){
@@ -85,8 +85,8 @@ router.post('/',(req,res)=>{
     relacion='asistida'; gestor=req.usuario.id;
   }
   const id=nuevoId('finca');
-  db.prepare(`INSERT INTO fincas(id,productor_id,nombre,ubicacion_id,pais,region,ciudad,cliente_id,gestor_id,relacion_tipo,cliente_nombre_cache) VALUES(?,?,?,?,?,?,?,?,?,?,?)`)
-    .run(id,req.usuario.id,limpiarTexto(nombre,120),limpiarTexto(ubicacionId,180),limpiarTexto(pais,80)||null,limpiarTexto(region,120)||null,limpiarTexto(ciudad,120)||null,cid,gestor,relacion,clienteCache);
+  db.prepare(`INSERT INTO fincas(id,productor_id,nombre,ubicacion_id,pais,region,ciudad,cliente_id,gestor_id,relacion_tipo,cliente_nombre_cache,latitud,longitud,altitud) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id,req.usuario.id,limpiarTexto(nombre,120),limpiarTexto(ubicacionId,180),limpiarTexto(pais,80)||null,limpiarTexto(region,120)||null,limpiarTexto(ciudad,120)||null,cid,gestor,relacion,clienteCache,Number.isFinite(Number(latitud))?Number(latitud):null,Number.isFinite(Number(longitud))?Number(longitud):null,Number.isFinite(Number(altitud))?Number(altitud):null);
   res.status(201).json(fincasVisiblesPara(req.usuario).find(f=>f.id===id)||fincaPorId(id));
 });
 router.patch('/:id',(req,res)=>{

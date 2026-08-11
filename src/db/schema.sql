@@ -444,3 +444,65 @@ CREATE TABLE IF NOT EXISTS visitas_tecnicas (
   eliminado_en TEXT DEFAULT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_visitas_lote ON visitas_tecnicas(lote_id, fecha);
+
+-- V8B · Inteligencia climática, hídrica, mercado, proyección y conocimiento
+CREATE TABLE IF NOT EXISTS clima_lote_snapshots (
+  id TEXT PRIMARY KEY,
+  lote_id TEXT NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  fuente TEXT NOT NULL,
+  latitud REAL NOT NULL,
+  longitud REAL NOT NULL,
+  payload_json TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_clima_lote_fecha ON clima_lote_snapshots(lote_id, creado_en);
+
+CREATE TABLE IF NOT EXISTS mediciones_campo (
+  id TEXT PRIMARY KEY,
+  lote_id TEXT NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL CHECK(tipo IN ('precipitacion','temperatura','humedad_suelo','caudal_riego')),
+  valor REAL NOT NULL,
+  unidad TEXT,
+  fecha TEXT NOT NULL,
+  notas TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_mediciones_lote_fecha ON mediciones_campo(lote_id, fecha);
+
+CREATE TABLE IF NOT EXISTS precios_mercado (
+  id TEXT PRIMARY KEY,
+  pais TEXT NOT NULL,
+  region TEXT,
+  mercado TEXT,
+  producto TEXT NOT NULL,
+  variedad TEXT,
+  unidad TEXT,
+  precio_min REAL,
+  precio_max REAL,
+  precio_promedio REAL NOT NULL,
+  moneda TEXT NOT NULL,
+  fuente TEXT NOT NULL,
+  fuente_url TEXT,
+  fecha TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(pais,region,mercado,producto,variedad,unidad,precio_promedio,fuente,fecha)
+);
+CREATE INDEX IF NOT EXISTS idx_precio_producto_fecha ON precios_mercado(pais,producto,fecha);
+
+CREATE TABLE IF NOT EXISTS conocimiento_agronomico (
+  id TEXT PRIMARY KEY,
+  titulo TEXT NOT NULL,
+  cultivo TEXT,
+  categoria TEXT,
+  resumen TEXT,
+  contenido TEXT NOT NULL,
+  fuente TEXT,
+  fuente_url TEXT,
+  prioridad INTEGER NOT NULL DEFAULT 50,
+  activo INTEGER NOT NULL DEFAULT 1 CHECK(activo IN (0,1)),
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_conocimiento_cultivo ON conocimiento_agronomico(cultivo,activo,prioridad);

@@ -28,6 +28,10 @@
   --border-radius-md:10px;
   --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
+
+/* V8B · Inteligencia del cultivo */
+.intel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 14px}.intel-card{background:var(--color-bg-secondary,#f4f8f3);border:1px solid rgba(35,90,45,.12);border-radius:16px;padding:12px;min-width:0}.intel-k{font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.04em}.intel-v{font-size:18px;font-weight:700;color:var(--color-text-primary);margin-top:3px}.intel-s{font-size:10px;color:var(--color-text-secondary);margin-top:3px;line-height:1.35}.intel-risk{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:700;text-transform:uppercase}.intel-risk.bajo{background:#EAF3DE;color:#1b5e20}.intel-risk.medio{background:#FAEEDA;color:#8a5b00}.intel-risk.alto{background:#FCEBEB;color:#b42318}.intel-panel{margin:8px 14px 0;border-radius:18px;border:1px solid rgba(35,90,45,.12);background:var(--color-bg-primary,#fff);overflow:hidden}.intel-row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid rgba(35,90,45,.08);font-size:11px}.intel-row:last-child{border-bottom:0}.intel-actions{display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px 0}.intel-note{font-size:9.5px;color:var(--color-text-secondary);line-height:1.45;padding:8px 14px}.intel-form{display:none;margin:8px 14px;padding:12px;border:1px solid rgba(35,90,45,.12);border-radius:16px;background:var(--color-bg-secondary,#f7faf7)}
+@media(min-width:760px){.intel-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
 <style id="icon-styles">i[class*="ti-"]{display:inline-block;width:1em;height:1em;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;vertical-align:-0.15em}
 .ti-home{-webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27black%27%20stroke-width=%271.9%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27M4%2011l8-7%208%207%27/%3E%3Cpath%20d=%27M6%2010v9h5v-5h2v5h5v-9%27/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27black%27%20stroke-width=%271.9%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27M4%2011l8-7%208%207%27/%3E%3Cpath%20d=%27M6%2010v9h5v-5h2v5h5v-9%27/%3E%3C/svg%3E")}
@@ -821,6 +825,27 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   </div>
 
   <div style="margin-top:16px">
+    <div class="sec-lbl" style="padding:0 14px;display:flex;justify-content:space-between;align-items:center">
+      <span>Inteligencia del cultivo · V8B</span><button class="mini-btn" onclick="cargarInteligenciaV8B(true)">Actualizar</button>
+    </div>
+    <div id="ld-inteligencia" class="intel-grid"><div class="intel-card" style="grid-column:1/-1">Analizando clima, agua, mercado y proyección…</div></div>
+    <div id="ld-intel-detalle" class="intel-panel"></div>
+    <div class="intel-actions"><button class="mini-btn" onclick="toggleIntelConfig()">Configurar proyección</button><button class="mini-btn" onclick="toggleMedicionCampo()">Registrar lluvia medida</button></div>
+    <div id="intel-config-form" class="intel-form">
+      <div class="frow2"><div class="fgrp"><label>Rendimiento objetivo por ha</label><input id="intel-rend" type="number" step="0.01" placeholder="Ej. 1800"></div><div class="fgrp"><label>Unidad</label><input id="intel-unidad-rend" value="kg/ha"></div></div>
+      <div class="frow2"><div class="fgrp"><label>Precio objetivo / referencia</label><input id="intel-precio" type="number" step="0.01" placeholder="0 = usar fuente disponible"></div><div class="fgrp"><label>Moneda</label><select id="intel-moneda"><option>COP</option><option>PEN</option><option>CLP</option><option>USD</option></select></div></div>
+      <div class="frow2"><div class="fgrp"><label>Unidad del precio</label><input id="intel-unidad-precio" placeholder="Ej. kg, carga 125 kg"></div><div class="fgrp"><label>Etapa fenológica</label><input id="intel-etapa" placeholder="Ej. floración"></div></div>
+      <button class="cta-btn" onclick="guardarConfigInteligencia()">Guardar y recalcular</button>
+    </div>
+    <div id="intel-medicion-form" class="intel-form">
+      <div class="frow2"><div class="fgrp"><label>Precipitación medida (mm)</label><input id="intel-lluvia" type="number" step="0.1" placeholder="Ej. 18.5"></div><div class="fgrp"><label>Fecha</label><input id="intel-lluvia-fecha" type="date"></div></div>
+      <div class="fgrp"><label>Notas</label><input id="intel-lluvia-notas" placeholder="Ej. Pluviómetro del lote norte"></div>
+      <button class="cta-btn" onclick="guardarMedicionCampo()">Guardar medición</button>
+    </div>
+    <div class="intel-note">Los indicadores climáticos son modelos de apoyo a decisión y no sustituyen una estación meteorológica o medición de campo. Los precios se muestran como referencia, con fuente y fecha.</div>
+  </div>
+
+  <div style="margin-top:16px">
     <div class="sec-lbl" style="padding:0 14px">Plan de fertilización</div>
     <div class="plan-tl" id="ld-plan"></div>
   </div>
@@ -1148,6 +1173,20 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="sec-lbl" style="padding:0">Trazabilidad de inteligencia artificial</div>
   </div>
   <div id="admin-auditoria-ia-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:8px"></div>
+
+  <div class="phdr-card" style="margin-top:12px">
+    <div class="phdr-t">Base de conocimiento agronómico · V8B</div>
+    <div class="phdr-s">Agrega protocolos, criterios técnicos y referencias validadas para que Dr. Agro las use como contexto.</div>
+  </div>
+  <div class="fform" style="padding-top:8px">
+    <div class="frow2"><div class="fgrp"><label>Título</label><input id="kb-titulo" placeholder="Ej. Muestreo de suelos para café"></div><div class="fgrp"><label>Cultivo</label><input id="kb-cultivo" list="catalogo-cultivos" placeholder="General o cultivo"></div></div>
+    <div class="frow2"><div class="fgrp"><label>Categoría</label><input id="kb-categoria" placeholder="Nutrición, riego, fitosanidad..."></div><div class="fgrp"><label>Fuente</label><input id="kb-fuente" placeholder="ICA, manual interno, investigación..."></div></div>
+    <div class="fgrp"><label>Resumen</label><input id="kb-resumen" placeholder="Idea principal que debe recordar Dr. Agro"></div>
+    <div class="fgrp"><label>Contenido validado</label><textarea id="kb-contenido" rows="5" placeholder="Escribe o pega el protocolo/recomendación validada"></textarea></div>
+    <div class="fgrp"><label>Enlace de fuente (opcional)</label><input id="kb-url" placeholder="https://..."></div>
+    <button class="cta-btn" onclick="guardarConocimientoV8B()"><i class="ti ti-brain"></i> Guardar en conocimiento de Dr. Agro</button>
+  </div>
+  <div id="admin-kb-list" style="padding:8px 14px 0;display:flex;flex-direction:column;gap:7px"></div>
 
   <div style="padding:20px 14px 0;display:flex;justify-content:space-between;align-items:center">
     <div class="sec-lbl" style="padding:0">Catálogo de AgroTienda</div>
@@ -1730,10 +1769,10 @@ async function cargarCiudades(){
  try{const d=await fetchJsonConTimeout(GEO_API+'/state/cities',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:pais,state:region})});const cities=(d.data||[]).sort((a,b)=>a.localeCompare(b,'es'));if(!cities.length)throw new Error('sin ciudades');sel.innerHTML='<option value="">Selecciona…</option>'+cities.map(x=>`<option>${x}</option>`).join('');estado.textContent=`${cities.length} ciudades/municipios/comunas disponibles.`;}catch(e){const cities=(GEO_FALLBACK[pais]?.[region]||[]);sel.innerHTML='<option value="">Selecciona…</option>'+cities.map(x=>`<option>${x}</option>`).join('')+'<option value="__otra__">Otra ubicación…</option>';estado.textContent='No se pudo consultar el catálogo completo. Usa una opción disponible o “Otra ubicación”.';}
 }
 async function resolverUbicacionSeleccionada(){
- let pais=paisApi(),region=document.getElementById('nl-region').value,city=document.getElementById('nl-ciudad').value;if(city==='__otra__')city=prompt('Escribe la ciudad, municipio o comuna:')||'';if(!city)return;
- const key=slugCultivo(`${pais}-${region}-${city}`);document.getElementById('nl-ubicacion').value=key;
- try{const q=encodeURIComponent(`${city}, ${region}, ${pais}`);const d=await fetchJsonConTimeout(`https://geocoding-api.open-meteo.com/v1/search?name=${q}&count=1&language=es&format=json`);const x=d.results?.[0];if(x)LOCATIONS[key]={label:`${city}, ${region}`,pais,lat:x.latitude,lon:x.longitude,altitud:x.elevation||0};else LOCATIONS[key]={label:`${city}, ${region}`,pais,lat:0,lon:0,altitud:0};}catch(e){LOCATIONS[key]={label:`${city}, ${region}`,pais,lat:0,lon:0,altitud:0};}
- actualizarHintPiso();
+ const pais=paisApi(),region=document.getElementById('nl-region').value,city=document.getElementById('nl-ciudad').value,st=document.getElementById('geo-estado');if(!region||!city)return;
+ const key=`geo_${slugify(pais+'_'+region+'_'+city)}`;document.getElementById('nl-ubicacion').value=key;st.textContent='Localizando finca…';
+ try{const x=await apiFetch(`/api/inteligencia/geocodificar?pais=${encodeURIComponent(pais)}&region=${encodeURIComponent(region)}&ciudad=${encodeURIComponent(city)}`);LOCATIONS[key]={label:x.label||`${city}, ${region}`,pais,lat:Number(x.lat)||0,lon:Number(x.lon)||0,altitud:Number(x.altitud)||0};}catch(e){LOCATIONS[key]={label:`${city}, ${region}`,pais,lat:0,lon:0,altitud:0};}
+ const loc=LOCATIONS[key];st.textContent=`${loc.label}${loc.altitud?` · ${Math.round(loc.altitud)} m s. n. m.`:''}`;actualizarHintPiso();
 }
 const PLAN_STEPS=[
   {key:'raizcampus',nombre:'RAIZCAMPUS 12-24-12',etapa:'Desarrollo radicular'},
@@ -2027,47 +2066,8 @@ function renderPanelAgronomo(){
 }
 
 async function loadFincaWeather(fslug,ubicacionId){
-  const box=document.getElementById('fwx-'+fslug);
-  if(!box)return;
-  const loc=LOCATIONS[ubicacionId];
-  try{
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,precipitation,weather_code&daily=precipitation_sum,weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&past_days=8&forecast_days=4`;
-    const res=await fetch(url);
-    if(!res.ok)throw new Error('sin respuesta');
-    const data=await res.json();
-    const cur=data.current;
-    const dias=data.daily.time.map((t,i)=>({
-      fecha:t,
-      esPasado:i<8,
-      label:new Date(t).toLocaleDateString('es-CO',{weekday:'short'}),
-      precip:data.daily.precipitation_sum[i],
-      code:data.daily.weather_code[i]
-    }));
-    const pasados=dias.slice(0,8);
-    const futuros=dias.slice(9,12); // se salta "hoy" (índice 8) y muestra 3 días siguientes
-    const precipAcum8=pasados.reduce((s,d)=>s+d.precip,0);
-    const maxPrecip=Math.max(1,...pasados.map(d=>d.precip));
-    box.innerHTML=`
-      <div class="wx-mini">
-        <div class="wx-mini-top">
-          <div class="wx-mini-now">
-            <span class="wx-mini-ico">${WX_ICONS[cur.weather_code]||'🌡️'}</span>
-            <span class="wx-mini-temp">${Math.round(cur.temperature_2m)}°C</span>
-            <span class="wx-mini-desc">${WX_DESC[cur.weather_code]||'—'}</span>
-          </div>
-          <div class="wx-mini-precip8"><b>${precipAcum8.toFixed(0)} mm</b> últimos 8 días</div>
-        </div>
-        <div class="wx-mini-bars">
-          ${pasados.map(d=>`<div class="wx-bar-col" title="${d.label}: ${d.precip.toFixed(1)}mm"><div class="wx-bar" style="height:${Math.max(3,Math.round(d.precip/maxPrecip*26))}px"></div><span>${d.label.slice(0,1).toUpperCase()}</span></div>`).join('')}
-        </div>
-        <div class="wx-mini-fc">
-          ${futuros.map(d=>`<div class="wx-mini-fcday"><span>${d.label}</span><span>${WX_ICONS[d.code]||'🌡️'}</span><span>${d.precip>0?d.precip.toFixed(0)+'mm':'—'}</span></div>`).join('')}
-        </div>
-        <div class="wx-mini-src">Fuente: Open-Meteo · en vivo</div>
-      </div>`;
-  }catch(err){
-    box.innerHTML=`<div class="wx-mini"><div class="wx-mini-top"><div class="wx-mini-now"><span class="wx-mini-ico">🌡️</span><span class="wx-mini-desc">No se pudo cargar el clima de esta zona en este momento.</span></div></div></div>`;
-  }
+  const box=document.getElementById('fwx-'+fslug);if(!box)return;const lote=LOTES.find(l=>slugify(l.finca)===fslug);if(!lote){box.innerHTML='';return;}
+  try{const d=await apiFetch(`/api/inteligencia/lotes/${encodeURIComponent(lote.id)}`),c=d.clima||{},cur=c.actual||{},r=c.resumen7d||{},dias=(c.dias||[]).slice(1,4);box.innerHTML=`<div class="wx-mini"><div class="wx-mini-top"><div class="wx-mini-now"><span class="wx-mini-ico">🌦️</span><span class="wx-mini-temp">${cur.temperatura===null||cur.temperatura===undefined?'—':Math.round(cur.temperatura)+'°C'}</span><span class="wx-mini-desc">HR ${cur.humedad??'—'}%</span></div><div class="wx-mini-precip8"><b>${r.precipitacionMm??'—'} mm</b> próximos 7 días</div></div><div class="wx-mini-fc">${dias.map(x=>`<div class="wx-mini-fcday"><span>${new Date(x.fecha+'T12:00:00').toLocaleDateString('es-CO',{weekday:'short'})}</span><span>${x.precip>0?'🌧️':'☀️'}</span><span>${Number(x.precip||0).toFixed(0)}mm</span></div>`).join('')}</div><div class="wx-mini-src">Balance hídrico ${r.balanceHidricoMm??'—'} mm · Fuente ${escapeHtml(c.fuente||'meteorológica')}</div></div>`;}catch(err){box.innerHTML=`<div class="wx-mini"><div class="wx-mini-top"><div class="wx-mini-now"><span class="wx-mini-ico">🌡️</span><span class="wx-mini-desc">No se pudo cargar el clima de esta zona.</span></div></div></div>`;}
 }
 
 const CROP_ICON={papa:'ti-seedling',cafe:'ti-leaf',aguacate:'ti-apple',limon:'ti-droplet',mango:'ti-apple',cana:'ti-grain',arroz:'ti-grain'};
@@ -2106,6 +2106,7 @@ function renderLoteDetalle(){
   renderObservaciones(lote);
   document.getElementById('ld-obs-actions').style.display=['agronomo','admin'].includes(SESION.rol)?'block':'none';
   loadWeather(lote);
+  cargarInteligenciaV8B(false);
   document.getElementById('ld-appform').style.display='none';
   document.getElementById('ld-analisisform').style.display='none';
   document.getElementById('ld-costoform').style.display='none';
@@ -2186,41 +2187,8 @@ const WX_ICONS={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫�
 const WX_DESC={0:'Despejado',1:'Mayormente despejado',2:'Parcialmente nublado',3:'Nublado',45:'Niebla',48:'Niebla',51:'Llovizna ligera',53:'Llovizna',55:'Llovizna densa',61:'Lluvia ligera',63:'Lluvia',65:'Lluvia fuerte',80:'Chubascos',81:'Chubascos',82:'Chubascos fuertes',95:'Tormenta',96:'Tormenta',99:'Tormenta fuerte'};
 
 async function loadWeather(lote){
-  const box=document.getElementById('ld-weather');
-  const loc=LOCATIONS[lote.ubicacionId];
-  box.innerHTML='Cargando datos meteorológicos…';
-  try{
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,precipitation,weather_code&daily=precipitation_sum,weather_code&timezone=auto&forecast_days=4`;
-    const res=await fetch(url);
-    const data=await res.json();
-    const cur=data.current;
-    const days=data.daily.time.map((t,i)=>({
-      label:new Date(t).toLocaleDateString('es-CO',{weekday:'short'}),
-      precip:data.daily.precipitation_sum[i]
-    })).slice(1,4);
-    box.innerHTML=`
-      <div class="wx-top">
-        <div>
-          <div class="wx-loc"><i class="ti ti-map-pin" aria-hidden="true"></i> ${loc.label}</div>
-          <div class="wx-temp">${Math.round(cur.temperature_2m)}°C</div>
-          <div class="wx-desc">${WX_DESC[cur.weather_code]||'—'} · ${cur.precipitation} mm ahora</div>
-        </div>
-        <div class="wx-ico">${WX_ICONS[cur.weather_code]||'🌡️'}</div>
-      </div>
-      <div class="wx-days">
-        ${days.map(d=>`<div class="wx-day"><div class="d">${d.label}</div><div>${d.precip>0?'🌧️':'☀️'}</div><div class="p">${d.precip.toFixed(1)}mm</div></div>`).join('')}
-      </div>`;
-  }catch(err){
-    box.innerHTML=`
-      <div class="wx-top">
-        <div>
-          <div class="wx-loc"><i class="ti ti-map-pin" aria-hidden="true"></i> ${loc.label}</div>
-          <div class="wx-temp">—</div>
-          <div class="wx-desc">No se pudo cargar el clima en este momento</div>
-        </div>
-        <div class="wx-ico">🌡️</div>
-      </div>`;
-  }
+  const box=document.getElementById('ld-weather');const loc=LOCATIONS[lote.ubicacionId]||{};box.innerHTML='Cargando datos meteorológicos…';
+  try{const d=await apiFetch(`/api/inteligencia/lotes/${encodeURIComponent(lote.id)}`),c=d.clima||{},cur=c.actual||{},days=(c.dias||[]).slice(1,4);box.innerHTML=`<div class="wx-top"><div><div class="wx-loc"><i class="ti ti-map-pin" aria-hidden="true"></i> ${escapeHtml(loc.label||d.lote?.ciudad||'Lote')}</div><div class="wx-temp">${cur.temperatura===null||cur.temperatura===undefined?'—':Math.round(cur.temperatura)+'°C'}</div><div class="wx-desc">Humedad ${cur.humedad??'—'}% · ${cur.precipitacion??0} mm ahora</div></div><div class="wx-ico">🌦️</div></div><div class="wx-days">${days.map(x=>`<div class="wx-day"><div class="d">${new Date(x.fecha+'T12:00:00').toLocaleDateString('es-CO',{weekday:'short'})}</div><div>${x.precip>0?'🌧️':'☀️'}</div><div class="p">${Number(x.precip||0).toFixed(1)}mm</div></div>`).join('')}</div><div class="wx-mini-src"><a href="${c.fuenteUrl||'https://open-meteo.com/'}" target="_blank" rel="noopener">Datos meteorológicos: ${escapeHtml(c.fuente||'Open-Meteo')}</a></div>`;}catch(err){box.innerHTML=`<div class="wx-top"><div><div class="wx-loc"><i class="ti ti-map-pin"></i> ${escapeHtml(loc.label||'Lote')}</div><div class="wx-temp">—</div><div class="wx-desc">No se pudo cargar el clima en este momento</div></div><div class="wx-ico">🌡️</div></div>`;}
 }
 
 function pisoDeUbicacion(ubicacionId){
@@ -2252,12 +2220,58 @@ async function crearLote(){
   if(!ubicacionId){await resolverUbicacionSeleccionada();ubicacionId=document.getElementById('nl-ubicacion').value;}
   const {id:cultivoId}=cropDataPorNombre(cultivoNombre,variedad);
   let id='lote'+(LOTES.length+1)+'_'+Date.now();
-  if(BACKEND_URL&&SESION.token){try{let fincaId=FINCA_IDS[finca];if(fincaId&&SESION.rol==='agronomo'&&FINCAS_META[finca]?.cliente_id!==clienteId)fincaId=null;if(!fincaId){const fc=await apiFetch('/api/fincas',{method:'POST',body:JSON.stringify({nombre:finca,ubicacionId,pais,region,ciudad,clienteId})});fincaId=fc.id;FINCA_IDS[finca]=fincaId;FINCAS_META[finca]=fc;}const lc=await apiFetch('/api/fincas/'+fincaId+'/lotes',{method:'POST',body:JSON.stringify({nombre,cultivoId,cultivoNombre,variedad,areaHa:area,fechaSiembra})});id=lc.id;}catch(e){alert('No se pudo guardar: '+e.message);return;}}
+  if(BACKEND_URL&&SESION.token){try{let fincaId=FINCA_IDS[finca];if(fincaId&&SESION.rol==='agronomo'&&FINCAS_META[finca]?.cliente_id!==clienteId)fincaId=null;if(!fincaId){const locGeo=LOCATIONS[ubicacionId]||{};const fc=await apiFetch('/api/fincas',{method:'POST',body:JSON.stringify({nombre:finca,ubicacionId,pais,region,ciudad,clienteId,latitud:locGeo.lat,longitud:locGeo.lon,altitud:locGeo.altitud})});fincaId=fc.id;FINCA_IDS[finca]=fincaId;FINCAS_META[finca]=fc;}const lc=await apiFetch('/api/fincas/'+fincaId+'/lotes',{method:'POST',body:JSON.stringify({nombre,cultivoId,cultivoNombre,variedad,areaHa:area,fechaSiembra})});id=lc.id;}catch(e){alert('No se pudo guardar: '+e.message);return;}}
   const clienteNombre=CLIENTES_PRO.find(c=>c.id===clienteId)?.nombre||'';LOTES.push({id,finca,clienteId,clienteNombre,nombre,cultivoId,cultivoNombre,variedad,area,fechaSiembra,ubicacionId,salud:90,aplicaciones:[],analisis:[],costosOperativos:[],observaciones:[],visitas:[]});guardarEstado();renderLotesList();renderResumenCultivoProfesional();openLote(id);
 }
 
 async function editarLoteActual(){const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;const nombre=prompt('Nombre del lote:',lote.nombre);if(!nombre)return;const area=Number(prompt('Área en hectáreas:',lote.area));if(!area)return;const cultivoNombre=prompt('Cultivo:',lote.cultivoNombre||CROPS[lote.cultivoId]?.label||lote.cultivoId)||'';const variedad=prompt('Variedad:',lote.variedad||'')||'';try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/lotes/'+lote.id,{method:'PATCH',body:JSON.stringify({nombre,areaHa:area,cultivoId:slugCultivo(cultivoNombre),cultivoNombre,variedad,fechaSiembra:lote.fechaSiembra})});Object.assign(lote,{nombre,area,cultivoId:slugCultivo(cultivoNombre),cultivoNombre,variedad});guardarEstado();openLote(lote.id);}catch(e){alert(e.message)}}
 async function eliminarLoteActual(){const lote=LOTES.find(l=>l.id===currentLote);if(!lote||!confirm('¿Eliminar este lote? Se ocultará junto con su historial.'))return;try{if(BACKEND_URL&&SESION.token)await apiFetch('/api/fincas/lotes/'+lote.id,{method:'DELETE'});LOTES=LOTES.filter(x=>x.id!==lote.id);guardarEstado();renderLotesList();go('cultivo','cultivo');}catch(e){alert(e.message)}}
+
+
+let INTEL_V8B=null;
+function fmtMonedaV8(v,moneda='COP'){
+  if(v===null||v===undefined||!Number.isFinite(Number(v)))return '—';
+  try{return new Intl.NumberFormat('es-CO',{style:'currency',currency:moneda,maximumFractionDigits:moneda==='COP'||moneda==='CLP'?0:2}).format(Number(v));}catch(e){return `${Number(v).toLocaleString('es-CO')} ${moneda}`;}
+}
+function riskBadgeV8(x){const v=['bajo','medio','alto'].includes(x)?x:'medio';return `<span class="intel-risk ${v}">${v}</span>`;}
+async function cargarInteligenciaV8B(force=false){
+  const lote=LOTES.find(l=>l.id===currentLote);if(!lote||!BACKEND_URL||!SESION.token)return;
+  const wrap=document.getElementById('ld-inteligencia'),detalle=document.getElementById('ld-intel-detalle');
+  if(wrap)wrap.innerHTML='<div class="intel-card" style="grid-column:1/-1">Actualizando inteligencia del cultivo…</div>';
+  try{
+    const d=await apiFetch(`/api/inteligencia/lotes/${encodeURIComponent(lote.id)}${force?'?refresh=1':''}`);INTEL_V8B=d;
+    const c=d.clima||{},r=c.resumen7d||{},p=d.proyeccion||{},m=d.mercado||{},med=d.medicionCampo;
+    if(wrap)wrap.innerHTML=`
+      <div class="intel-card"><div class="intel-k">Lluvia 7 días</div><div class="intel-v">${r.precipitacionMm??'—'} mm</div><div class="intel-s">ET₀ ${r.et0Mm??'—'} mm</div></div>
+      <div class="intel-card"><div class="intel-k">Balance hídrico</div><div class="intel-v">${r.balanceHidricoMm??'—'} mm</div><div class="intel-s">Riego indicativo ${r.necesidadRiegoIndicativaMm??'—'} mm</div></div>
+      <div class="intel-card"><div class="intel-k">Riesgo hídrico</div><div class="intel-v">${riskBadgeV8(r.riesgoHidrico)}</div><div class="intel-s">Demanda estimada ${r.demandaCultivoMm??'—'} mm</div></div>
+      <div class="intel-card"><div class="intel-k">Calor</div><div class="intel-v">${r.diasEstresCalor??0} días</div><div class="intel-s">Riesgo térmico ${riskBadgeV8(r.riesgoTermico)}</div></div>`;
+    const precio=p.precioReferencia?fmtMonedaV8(p.precioReferencia,p.moneda):'Sin referencia automática';
+    const obs=med?`${Number(med.valor).toFixed(1)} ${med.unidad||''} · ${med.fecha}`:'Sin medición de campo';
+    const marketRows=(m.registros||[]).slice(0,3).map(x=>`<div class="intel-row"><span>${escapeHtml(x.mercado||x.region||x.fuente||'Mercado')} · ${escapeHtml(x.fecha||'')}</span><b>${fmtMonedaV8(x.precio_promedio,x.moneda||p.moneda)} ${escapeHtml(x.unidad||'')}</b></div>`).join('');
+    if(detalle)detalle.innerHTML=`
+      <div class="intel-row"><span>Temperatura actual</span><b>${c.actual?.temperatura??'—'} °C · HR ${c.actual?.humedad??'—'}%</b></div>
+      <div class="intel-row"><span>Grados-día próximos 7 días</span><b>${r.gradosDia??'—'}</b></div>
+      <div class="intel-row"><span>Última lluvia medida en finca</span><b>${escapeHtml(obs)}</b></div>
+      <div class="intel-row"><span>Precio usado en proyección</span><b>${precio}</b></div>
+      <div class="intel-row"><span>Producción objetivo</span><b>${p.produccionBase??0} · ajustada por riesgo ${p.produccionAjustadaClima??0}</b></div>
+      <div class="intel-row"><span>Ingreso indicativo ajustado</span><b>${fmtMonedaV8(p.ingresoAjustadoClima,p.moneda)}</b></div>
+      <div class="intel-row"><span>Utilidad indicativa</span><b>${fmtMonedaV8(p.utilidadIndicativa,p.moneda)}${p.margenIndicativoPct!==null?' · '+p.margenIndicativoPct+'%':''}</b></div>
+      ${marketRows||`<div class="intel-row"><span>Mercado oficial</span><b>${escapeHtml(m.fuente?.nombre||'—')} · ${m.aviso?'conector en preparación':'sin cotización coincidente'}</b></div>`}
+      <div class="intel-row"><span>Fuente meteorológica</span><b><a href="${escapeHtml(c.fuenteUrl||'https://open-meteo.com/')}" target="_blank" rel="noopener">${escapeHtml(c.fuente||'Open-Meteo')}</a></b></div>`;
+    const lot=INTEL_V8B.lote||{};document.getElementById('intel-rend').value=lot.rendimiento_objetivo_ha||'';document.getElementById('intel-unidad-rend').value=lot.unidad_rendimiento||'kg/ha';document.getElementById('intel-precio').value=lot.precio_objetivo||'';document.getElementById('intel-unidad-precio').value=lot.unidad_precio||'';document.getElementById('intel-moneda').value=lot.moneda_proyeccion||p.moneda||'COP';document.getElementById('intel-etapa').value=lot.etapa_fenologica||'';
+  }catch(e){if(wrap)wrap.innerHTML=`<div class="intel-card" style="grid-column:1/-1"><b>No se pudo actualizar la inteligencia.</b><div class="intel-s">${escapeHtml(e.message||'Intenta nuevamente.')}</div></div>`;if(detalle)detalle.innerHTML='';}
+}
+function toggleIntelConfig(){const x=document.getElementById('intel-config-form');x.style.display=x.style.display==='block'?'none':'block';}
+function toggleMedicionCampo(){const x=document.getElementById('intel-medicion-form');x.style.display=x.style.display==='block'?'none':'block';if(!document.getElementById('intel-lluvia-fecha').value)document.getElementById('intel-lluvia-fecha').value=new Date().toISOString().slice(0,10);}
+async function guardarConfigInteligencia(){
+  const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;
+  try{await apiFetch(`/api/inteligencia/lotes/${lote.id}/configuracion`,{method:'POST',body:JSON.stringify({rendimientoObjetivoHa:Number(document.getElementById('intel-rend').value)||0,unidadRendimiento:document.getElementById('intel-unidad-rend').value,precioObjetivo:Number(document.getElementById('intel-precio').value)||0,unidadPrecio:document.getElementById('intel-unidad-precio').value,moneda:document.getElementById('intel-moneda').value,etapaFenologica:document.getElementById('intel-etapa').value})});toggleIntelConfig();await cargarInteligenciaV8B(true);}catch(e){alert(e.message)}
+}
+async function guardarMedicionCampo(){
+  const lote=LOTES.find(l=>l.id===currentLote);if(!lote)return;const valor=Number(document.getElementById('intel-lluvia').value);if(!Number.isFinite(valor)||valor<0){alert('Ingresa la lluvia medida en milímetros.');return;}
+  try{await apiFetch(`/api/inteligencia/lotes/${lote.id}/mediciones`,{method:'POST',body:JSON.stringify({tipo:'precipitacion',valor,unidad:'mm',fecha:document.getElementById('intel-lluvia-fecha').value||new Date().toISOString().slice(0,10),notas:document.getElementById('intel-lluvia-notas').value})});document.getElementById('intel-lluvia').value='';toggleMedicionCampo();await cargarInteligenciaV8B(false);}catch(e){alert(e.message)}
+}
 
 function toggleAppForm(){
   const f=document.getElementById('ld-appform');
@@ -2435,7 +2449,7 @@ async function go(sid,nid){
   if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
-  if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
+  if(sid==='panel-admin'){setTimeout(cargarConocimientoAdminV8B,0);} if(sid==='panel-admin'){renderAdminSolicitudes();iniciarActualizacionAdminCircular();}
   if(sid==='lote-nuevo')actualizarHintPiso();
   if(sid==='home')renderHomeStats();
 }
@@ -4266,6 +4280,20 @@ document.addEventListener('DOMContentLoaded',async()=>{
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addThemeButton);else addThemeButton();
 })();
+
+async function guardarConocimientoV8B(){
+  try{
+    const titulo=document.getElementById('kb-titulo').value.trim(),contenido=document.getElementById('kb-contenido').value.trim();
+    if(!titulo||!contenido){alert('Título y contenido son obligatorios.');return;}
+    await apiFetch('/api/inteligencia/conocimiento',{method:'POST',body:JSON.stringify({titulo,cultivo:document.getElementById('kb-cultivo').value.trim(),categoria:document.getElementById('kb-categoria').value.trim(),resumen:document.getElementById('kb-resumen').value.trim(),contenido,fuente:document.getElementById('kb-fuente').value.trim(),fuenteUrl:document.getElementById('kb-url').value.trim(),prioridad:60})});
+    ['kb-titulo','kb-cultivo','kb-categoria','kb-resumen','kb-contenido','kb-fuente','kb-url'].forEach(id=>document.getElementById(id).value='');
+    await cargarConocimientoAdminV8B();alert('Conocimiento guardado. Dr. Agro podrá usarlo cuando sea pertinente.');
+  }catch(e){alert(e.message)}
+}
+async function cargarConocimientoAdminV8B(){
+  const w=document.getElementById('admin-kb-list');if(!w||SESION.rol!=='admin')return;
+  try{const rows=await apiFetch('/api/inteligencia/conocimiento');w.innerHTML=rows.slice(0,15).map(x=>`<div class="lab-card"><div class="lab-ico"><i class="ti ti-brain"></i></div><div style="flex:1"><div class="lab-name">${escapeHtml(x.titulo)}</div><div class="lab-desc">${escapeHtml(x.cultivo||'General')} · ${escapeHtml(x.categoria||'Sin categoría')}${x.fuente?' · '+escapeHtml(x.fuente):''}</div><div class="lab-desc" style="margin-top:3px">${escapeHtml(x.resumen||'')}</div></div></div>`).join('')||'<div class="intel-note">Aún no hay conocimiento validado cargado.</div>';}catch(e){w.innerHTML=`<div class="intel-note">${escapeHtml(e.message)}</div>`;}
+}
 </script>
 
 </body>

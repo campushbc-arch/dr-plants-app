@@ -32,13 +32,14 @@ router.post('/', requiereAuth, async (req, res) => {
 
   const inicioMs = Date.now();
   const mensajesNormalizados = normalizarMensajes(messages);
+  const systemEnriquecido = modulo === 'dr_agro' ? enriquecerSystemAgronomico(req.usuario, system, mensajesNormalizados) : system;
   const adjuntos = obtenerAdjuntos(req.usuario.id, archivoIds);
   let resultado;
   let errores = [];
 
   if (process.env.ANTHROPIC_API_KEY) {
     try {
-      resultado = await consultarAnthropic({ system, messages: mensajesNormalizados, adjuntos });
+      resultado = await consultarAnthropic({ system: systemEnriquecido, messages: mensajesNormalizados, adjuntos });
     } catch (error) {
       errores.push(error);
       console.error('Anthropic falló:', error.message);
@@ -47,7 +48,7 @@ router.post('/', requiereAuth, async (req, res) => {
 
   if (!resultado && FALLBACK_ENABLED && process.env.OPENAI_API_KEY) {
     try {
-      resultado = await consultarOpenAI({ system, messages: mensajesNormalizados });
+      resultado = await consultarOpenAI({ system: systemEnriquecido, messages: mensajesNormalizados });
     } catch (error) {
       errores.push(error);
       console.error('OpenAI fallback falló:', error.message);
@@ -81,6 +82,37 @@ router.post('/', requiereAuth, async (req, res) => {
     requestId: req.requestId
   });
 });
+
+
+function enriquecerSystemAgronomico(usuario, system, messages) {
+  try {
+    const lotes = db.prepare(`SELECT l.id,l.nombre,l.cultivo_id,l.cultivo_nombre,l.variedad,l.area_ha,l.etapa_fenologica,l.rendimiento_objetivo_ha,
+      f.nombre finca_nombre,f.pais,f.region,f.ciudad,COALESCE(c.nombre,f.cliente_nombre_cache) cliente_nombre
+      FROM lotes l JOIN fincas f ON f.id=l.finca_id LEFT JOIN clientes_agronomicos c ON c.id=f.cliente_id
+      WHERE l.eliminado_en IS NULL AND f.eliminado_en IS NULL
+      AND (?='admin' OR f.productor_id=? OR f.gestor_id=? OR EXISTS(SELECT 1 FROM agronomo_asignacion a WHERE a.finca_id=f.id AND a.agronomo_id=?))
+      ORDER BY l.actualizado_en DESC,l.creado_en DESC LIMIT 30`).all(usuario.rol,usuario.id,usuario.id,usuario.id);
+    const resumen = lotes.map(l => {
+      const snap=db.prepare('SELECT payload_json FROM clima_lote_snapshots WHERE lote_id=? ORDER BY creado_en DESC LIMIT 1').get(l.id);
+      let c=null;try{c=snap?JSON.parse(snap.payload_json):null}catch(e){}
+      const r=c?.resumen7d;
+      return `${l.cliente_nombre?`Cliente ${l.cliente_nombre} · `:''}${l.finca_nombre} · ${l.nombre}: ${l.cultivo_nombre||l.cultivo_id}${l.variedad?' '+l.variedad:''}, ${l.area_ha} ha${l.etapa_fenologica?`, etapa ${l.etapa_fenologica}`:''}${r?`, lluvia7d ${r.precipitacionMm} mm, balance hídrico ${r.balanceHidricoMm} mm, riesgo hídrico ${r.riesgoHidrico}, riesgo térmico ${r.riesgoTermico}`:''}.`;
+    }).join('\n');
+    const ultimaPregunta=messages.filter(m=>m.role==='user').slice(-1)[0]?.content||'';
+    const palabras=String(ultimaPregunta).toLowerCase().split(/[^a-záéíóúñ0-9]+/).filter(x=>x.length>4).slice(0,8);
+    let conocimientos=[];
+    if(palabras.length){
+      const rows=db.prepare('SELECT titulo,cultivo,categoria,resumen,contenido,fuente FROM conocimiento_agronomico WHERE activo=1 ORDER BY prioridad DESC,actualizado_en DESC LIMIT 80').all();
+      conocimientos=rows.filter(x=>{const t=`${x.titulo} ${x.cultivo||''} ${x.categoria||''} ${x.resumen||''}`.toLowerCase();return palabras.some(w=>t.includes(w));}).slice(0,4);
+    }
+    const kb=conocimientos.map(x=>`• ${x.titulo}${x.fuente?' ('+x.fuente+')':''}: ${(x.resumen||x.contenido||'').slice(0,1200)}`).join('\n');
+    const extra=`\n\nCONTEXTO V8B DISPONIBLE EN DR. PLANTS (datos del usuario, úsalo solo cuando sea pertinente):\n${resumen||'No hay lotes registrados.'}${kb?`\n\nBASE DE CONOCIMIENTO VALIDADA POR EL ADMINISTRADOR:\n${kb}`:''}\n\nReglas: distingue datos medidos de modelos; no presentes proyecciones como garantías; para recomendaciones de dosis o fitosanitarios pide análisis y contexto técnico suficiente.`;
+    return `${typeof system==='string'?system:''}${extra}`.slice(0,30000);
+  } catch(e) {
+    console.error('No se pudo enriquecer el contexto V8B:',e.message);
+    return system;
+  }
+}
 
 function normalizarMensajes(messages) {
   return messages.slice(-20).map(m => ({

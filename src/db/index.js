@@ -49,11 +49,15 @@ migrarColumnas('fincas', {
   pais: "TEXT DEFAULT NULL", region: "TEXT DEFAULT NULL", ciudad: "TEXT DEFAULT NULL",
   actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL",
   cliente_id: "TEXT DEFAULT NULL", gestor_id: "TEXT DEFAULT NULL",
-  relacion_tipo: "TEXT DEFAULT 'propia'", cliente_nombre_cache: "TEXT DEFAULT NULL"
+  relacion_tipo: "TEXT DEFAULT 'propia'", cliente_nombre_cache: "TEXT DEFAULT NULL",
+  latitud: "REAL DEFAULT NULL", longitud: "REAL DEFAULT NULL", altitud: "REAL DEFAULT NULL"
 });
 migrarColumnas('lotes', {
   cultivo_nombre: "TEXT DEFAULT NULL", variedad: "TEXT DEFAULT NULL",
-  actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL"
+  actualizado_en: "TEXT DEFAULT NULL", eliminado_en: "TEXT DEFAULT NULL",
+  rendimiento_objetivo_ha: "REAL DEFAULT 0", unidad_rendimiento: "TEXT DEFAULT 'kg/ha'",
+  precio_objetivo: "REAL DEFAULT 0", unidad_precio: "TEXT DEFAULT NULL", moneda_proyeccion: "TEXT DEFAULT NULL",
+  etapa_fenologica: "TEXT DEFAULT NULL"
 });
 migrarColumnas('pedidos', { pago_id: "TEXT DEFAULT NULL" });
 migrarColumnas('solicitudes_laboratorio', { pago_id: "TEXT DEFAULT NULL" });
