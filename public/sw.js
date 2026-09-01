@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c11-icons-fix';
+const CACHE_NAME = 'dr-plants-v8c12-marketing-safe-area';
 const APP_SHELL = [
   '/',
   '/manifest.json',

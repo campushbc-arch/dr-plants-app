@@ -1,7 +1,7 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.3.11",
-  "description": "Dr Plants V8C.11 — corrección integral de iconografía y Home Mercadeo",
+  "version": "8.3.12",
+  "description": "Dr Plants V8C.12 — área segura del carrusel de mercadeo y controles sin superposición",
   "main": "app.js",
   "type": "commonjs",
   "engines": {
