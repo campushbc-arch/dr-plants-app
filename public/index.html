@@ -768,7 +768,17 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   </div>
   <div class="phdr-card">
     <div class="phdr-t">Bolsa Agropecuaria</div>
-    <div class="phdr-s">Precios mayoristas de referencia (SIPSA-DANE) · Conecta con compradores locales y nacionales</div>
+    <div class="phdr-s">Precios mayoristas de referencia · Fecha de publicación, fuente y unidad visibles para cada precio</div>
+  </div>
+  <div id="market-fx-card" style="margin:0 14px 12px;padding:12px 14px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);background:var(--color-background-secondary)">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+      <div>
+        <div style="font-size:10px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Dólar · TRM Colombia</div>
+        <div id="market-usd-value" style="font-size:22px;font-weight:800;color:var(--color-text-primary);margin-top:3px">Cargando…</div>
+        <div id="market-usd-meta" style="font-size:10px;color:var(--color-text-secondary);line-height:1.45;margin-top:4px">Consultando fuente oficial…</div>
+      </div>
+      <div class="src-badge src-ref" id="market-usd-badge">USD/COP</div>
+    </div>
   </div>
   <div class="crops" id="market-list"></div>
   <button class="cta-btn gold" onclick="openReg()"><i class="ti ti-users" aria-hidden="true"></i> Conectar con compradores</button>
@@ -1817,21 +1827,36 @@ const MARKET=[
 const SIPSA_RESOURCE='gkqq-k3k5'; // dataset SIPSA - Precios Mayoristas, datos.gov.co (verificar vigencia periódicamente)
 const FIELD_CANDIDATES=['precio_promedio','preciopromedio','precio_kilo','precio','valor'];
 
+function marketFirst(row,keys){for(const k of keys){if(row&&row[k]!==undefined&&row[k]!==null&&String(row[k]).trim()!=='')return row[k];}return null;}
+function marketFechaTexto(raw){
+  if(!raw)return 'Fecha no reportada';
+  const d=new Date(raw);
+  if(Number.isNaN(d.getTime()))return String(raw);
+  const tieneHora=/T\d{2}:\d{2}/.test(String(raw));
+  return d.toLocaleString('es-CO',tieneHora?{dateStyle:'medium',timeStyle:'short'}:{dateStyle:'medium'});
+}
+function marketUnidad(row,fallback){
+  return marketFirst(row,['unidad','unidad_medida','unidadmedida','unidad_de_medida','unidad_comercializacion','unidad_de_comercializacion','unidad_de_comercializaci_n'])||fallback||'Unidad no reportada';
+}
+function marketFecha(row){return marketFirst(row,['fecha_publicacion','fecha','fecha_reporte','fecha_registro','vigenciadesde','created_at']);}
+
 function renderMarketList(){
   const wrap=document.getElementById('market-list');
   if(!wrap)return;
   wrap.innerHTML=MARKET.map(m=>`
-    <div class="crow" id="mrow-${m.id}">
+    <div class="crow" id="mrow-${m.id}" style="align-items:flex-start">
       <span class="cemi">${m.emoji}</span>
-      <div class="cinf"><div class="cn">${m.label}</div><div class="creg">${m.region}</div></div>
-      <div><div class="cpv" id="mpv-${m.id}">${fmtCOP(m.ref)}</div><div class="src-badge src-ref" id="mbadge-${m.id}">Cargando…</div></div>
+      <div class="cinf"><div class="cn">${m.label}</div><div class="creg">${m.region}</div><div id="mmeta-${m.id}" style="font-size:9.5px;color:var(--color-text-secondary);line-height:1.45;margin-top:4px">Consultando fecha, fuente y unidad…</div></div>
+      <div style="text-align:right;min-width:116px"><div class="cpv" id="mpv-${m.id}">${fmtCOP(m.ref)}</div><div class="src-badge src-ref" id="mbadge-${m.id}">Cargando…</div></div>
     </div>`).join('');
+  cargarTRMColombia();
   MARKET.forEach(cargarPrecioMercado);
 }
 
 async function cargarPrecioMercado(m){
   const badge=document.getElementById('mbadge-'+m.id);
   const pv=document.getElementById('mpv-'+m.id);
+  const meta=document.getElementById('mmeta-'+m.id);
   try{
     const url=`https://www.datos.gov.co/resource/${SIPSA_RESOURCE}.json?$where=upper(articulo)%20like%20%27%25${encodeURIComponent(m.keyword)}%25%27&$order=fecha%20DESC&$limit=1`;
     const res=await fetch(url);
@@ -1842,13 +1867,42 @@ async function cargarPrecioMercado(m){
     let val=null;
     for(const f of FIELD_CANDIDATES){if(row[f]){val=parseFloat(row[f]);break;}}
     if(!val||isNaN(val))throw new Error('campo no encontrado');
+    const fecha=marketFecha(row);
+    const unidad=marketUnidad(row,m.unit);
     pv.textContent=fmtCOP(Math.round(val));
-    badge.textContent='En vivo · SIPSA-DANE';
+    badge.textContent='SIPSA · DANE';
     badge.className='src-badge src-live';
+    if(meta)meta.innerHTML=`Publicado: <b>${escapeHtml(marketFechaTexto(fecha))}</b><br>Unidad: <b>${escapeHtml(unidad)}</b> · Fuente: <b>SIPSA-DANE</b>`;
   }catch(err){
     pv.textContent=fmtCOP(m.ref);
     badge.textContent='Referencia';
     badge.className='src-badge src-ref';
+    if(meta)meta.innerHTML=`Precio referencial de respaldo · Unidad: <b>${escapeHtml(m.unit)}</b><br>Fuente en vivo no disponible en este momento`;
+  }
+}
+
+async function cargarTRMColombia(){
+  const value=document.getElementById('market-usd-value');
+  const meta=document.getElementById('market-usd-meta');
+  const badge=document.getElementById('market-usd-badge');
+  if(!value||!meta)return;
+  try{
+    const url='https://www.datos.gov.co/resource/32sa-8pi3.json?$order=vigenciadesde%20DESC&$limit=1';
+    const res=await fetch(url);
+    if(!res.ok)throw new Error('sin respuesta');
+    const rows=await res.json();
+    const row=rows&&rows[0];
+    const trm=Number(row?.valor);
+    if(!Number.isFinite(trm))throw new Error('TRM no disponible');
+    value.textContent=new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:2}).format(trm);
+    const desde=marketFechaTexto(row.vigenciadesde);
+    const hasta=marketFechaTexto(row.vigenciahasta);
+    meta.innerHTML=`1 USD = ${escapeHtml(new Intl.NumberFormat('es-CO',{maximumFractionDigits:2}).format(trm))} COP<br>Vigencia: <b>${escapeHtml(desde)}</b> a <b>${escapeHtml(hasta)}</b><br>Fuente: <b>Superintendencia Financiera de Colombia · Datos Abiertos</b>`;
+    if(badge){badge.textContent='TRM oficial';badge.className='src-badge src-live';}
+  }catch(e){
+    value.textContent='No disponible';
+    meta.textContent='No se pudo consultar la TRM oficial en este momento.';
+    if(badge){badge.textContent='Sin conexión';badge.className='src-badge src-ref';}
   }
 }
 

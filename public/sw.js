@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c5-enterprise-demo-erp';
+const CACHE_NAME = 'dr-plants-v8c9-mercado-trm-metadata';
 const APP_SHELL = [
   '/',
   '/manifest.json',

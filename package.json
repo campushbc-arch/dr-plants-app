@@ -1,7 +1,7 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.3.5",
-  "description": "Dr Plants V8C.5 — roles empresariales, demo comercial y panel administrativo ERP",
+  "version": "8.3.9",
+  "description": "Dr Plants V8C.9 — precios de mercado con fecha, fuente, unidad y TRM oficial",
   "main": "app.js",
   "type": "commonjs",
   "engines": {
