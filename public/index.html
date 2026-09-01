@@ -2074,7 +2074,7 @@ async function cargarFincasDesdeBackend(){
   if(!BACKEND_URL||!SESION.token)return;
   try{
     const fincas=await apiFetch('/api/fincas');
-    if(SESION.rol==='agronomo'){try{CLIENTES_PRO=await apiFetch('/api/fincas/clientes');}catch(_e){CLIENTES_PRO=[];}}
+    if(SESION.rol==='agronomo'||SESION.rolEmpresarial==='ejecutivo_comercial'){try{CLIENTES_PRO=await apiFetch('/api/fincas/clientes');}catch(_e){CLIENTES_PRO=[];}}else{CLIENTES_PRO=[];}
     const nuevosLotes=[]; FINCA_IDS={}; FINCAS_META={};
     for(const f of fincas){
       FINCA_IDS[f.nombre]=f.id; FINCAS_META[f.nombre]=f;
@@ -2088,136 +2088,10 @@ async function cargarFincasDesdeBackend(){
   }catch(e){console.warn('No se pudieron cargar fincas del backend:',e.message);}
 }
 
-let LOTES=[
-  // Finca La Esperanza — Pasto, Nariño (piso Frío: papa y aguacate)
-  {id:'lote1',finca:'Finca La Esperanza',nombre:'Lote Alto Nariño',cultivoId:'papa',area:5,
-    fechaSiembra:isoDaysAgo(70),ubicacionId:'pasto',salud:89,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'RAIZCAMPUS 12-24-12',fecha:isoDaysAgo(65),cantidad:'6 bultos 25kg',costo:552000},
-      {tipo:'Fertilizante',producto:'Leonardita',fecha:isoDaysAgo(50),cantidad:'4 bultos 50kg',costo:660000},
-      {tipo:'Fertilizante',producto:'CRECICAMPUS 18-12-18',fecha:isoDaysAgo(25),cantidad:'6 bultos 25kg',costo:528000}
-    ],
-    analisis:[
-      {tipo:'Análisis de suelo (físico-químico)',fecha:isoDaysAgo(68),resultado:'pH 5.4 (ácido) · Fósforo bajo · Materia orgánica 3.1%'}
-    ],
-    costosOperativos:[
-      {categoria:'Mano de obra',descripcion:'Jornales de siembra y aporque',fecha:isoDaysAgo(60),costo:480000}
-    ]},
-  {id:'lote2',finca:'Finca La Esperanza',nombre:'Lote Bajo Nariño',cultivoId:'papa',area:3.2,
-    fechaSiembra:isoDaysAgo(18),ubicacionId:'pasto',salud:92,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'RAIZCAMPUS 12-24-12',fecha:isoDaysAgo(15),cantidad:'4 bultos 25kg',costo:368000},
-      {tipo:'Fertilizante',producto:'MYCORPAZ',fecha:isoDaysAgo(10),cantidad:'3 bultos 50kg',costo:390000}
-    ],
-    analisis:[],
-    costosOperativos:[]},
-  {id:'lote3',finca:'Finca La Esperanza',nombre:'Lote Aguacate Andino',cultivoId:'aguacate',area:2,
-    fechaSiembra:isoDaysAgo(180),ubicacionId:'pasto',salud:85,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'PRODUCAMPUS 10-8-26',fecha:isoDaysAgo(160),cantidad:'3 bultos 25kg',costo:315000},
-      {tipo:'Fertilizante',producto:'ZUELO-CA',fecha:isoDaysAgo(90),cantidad:'2 bultos 50kg',costo:240000},
-      {tipo:'Foliar',producto:'CAB+ZN',fecha:isoDaysAgo(15),cantidad:'2 litros',costo:104000}
-    ],
-    analisis:[
-      {tipo:'Análisis foliar',fecha:isoDaysAgo(170),resultado:'Zinc bajo · resto de nutrientes en rango de referencia'}
-    ],
-    costosOperativos:[]},
-  // Finca El Cafetal — Medellín, Antioquia (piso Templado: café y aguacate)
-  {id:'lote4',finca:'Finca El Cafetal',nombre:'Lote Cafetal Norte',cultivoId:'cafe',area:4,
-    fechaSiembra:isoDaysAgo(150),ubicacionId:'medellin',salud:91,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'CRECICAMPUS 18-12-18',fecha:isoDaysAgo(120),cantidad:'5 bultos 25kg',costo:440000},
-      {tipo:'Fertilizante',producto:'BIOPLANT Plus 8.0',fecha:isoDaysAgo(60),cantidad:'2 litros',costo:178000},
-      {tipo:'Foliar',producto:'FRUKOSECHA',fecha:isoDaysAgo(15),cantidad:'2 litros',costo:108000}
-    ],
-    analisis:[
-      {tipo:'Análisis de suelo (físico-químico)',fecha:isoDaysAgo(145),resultado:'pH 5.8 · CIC media · Materia orgánica 4.2%'}
-    ],
-    costosOperativos:[
-      {categoria:'Maquinaria',descripcion:'Alquiler guadaña para plateo',fecha:isoDaysAgo(100),costo:150000}
-    ]},
-  {id:'lote5',finca:'Finca El Cafetal',nombre:'Lote Cafetal Sur',cultivoId:'cafe',area:3.5,
-    fechaSiembra:isoDaysAgo(300),ubicacionId:'medellin',salud:88,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'PRODUCAMPUS 10-8-26',fecha:isoDaysAgo(60),cantidad:'4 bultos 25kg',costo:420000},
-      {tipo:'Foliar',producto:'RECOSECHA',fecha:isoDaysAgo(20),cantidad:'3 kg',costo:138000}
-    ],
-    analisis:[],
-    costosOperativos:[]},
-  {id:'lote6',finca:'Finca El Cafetal',nombre:'Lote Aguacate Cafetero',cultivoId:'aguacate',area:2.5,
-    fechaSiembra:isoDaysAgo(400),ubicacionId:'medellin',salud:90,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'THERMO CORRECTOR',fecha:isoDaysAgo(200),cantidad:'2 bultos 50kg',costo:250000},
-      {tipo:'Fertilizante',producto:'K2K',fecha:isoDaysAgo(45),cantidad:'3 bultos 50kg',costo:450000},
-      {tipo:'Foliar',producto:'BRAZYME',fecha:isoDaysAgo(10),cantidad:'3 x 100cc',costo:126000}
-    ],
-    analisis:[],
-    costosOperativos:[]},
-  // Finca Río Seco — Espinal, Tolima (piso Cálido: arroz y mango)
-  {id:'lote7',finca:'Finca Río Seco',nombre:'Lote Arrozal 1',cultivoId:'arroz',area:8,
-    fechaSiembra:isoDaysAgo(60),ubicacionId:'espinal',salud:87,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'RAIZCAMPUS 12-24-12',fecha:isoDaysAgo(55),cantidad:'10 bultos 25kg',costo:920000},
-      {tipo:'Fertilizante',producto:'K2K',fecha:isoDaysAgo(30),cantidad:'6 bultos 50kg',costo:900000},
-      {tipo:'Foliar',producto:'BANDA NEGRA',fecha:isoDaysAgo(10),cantidad:'3 litros',costo:174000}
-    ],
-    analisis:[
-      {tipo:'Análisis de agua de riego',fecha:isoDaysAgo(58),resultado:'Conductividad eléctrica media · pH 7.1 · sin contaminantes detectados'}
-    ],
-    costosOperativos:[
-      {categoria:'Mano de obra',descripcion:'Siembra mecanizada',fecha:isoDaysAgo(58),costo:620000},
-      {categoria:'Transporte',descripcion:'Flete de insumos a finca',fecha:isoDaysAgo(50),costo:180000}
-    ]},
-  {id:'lote8',finca:'Finca Río Seco',nombre:'Lote Arrozal 2',cultivoId:'arroz',area:6,
-    fechaSiembra:isoDaysAgo(15),ubicacionId:'espinal',salud:93,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'RAIZCAMPUS 12-24-12',fecha:isoDaysAgo(12),cantidad:'8 bultos 25kg',costo:736000}
-    ],
-    analisis:[],
-    costosOperativos:[]},
-  {id:'lote9',finca:'Finca Río Seco',nombre:'Lote Mango Seco',cultivoId:'mango',area:3,
-    fechaSiembra:isoDaysAgo(250),ubicacionId:'espinal',salud:84,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'MAGNE-3',fecha:isoDaysAgo(150),cantidad:'2 bultos 50kg',costo:220000},
-      {tipo:'Fertilizante',producto:'PRODUCAMPUS 10-8-26',fecha:isoDaysAgo(50),cantidad:'3 bultos 25kg',costo:315000},
-      {tipo:'Foliar',producto:'RECOSECHA',fecha:isoDaysAgo(12),cantidad:'2 kg',costo:92000}
-    ],
-    analisis:[],
-    costosOperativos:[]},
-  // Finca Costa Verde — Cartagena, Bolívar (piso Cálido: caña, limón y mango)
-  {id:'lote10',finca:'Finca Costa Verde',nombre:'Lote Cañaduzal',cultivoId:'cana',area:10,
-    fechaSiembra:isoDaysAgo(180),ubicacionId:'cartagena',salud:90,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'RAIFOS 20',fecha:isoDaysAgo(150),cantidad:'8 bultos 50kg',costo:1120000},
-      {tipo:'Fertilizante',producto:'K2K',fecha:isoDaysAgo(60),cantidad:'6 bultos 50kg',costo:900000},
-      {tipo:'Foliar',producto:'MIOFORT REBROTE',fecha:isoDaysAgo(20),cantidad:'4 kg',costo:192000}
-    ],
-    analisis:[
-      {tipo:'Análisis de suelo (físico-químico)',fecha:isoDaysAgo(175),resultado:'pH 6.3 · Potasio bajo · Materia orgánica 2.8%'}
-    ],
-    costosOperativos:[
-      {categoria:'Mano de obra',descripcion:'Corte y deshije',fecha:isoDaysAgo(140),costo:900000}
-    ]},
-  {id:'lote11',finca:'Finca Costa Verde',nombre:'Lote Limonar Costa',cultivoId:'limon',area:4,
-    fechaSiembra:isoDaysAgo(220),ubicacionId:'cartagena',salud:86,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'BORO',fecha:isoDaysAgo(100),cantidad:'2 bultos 50kg',costo:190000},
-      {tipo:'Foliar',producto:'CAB+ZN',fecha:isoDaysAgo(30),cantidad:'3 litros',costo:156000}
-    ],
-    analisis:[],
-    costosOperativos:[]},
-  {id:'lote12',finca:'Finca Costa Verde',nombre:'Lote Mango Costero',cultivoId:'mango',area:5,
-    fechaSiembra:isoDaysAgo(90),ubicacionId:'cartagena',salud:91,
-    aplicaciones:[
-      {tipo:'Fertilizante',producto:'ACTIVCAMPUS',fecha:isoDaysAgo(80),cantidad:'3 litros',costo:294000},
-      {tipo:'Fertilizante',producto:'CRECICAMPUS 18-12-18',fecha:isoDaysAgo(40),cantidad:'5 bultos 25kg',costo:440000},
-      {tipo:'Foliar',producto:'FRUKOSECHA',fecha:isoDaysAgo(10),cantidad:'3 litros',costo:162000}
-    ],
-    analisis:[
-      {tipo:'Diagnóstico fitosanitario',fecha:isoDaysAgo(85),resultado:'Sin patógenos significativos · monitoreo preventivo de trips'}
-    ],
-    costosOperativos:[]}
-];
+// V8C.8 · Privacidad por defecto: una cuenta nueva empieza sin fincas ni lotes.
+// Los escenarios de ejemplo se generan únicamente desde Demo Studio para cuentas
+// autorizadas (Super Admin / Ejecutivo Comercial) y nunca se precargan globalmente.
+let LOTES=[];
 let currentLote=null;
 
 function costoAcum(lote){
@@ -2258,6 +2132,15 @@ function renderLotesList(){
     }else{
       banner.style.display='none';
     }
+  }
+  if(!fincas.length){
+    const puedeVerDemo=(SESION.rol==='admin'||SESION.rolEmpresarial==='ejecutivo_comercial')&&SESION.modoDemo;
+    wrap.innerHTML=`<div class="unit-card" style="padding:22px;text-align:center">
+      <div class="lesson-ico" style="margin:0 auto 10px"><i class="ti ti-map-2"></i></div>
+      <b>${puedeVerDemo?'No hay escenarios demo cargados':'Aún no tienes fincas ni lotes'}</b>
+      <div class="lab-desc" style="margin-top:6px">${puedeVerDemo?'Genera un escenario desde Demo Studio para comenzar la demostración.':'Crea tu primera finca y lote con el formulario de esta sección. Tus datos aparecerán aquí.'}</div>
+    </div>`;
+    return;
   }
   wrap.innerHTML=fincas.map(f=>{
     const lotesFinca=LOTES.filter(l=>l.finca===f);
