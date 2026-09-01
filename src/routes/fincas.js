@@ -154,6 +154,41 @@ router.delete('/:id',(req,res)=>{
   res.json({ok:true});
 });
 
+
+// V8C.7 · Informes profesionales por finca y lote.
+// Devuelve datos normalizados; el frontend genera una vista imprimible que el usuario
+// puede guardar directamente como PDF desde cualquier navegador moderno.
+function rangoReporte(req){
+  const desde=limpiarTexto(req.query.desde,10)||null, hasta=limpiarTexto(req.query.hasta,10)||null;
+  const ok=x=>!x||/^\d{4}-\d{2}-\d{2}$/.test(x);
+  if(!ok(desde)||!ok(hasta)) return {error:'Rango de fechas inválido.'};
+  return {desde,hasta};
+}
+function enRango(fecha,r){ if(!fecha)return true; const f=String(fecha).slice(0,10); return (!r.desde||f>=r.desde)&&(!r.hasta||f<=r.hasta); }
+function datosLoteReporte(usuario,lote,r){
+  const detalle={...lote};
+  detalle.aplicaciones=db.prepare('SELECT * FROM aplicaciones WHERE lote_id=? AND eliminado_en IS NULL ORDER BY fecha DESC').all(lote.id).filter(x=>enRango(x.fecha,r));
+  detalle.analisis=db.prepare('SELECT * FROM analisis_laboratorio WHERE lote_id=? AND eliminado_en IS NULL ORDER BY fecha DESC').all(lote.id).filter(x=>enRango(x.fecha,r));
+  detalle.costosOperativos=db.prepare('SELECT * FROM costos_operativos WHERE lote_id=? AND eliminado_en IS NULL ORDER BY fecha DESC').all(lote.id).filter(x=>enRango(x.fecha,r));
+  detalle.observaciones=db.prepare(`SELECT o.*,u.nombre autor_nombre,u.rol autor_rol FROM observaciones_agronomicas o JOIN usuarios u ON u.id=o.autor_id WHERE o.lote_id=? AND o.eliminado_en IS NULL ORDER BY o.creado_en DESC`).all(lote.id).filter(x=>enRango(x.creado_en,r));
+  detalle.visitas=db.prepare(`SELECT v.*,u.nombre profesional_nombre FROM visitas_tecnicas v JOIN usuarios u ON u.id=v.profesional_id WHERE v.lote_id=? AND v.eliminado_en IS NULL ORDER BY v.fecha DESC`).all(lote.id).filter(x=>enRango(x.fecha,r));
+  detalle.costo_total=detalle.aplicaciones.reduce((a,x)=>a+Number(x.costo_cop||0),0)+detalle.costosOperativos.reduce((a,x)=>a+Number(x.costo_cop||0),0);
+  return detalle;
+}
+router.get('/reportes/finca/:id',(req,res)=>{
+  const finca=puedeVerFinca(req.usuario,req.params.id); if(!finca)return res.status(403).json({error:'No tienes acceso a esta finca.'});
+  const r=rangoReporte(req); if(r.error)return res.status(400).json({error:r.error});
+  const lotes=db.prepare('SELECT * FROM lotes WHERE finca_id=? AND eliminado_en IS NULL ORDER BY nombre').all(finca.id).map(l=>datosLoteReporte(req.usuario,l,r));
+  const area_total=lotes.reduce((a,l)=>a+Number(l.area_ha||0),0), costo_total=lotes.reduce((a,l)=>a+Number(l.costo_total||0),0);
+  res.json({tipo:'finca',generado_en:new Date().toISOString(),periodo:r,finca,lotes,resumen:{lotes:lotes.length,area_total,costo_total,cultivos:[...new Set(lotes.map(l=>l.cultivo_nombre||l.cultivo_id).filter(Boolean))]}});
+});
+router.get('/reportes/lote/:id',(req,res)=>{
+  const lote=loteVisible(req.usuario,req.params.id); if(!lote)return res.status(403).json({error:'No tienes acceso a este lote.'});
+  const r=rangoReporte(req); if(r.error)return res.status(400).json({error:r.error});
+  const finca=fincaPorId(lote.finca_id);
+  res.json({tipo:'lote',generado_en:new Date().toISOString(),periodo:r,finca,lote:datosLoteReporte(req.usuario,lote,r)});
+});
+
 router.get('/:id/lotes',(req,res)=>{
   const finca=puedeVerFinca(req.usuario,req.params.id); if(!finca) return res.status(403).json({error:'No tienes acceso.'});
   res.json(db.prepare('SELECT * FROM lotes WHERE finca_id=? AND eliminado_en IS NULL ORDER BY creado_en DESC').all(finca.id));
