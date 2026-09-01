@@ -562,7 +562,7 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="chip" onclick="chipMsg('¿Cuál es el plan de riego recomendado para esta semana del cultivo?')">Plan de riego</div>
     <div class="chip" onclick="chipMsg('¿Qué fertilización recomiendas para esta etapa del cultivo?')">Fertilización</div>
   </div>
-  <div style="padding:0 14px 6px"><label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#1b5e20;cursor:pointer"><i class="ti ti-paperclip"></i> Adjuntar análisis de suelo u otro PDF<input id="dr-agro-pdf" type="file" accept="application/pdf" style="display:none" onchange="subirPdfDrAgro(this.files[0])"></label><span id="dr-agro-pdf-nombre" style="font-size:10px;color:var(--color-text-secondary);margin-left:8px"></span></div>
+  <div style="padding:0 14px 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label title="Adjuntar foto o PDF" style="width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);color:#1b5e20;cursor:pointer;font-size:18px"><i class="ti ti-paperclip"></i><input id="dr-agro-adjunto" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:none" onchange="subirAdjuntoDrAgro(this.files[0]);this.value=''"></label><span style="font-size:10.5px;color:var(--color-text-secondary)">Foto o PDF</span><div id="dr-agro-adjuntos" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>
   <div class="cin" id="dr-agro-form" role="group" aria-label="Consulta a Dr. Agro">
     <input id="cin" name="consulta" placeholder="Escribe tu consulta..." autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}">
     <button class="csend" id="csendbtn" type="button" onclick="sendMsg()" aria-label="Enviar pregunta"><i class="ti ti-send"></i></button>
@@ -1903,6 +1903,13 @@ const LOCATIONS={
   cdmx:{label:'Ciudad de México',pais:'México',lat:19.4326,lon:-99.1332,altitud:2240}
 };
 
+function ubicacionSegura(ubicacionId, fallback='Ubicación registrada'){
+  const u=LOCATIONS?.[ubicacionId];
+  if(u&&u.label)return u;
+  const meta=Object.values(FINCAS_META||{}).find(f=>f?.ubicacion_id===ubicacionId)||{};
+  const label=[meta.ciudad,meta.region].filter(Boolean).join(', ')||ubicacionId||fallback;
+  return {label,pais:meta.pais||'',lat:Number(meta.latitud)||0,lon:Number(meta.longitud)||0,altitud:Number(meta.altitud)||0};
+}
 const GEO_API='https://countriesnow.space/api/v0.1/countries';
 const GEO_FALLBACK={
  Colombia:{'Antioquia':['Medellín','Apartadó','Bello','Envigado','Itagüí','Rionegro'],'Cundinamarca':['Bogotá','Soacha','Chía','Zipaquirá','Facatativá'],'Tolima':['Ibagué','Espinal','Honda','Melgar'],'Valle del Cauca':['Cali','Palmira','Buenaventura','Tuluá'],'Nariño':['Pasto','Ipiales','Tumaco'],'Bolívar':['Cartagena','Magangué','Turbaco'],'Meta':['Villavicencio','Acacías','Granada']},
@@ -2256,7 +2263,7 @@ function renderLotesList(){
     const lotesFinca=LOTES.filter(l=>l.finca===f);
     const areaTotal=lotesFinca.reduce((s,l)=>s+l.area,0);
     const ubicacionId=lotesFinca[0].ubicacionId;
-    const ubic=LOCATIONS[ubicacionId];
+    const ubic=ubicacionSegura(ubicacionId);
     const fslug=slugify(f);
     return `<div class="unit-card">
       <div class="unit-hdr">${f} · ${ubic.label} <span style="opacity:0.75;font-weight:400">(${lotesFinca.length} lotes · ${areaTotal.toFixed(1)} ha)</span>${(FINCAS_META[f]?.cliente_nombre||FINCAS_META[f]?.cliente_nombre_cache)?`<div style="font-size:10px;font-weight:500;opacity:.9;margin-top:3px"><i class="ti ti-user"></i> Cliente: ${FINCAS_META[f].cliente_nombre||FINCAS_META[f].cliente_nombre_cache}</div>`:''}</div>
@@ -2313,7 +2320,7 @@ function renderPanelAgronomo(){
   const fincas=[...new Set(LOTES.map(l=>l.finca))];
   wrap.innerHTML=fincas.map(f=>{
     const lotesFinca=LOTES.filter(l=>l.finca===f);
-    const ubic=LOCATIONS[lotesFinca[0].ubicacionId];
+    const ubic=ubicacionSegura(lotesFinca[0].ubicacionId);
     const saludProm=Math.round(lotesFinca.reduce((s,l)=>s+l.salud,0)/lotesFinca.length);
     const color=saludProm>=85?'#1b5e20':saludProm>=70?'#c9a227':'#c62828';
     const bg=saludProm>=85?'#EAF3DE':saludProm>=70?'#FAEEDA':'#FCEBEB';
@@ -2354,7 +2361,7 @@ function renderLoteDetalle(){
   document.getElementById('ld-cardwrap').innerHTML=`<div class="cult-card">
       <div class="cbadge">${crop.emoji} ${crop.label}${lote.variedad?' · '+lote.variedad:''} · Activo · ${lote.finca}</div><div style="display:flex;gap:6px;margin-top:8px"><button class="mini-btn" onclick="editarLoteActual()">Editar lote</button><button class="mini-btn" onclick="eliminarLoteActual()">Eliminar</button></div>
       <div class="cname">${lote.nombre}</div>
-      <div class="carea">${lote.area} ha · ${LOCATIONS[lote.ubicacionId].label} · Siembra ${new Date(lote.fechaSiembra).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})}</div>
+      <div class="carea">${lote.area} ha · ${ubicacionSegura(lote.ubicacionId).label} · Siembra ${new Date(lote.fechaSiembra).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})}</div>
       <div class="prow-lbl"><span>Ciclo del cultivo</span><span>Semana ${week} / ${crop.ciclo}</span></div>
       <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
     </div>`;
@@ -2458,7 +2465,7 @@ async function loadWeather(lote){
 }
 
 function pisoDeUbicacion(ubicacionId){
-  return pisoTermico(LOCATIONS[ubicacionId].altitud);
+  return pisoTermico(ubicacionSegura(ubicacionId).altitud);
 }
 
 function actualizarHintPiso(){
@@ -4361,7 +4368,7 @@ async function enviarMensajeIA(cfg){
       system:cfg.system,
       messages:cfg.history,
       modulo:cfg.chatId==='chat'?'dr_agro':(cfg.chatId==='soporte-chat'?'soporte':'laboratorio'),
-      archivoIds:cfg.chatId==='chat'&&DR_AGRO_ARCHIVO_ID?[DR_AGRO_ARCHIVO_ID]:[]
+      archivoIds:cfg.chatId==='chat'?DR_AGRO_ARCHIVO_IDS.slice(0,3):[]
     };
     let response=await llamarClaudeAPI(payloadIA,tokenActual);
     if(response.status===401){
@@ -4554,7 +4561,8 @@ cargarProductosDesdeBackend();
 })();
 
 
-let DR_AGRO_ARCHIVO_ID=null;
+let DR_AGRO_ARCHIVO_IDS=[];
+let DR_AGRO_ADJUNTOS_META=[];
 async function subirArchivoUsuario(file,tipo){
   if(!file)return null;
   const token=localStorage.getItem('drplants_token')||SESION.token;
@@ -4566,9 +4574,15 @@ async function subirFotoPerfil(file){
   const msg=document.getElementById('perfil-foto-msg');
   try{msg.textContent='Subiendo...';const d=await subirArchivoUsuario(file,'foto_perfil');const token=localStorage.getItem('drplants_token')||SESION.token;const img=document.createElement('img');img.src=d.url+'?t='+Date.now();img.style='width:100%;height:100%;object-fit:cover;border-radius:50%';img.alt='Foto de perfil';const av=document.getElementById('perfil-avatar');av.innerHTML='';av.appendChild(img);msg.textContent='Foto actualizada.';}catch(e){msg.textContent=e.message;}
 }
-async function subirPdfDrAgro(file){
-  const el=document.getElementById('dr-agro-pdf-nombre');
-  try{el.textContent='Subiendo...';const d=await subirArchivoUsuario(file,'analisis_suelo');DR_AGRO_ARCHIVO_ID=d.id;el.textContent='Adjunto: '+d.nombre;}catch(e){el.textContent=e.message;DR_AGRO_ARCHIVO_ID=null;}
+function renderAdjuntosDrAgro(){
+  const el=document.getElementById('dr-agro-adjuntos');if(!el)return;
+  el.innerHTML=DR_AGRO_ADJUNTOS_META.map((a,i)=>`<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:12px;background:#EAF3DE;font-size:10px;max-width:220px"><i class="ti ${a.mime_type?.startsWith('image/')?'ti-photo':'ti-file-type-pdf'}"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(a.nombre)}</span><button type="button" onclick="quitarAdjuntoDrAgro(${i})" style="border:0;background:transparent;cursor:pointer;padding:0"><i class="ti ti-x"></i></button></span>`).join('');
+}
+function quitarAdjuntoDrAgro(i){DR_AGRO_ARCHIVO_IDS.splice(i,1);DR_AGRO_ADJUNTOS_META.splice(i,1);renderAdjuntosDrAgro();}
+async function subirAdjuntoDrAgro(file){
+  if(!file)return;if(DR_AGRO_ARCHIVO_IDS.length>=3){alert('Puedes adjuntar hasta 3 archivos por consulta.');return;}
+  const el=document.getElementById('dr-agro-adjuntos');
+  try{if(el&&!DR_AGRO_ADJUNTOS_META.length)el.textContent='Subiendo adjunto…';const d=await subirArchivoUsuario(file,'chat_adjunto');DR_AGRO_ARCHIVO_IDS.push(d.id);DR_AGRO_ADJUNTOS_META.push(d);renderAdjuntosDrAgro();}catch(e){if(el)el.textContent=e.message;}
 }
 
 document.getElementById('admin-usuarios-buscar')?.addEventListener('keydown',e=>{if(e.key==='Enter')renderAdminUsuarios();});

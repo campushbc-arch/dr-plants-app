@@ -32,7 +32,7 @@ router.post('/subir', (req, res) => {
     try {
       validateStoredFile(req.file);
       const tipo = String(req.body.tipo || 'otro_pdf');
-      const permitidos = ['foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf'];
+      const permitidos = ['foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf','chat_adjunto'];
       if (!permitidos.includes(tipo)) throw new Error('Tipo de archivo inválido.');
       if (['analisis_suelo','otro_pdf'].includes(tipo) && req.file.mimetype !== 'application/pdf') {
         throw new Error('Este documento debe estar en formato PDF.');

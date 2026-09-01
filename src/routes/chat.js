@@ -140,6 +140,11 @@ async function consultarAnthropic({ system, messages, adjuntos }) {
           source: { type: 'base64', media_type: 'application/pdf', data: fs.readFileSync(a.ruta).toString('base64') },
           title: a.nombre_original || 'Documento'
         });
+      } else if (['image/jpeg','image/png','image/webp'].includes(a.mime_type) && a.ruta && fs.existsSync(a.ruta)) {
+        bloques.push({
+          type: 'image',
+          source: { type: 'base64', media_type: a.mime_type, data: fs.readFileSync(a.ruta).toString('base64') }
+        });
       }
     }
     proveedorMessages[proveedorMessages.length - 1] = { role: 'user', content: bloques };
