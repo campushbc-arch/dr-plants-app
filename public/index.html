@@ -32,6 +32,9 @@
 /* V8B · Inteligencia del cultivo */
 .intel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 14px}.intel-card{background:var(--color-bg-secondary,#f4f8f3);border:1px solid rgba(35,90,45,.12);border-radius:16px;padding:12px;min-width:0}.intel-k{font-size:10px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.04em}.intel-v{font-size:18px;font-weight:700;color:var(--color-text-primary);margin-top:3px}.intel-s{font-size:10px;color:var(--color-text-secondary);margin-top:3px;line-height:1.35}.intel-risk{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:700;text-transform:uppercase}.intel-risk.bajo{background:#EAF3DE;color:#1b5e20}.intel-risk.medio{background:#FAEEDA;color:#8a5b00}.intel-risk.alto{background:#FCEBEB;color:#b42318}.intel-panel{margin:8px 14px 0;border-radius:18px;border:1px solid rgba(35,90,45,.12);background:var(--color-bg-primary,#fff);overflow:hidden}.intel-row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid rgba(35,90,45,.08);font-size:11px}.intel-row:last-child{border-bottom:0}.intel-actions{display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px 0}.intel-note{font-size:9.5px;color:var(--color-text-secondary);line-height:1.45;padding:8px 14px}.intel-form{display:none;margin:8px 14px;padding:12px;border:1px solid rgba(35,90,45,.12);border-radius:16px;background:var(--color-bg-secondary,#f7faf7)}
 @media(min-width:760px){.intel-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* V8C.10 · Sección de mercadeo dinámica */
+.mkt-zone{padding:14px 14px 2px}.mkt-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}.mkt-kicker{font-size:12px;font-weight:800;color:#1b5e20;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.35px}.mkt-sub{font-size:10.5px;color:var(--color-text-secondary);margin-top:3px}.mkt-pause{width:34px;height:34px;border:1px solid var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-primary);border-radius:10px;cursor:pointer}.mkt-carousel{position:relative;overflow:hidden;border-radius:18px;min-height:255px;background:#173c29;box-shadow:0 12px 28px rgba(21,78,49,.16)}.mkt-track{display:flex;transition:transform .55s cubic-bezier(.2,.7,.2,1);will-change:transform}.mkt-slide{min-width:100%;height:255px;position:relative;display:flex;align-items:flex-end;overflow:hidden;background:#173c29}.mkt-slide-bg{position:absolute;inset:0;background-size:cover;background-position:center}.mkt-slide::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,38,24,.92) 0%,rgba(8,38,24,.76) 48%,rgba(8,38,24,.18) 100%)}.mkt-content{position:relative;z-index:2;padding:22px 48px 28px 22px;max-width:82%;color:#fff}.mkt-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);padding:5px 9px;border-radius:999px;font-size:10px;font-weight:700;margin-bottom:8px}.mkt-title{font-size:23px;line-height:1.06;font-weight:800;letter-spacing:-.4px;max-width:520px}.mkt-copy{font-size:11.5px;line-height:1.5;color:#eef9f1;max-width:500px;margin-top:8px}.mkt-cta{margin-top:13px;border:0;background:#c9a227;color:#fff;border-radius:10px;padding:9px 13px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit}.mkt-arrow{position:absolute;z-index:5;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.88);color:#1b5e20;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.14)}.mkt-arrow.left{left:8px}.mkt-arrow.right{right:8px}.mkt-dots{position:absolute;z-index:6;left:50%;bottom:8px;transform:translateX(-50%);display:flex;gap:6px}.mkt-dot{width:7px;height:7px;border-radius:50%;border:0;background:rgba(255,255,255,.48);padding:0;cursor:pointer}.mkt-dot.on{width:19px;border-radius:8px;background:#fff}.mkt-slide.course::after{background:linear-gradient(90deg,rgba(8,35,28,.93),rgba(22,75,52,.74),rgba(12,38,26,.25))}.mkt-slide.event::after{background:linear-gradient(90deg,rgba(41,25,4,.91),rgba(89,59,10,.68),rgba(27,37,20,.18))}@media(max-width:560px){.mkt-carousel,.mkt-slide{min-height:290px;height:290px}.mkt-content{padding:20px 34px 30px 18px;max-width:94%}.mkt-title{font-size:21px}.mkt-copy{font-size:11px}.mkt-slide::after{background:linear-gradient(0deg,rgba(7,35,22,.94) 0%,rgba(7,35,22,.62) 62%,rgba(7,35,22,.12) 100%)}.mkt-slide-bg{background-position:center}.mkt-head{align-items:center}}
 </style>
 <style id="icon-styles">i[class*="ti-"]{display:inline-block;width:1em;height:1em;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain;vertical-align:-0.15em}
 .ti-home{-webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27black%27%20stroke-width=%271.9%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27M4%2011l8-7%208%207%27/%3E%3Cpath%20d=%27M6%2010v9h5v-5h2v5h5v-9%27/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27black%27%20stroke-width=%271.9%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27M4%2011l8-7%208%207%27/%3E%3Cpath%20d=%27M6%2010v9h5v-5h2v5h5v-9%27/%3E%3C/svg%3E")}
@@ -462,12 +465,18 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 </div>
 
 <div id="s-home" class="screen">
-  <div class="hero">
-    <div class="hero-tag">Bienvenido</div>
-    <div class="hero-h">Ecosistema inteligente<br>para la nutrición del futuro</div>
-    <div class="hero-p">No vendemos productos, diseñamos soluciones vivas para la agricultura de precisión biológica.</div>
-    <div class="hero-badge"><i class="ti ti-leaf" aria-hidden="true"></i> Un ecosistema, no solo insumos</div>
-  </div>
+  <section class="mkt-zone" aria-label="Mercadeo Dr. Plants">
+    <div class="mkt-head">
+      <div><div class="mkt-kicker"><i class="ti ti-speakerphone"></i> Sección de mercadeo</div><div class="mkt-sub">Novedades, soluciones, formación y oportunidades para el agro.</div></div>
+      <button class="mkt-pause" id="mkt-pause" type="button" onclick="toggleMarketingAutoplay()" aria-label="Pausar carrusel"><i class="ti ti-player-pause"></i></button>
+    </div>
+    <div class="mkt-carousel" id="mkt-carousel">
+      <div class="mkt-track" id="mkt-track"></div>
+      <button class="mkt-arrow left" type="button" onclick="moverMarketing(-1)" aria-label="Anterior"><i class="ti ti-chevron-left"></i></button>
+      <button class="mkt-arrow right" type="button" onclick="moverMarketing(1)" aria-label="Siguiente"><i class="ti ti-chevron-right"></i></button>
+      <div class="mkt-dots" id="mkt-dots"></div>
+    </div>
+  </section>
   <div class="body">
     <div>
       <div class="sec-lbl">Servicio principal</div>
@@ -4610,6 +4619,36 @@ async function cargarConocimientoAdminV8B(){
   const w=document.getElementById('admin-kb-list');if(!w||SESION.rol!=='admin')return;
   try{const rows=await apiFetch('/api/inteligencia/conocimiento');w.innerHTML=rows.slice(0,15).map(x=>`<div class="lab-card"><div class="lab-ico"><i class="ti ti-brain"></i></div><div style="flex:1"><div class="lab-name">${escapeHtml(x.titulo)}</div><div class="lab-desc">${escapeHtml(x.cultivo||'General')} · ${escapeHtml(x.categoria||'Sin categoría')}${x.fuente?' · '+escapeHtml(x.fuente):''}</div><div class="lab-desc" style="margin-top:3px">${escapeHtml(x.resumen||'')}</div></div></div>`).join('')||'<div class="intel-note">Aún no hay conocimiento validado cargado.</div>';}catch(e){w.innerHTML=`<div class="intel-note">${escapeHtml(e.message)}</div>`;}
 }
+
+// V8C.10 · Motor de mercadeo del home
+let MARKETING_SLIDES=[
+ {tag:'Dr. Plants',title:'Ecosistema inteligente para la nutrición del futuro',copy:'Decisiones agronómicas con IA, clima, seguimiento de fincas, laboratorio, mercado y formación en un solo ecosistema.',image:'https://images.pexels.com/photos/4975400/pexels-photo-4975400.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Conocer Dr. Agro',action:()=>go('agronomo','agronomo')},
+ {tag:'Problemas que resolvemos',title:'Menos suposiciones. Más decisiones basadas en datos.',copy:'Organiza fincas y lotes, registra aplicaciones, analiza costos, consulta clima y convierte información dispersa en decisiones de campo.',image:'https://images.pexels.com/photos/17797257/pexels-photo-17797257.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Abrir Cultivo Professional',action:()=>go('cultivo','cultivo')},
+ {tag:'Agrónomo Inteligente · IA',title:'Una foto, una pregunta y más contexto para decidir.',copy:'Consulta síntomas, adjunta imágenes o PDF y recibe orientación agronómica respaldada por el contexto de tu cultivo.',image:'https://images.pexels.com/photos/15876334/pexels-photo-15876334.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Consultar ahora',action:()=>go('agronomo','agronomo')},
+ {tag:'Precios & Mercado',title:'Precio, fuente, unidad, fecha y TRM en un mismo lugar.',copy:'Consulta referencias de mercado con mayor trazabilidad y el precio del dólar para apoyar decisiones comerciales.',image:'https://images.pexels.com/photos/17797257/pexels-photo-17797257.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Ver precios',action:()=>go('precios','precios')},
+ {tag:'Economía circular',title:'Convierte residuos agrícolas en nuevas oportunidades.',copy:'AgroCircular conecta sostenibilidad, aprovechamiento de residuos y nuevas posibilidades para el campo.',image:'https://images.pexels.com/photos/15876334/pexels-photo-15876334.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Explorar AgroCircular',action:()=>go('reciclaje','reciclaje')},
+ {tag:'Seminarios virtuales certificados',title:'Aprende, actualízate y certifica nuevas competencias.',copy:'Este espacio podrá anunciar webinars, jornadas técnicas, promociones e invitaciones especiales de Dr. Plants.',image:'https://images.pexels.com/photos/4975400/pexels-photo-4975400.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Ir a Formación',action:()=>go('formacion',''),kind:'event'}
+];
+let MARKETING_IDX=0,MARKETING_TIMER=null,MARKETING_PAUSED=false,MARKETING_CURSOS_CARGADOS=false;
+function renderMarketing(){
+ const track=document.getElementById('mkt-track'),dots=document.getElementById('mkt-dots');if(!track||!dots)return;
+ track.innerHTML=MARKETING_SLIDES.map((s,i)=>`<article class="mkt-slide ${s.kind||''}" aria-hidden="${i===MARKETING_IDX?'false':'true'}"><div class="mkt-slide-bg" style="background-image:url('${s.image}')"></div><div class="mkt-content"><div class="mkt-tag">${escapeHtml(s.tag)}</div><div class="mkt-title">${escapeHtml(s.title)}</div><div class="mkt-copy">${escapeHtml(s.copy)}</div><button class="mkt-cta" type="button" onclick="marketingAction(${i})">${escapeHtml(s.cta||'Conocer más')} <i class="ti ti-arrow-right"></i></button></div></article>`).join('');
+ dots.innerHTML=MARKETING_SLIDES.map((_,i)=>`<button class="mkt-dot ${i===MARKETING_IDX?'on':''}" type="button" onclick="irMarketing(${i})" aria-label="Ir al anuncio ${i+1}"></button>`).join('');
+ track.style.transform=`translateX(-${MARKETING_IDX*100}%)`;
+}
+function marketingAction(i){const s=MARKETING_SLIDES[i];if(s&&typeof s.action==='function')s.action();}
+function irMarketing(i){MARKETING_IDX=(i+MARKETING_SLIDES.length)%MARKETING_SLIDES.length;renderMarketing();reiniciarMarketing();}
+function moverMarketing(delta){irMarketing(MARKETING_IDX+delta);}
+function iniciarMarketing(){if(MARKETING_TIMER)clearInterval(MARKETING_TIMER);if(!MARKETING_PAUSED)MARKETING_TIMER=setInterval(()=>{MARKETING_IDX=(MARKETING_IDX+1)%MARKETING_SLIDES.length;renderMarketing();},6500);}
+function reiniciarMarketing(){if(!MARKETING_PAUSED)iniciarMarketing();}
+function toggleMarketingAutoplay(){MARKETING_PAUSED=!MARKETING_PAUSED;const b=document.getElementById('mkt-pause');if(b)b.innerHTML=`<i class="ti ti-${MARKETING_PAUSED?'player-play':'player-pause'}"></i>`;if(MARKETING_PAUSED&&MARKETING_TIMER){clearInterval(MARKETING_TIMER);MARKETING_TIMER=null;}else iniciarMarketing();}
+async function cargarCursosEnMarketing(){
+ if(MARKETING_CURSOS_CARGADOS)return;MARKETING_CURSOS_CARGADOS=true;
+ try{const cursos=await apiFetch('/api/cursos');for(const c of (cursos||[]).filter(x=>x.publicado!==0)){MARKETING_SLIDES.splice(Math.max(3,MARKETING_SLIDES.length-2),0,{tag:'Curso certificado',title:c.nombre,copy:c.descripcion||'Programa de formación especializada disponible en Dr. Plants.',image:'https://images.pexels.com/photos/4975400/pexels-photo-4975400.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Ver curso',kind:'course',action:()=>abrirCursoDetalle(c.id)});}renderMarketing();iniciarMarketing();}catch(e){renderMarketing();iniciarMarketing();}
+}
+function initMarketingHome(){renderMarketing();iniciarMarketing();cargarCursosEnMarketing();}
+
+window.addEventListener('DOMContentLoaded',()=>{setTimeout(initMarketingHome,120);});
 </script>
 
 </body>

@@ -1,7 +1,7 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.3.9",
-  "description": "Dr Plants V8C.9 — precios de mercado con fecha, fuente, unidad y TRM oficial",
+  "version": "8.3.10",
+  "description": "Dr Plants V8C.10 — sección de mercadeo dinámica en Home",
   "main": "app.js",
   "type": "commonjs",
   "engines": {
