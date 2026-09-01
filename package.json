@@ -1,7 +1,7 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.3.10",
-  "description": "Dr Plants V8C.10 — sección de mercadeo dinámica en Home",
+  "version": "8.3.11",
+  "description": "Dr Plants V8C.11 — corrección integral de iconografía y Home Mercadeo",
   "main": "app.js",
   "type": "commonjs",
   "engines": {
