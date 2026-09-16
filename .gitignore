@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+drplants.db
+drplants.db-*
+*.sqlite
+*.sqlite3
+uploads/
+npm-debug.log*
+.DS_Store
