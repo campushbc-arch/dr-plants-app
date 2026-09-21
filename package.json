@@ -1,11 +1,11 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.3.12-recovery.1",
-  "description": "Dr Plants V8C.12 — recuperación Hostinger con better-sqlite3 compatible",
+  "version": "8.3.12-recovery.2",
+  "description": "Dr Plants V8C.12 — recuperación Hostinger con SQLite nativo de Node 22",
   "main": "app.js",
   "type": "commonjs",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.5 <23"
   },
   "scripts": {
     "start": "node app.js",
@@ -13,19 +13,18 @@
     "seed": "node src/db/seed.js",
     "audit": "npm audit --audit-level=high",
     "security:check": "node scripts/security-check.js",
-    "check": "node --check app.js && node --check src/server.js && node scripts/security-check.js"
+    "check": "node --check app.js && node --check src/server.js && node --check src/db/sqlite-compat.js && node scripts/security-check.js"
   },
   "dependencies": {
-    "better-sqlite3": "11.3.0",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "2.4.3",
+    "cors": "2.8.5",
+    "dotenv": "16.4.5",
+    "express": "4.19.2",
+    "jsonwebtoken": "9.0.2",
     "multer": "2.2.0",
     "nodemailer": "9.0.3",
-    "helmet": "^8.1.0",
-    "express-rate-limit": "^8.0.1",
-    "hpp": "^0.2.3"
+    "helmet": "8.1.0",
+    "express-rate-limit": "8.0.1",
+    "hpp": "0.2.3"
   }
 }
