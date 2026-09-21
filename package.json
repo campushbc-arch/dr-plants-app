@@ -1,7 +1,7 @@
 {
   "name": "dr-plants-backend",
-  "version": "8.3.12",
-  "description": "Dr Plants V8C.12 — área segura del carrusel de mercadeo y controles sin superposición",
+  "version": "8.3.12-recovery.1",
+  "description": "Dr Plants V8C.12 — recuperación Hostinger con better-sqlite3 compatible",
   "main": "app.js",
   "type": "commonjs",
   "engines": {
@@ -16,7 +16,7 @@
     "check": "node --check app.js && node --check src/server.js && node scripts/security-check.js"
   },
   "dependencies": {
-    "better-sqlite3": "^11.3.0",
+    "better-sqlite3": "11.3.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
