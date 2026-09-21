@@ -1,0 +1,54 @@
+name: Build Hostinger SQLite binding
+
+on:
+  push:
+    branches:
+      - recovery-v8c12-hostinger
+    paths:
+      - ".github/workflows/build-hostinger-binding.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-binding:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout recovery branch
+        uses: actions/checkout@v4
+        with:
+          ref: recovery-v8c12-hostinger
+
+      - name: Build better-sqlite3 for Hostinger EL8 / Node 20.19.4
+        run: |
+          set -euxo pipefail
+          mkdir -p vendor/hostinger-node20
+          docker run --rm             -v "$PWD:/workspace"             -w /workspace             almalinux:8             bash -lc '
+              set -euxo pipefail
+              dnf -y install gcc gcc-c++ make python3 curl tar xz binutils git
+              curl -fsSLO https://nodejs.org/dist/v20.19.4/node-v20.19.4-linux-x64.tar.xz
+              tar -xJf node-v20.19.4-linux-x64.tar.xz
+              export PATH="/workspace/node-v20.19.4-linux-x64/bin:$PATH"
+              node -v
+              npm -v
+              rm -rf /tmp/drplants-binding
+              mkdir -p /tmp/drplants-binding
+              cd /tmp/drplants-binding
+              npm init -y
+              npm install better-sqlite3@11.3.0 --build-from-source
+              cp node_modules/better-sqlite3/build/Release/better_sqlite3.node /workspace/vendor/hostinger-node20/better_sqlite3.node
+              objdump -T /workspace/vendor/hostinger-node20/better_sqlite3.node | grep -o "GLIBC_[0-9.]*" | sort -Vu | tail -n 20 || true
+            '
+          rm -rf node-v20.19.4-linux-x64 node-v20.19.4-linux-x64.tar.xz
+          test -s vendor/hostinger-node20/better_sqlite3.node
+
+      - name: Commit compatible binding to recovery branch
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add vendor/hostinger-node20/better_sqlite3.node
+          git diff --cached --quiet && exit 0
+          git commit -m "V8C.12 recovery: add Hostinger-compatible SQLite binding [skip ci]"
+          git push origin HEAD:recovery-v8c12-hostinger
