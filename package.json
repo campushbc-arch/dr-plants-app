@@ -13,7 +13,8 @@
     "seed": "node --experimental-sqlite src/db/seed.js",
     "audit": "npm audit --audit-level=high",
     "security:check": "node scripts/security-check.js",
-    "check": "node --check app.js && node --check src/server.js && node --check src/db/sqlite-compat.js && node scripts/security-check.js"
+    "check": "node --check app.js && node --check src/server.js && node --check src/db/sqlite-compat.js && node scripts/security-check.js",
+    "postinstall": "node -e \"console.log('Hostinger postinstall complete')\""
   },
   "dependencies": {
     "bcryptjs": "2.4.3",
