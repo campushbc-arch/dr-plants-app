@@ -167,11 +167,22 @@ i[class*="ti-"]:not([style]){background-color:currentColor}
 .stat-v{font-size:15px;font-weight:500;color:#1b5e20}
 .stat-l{font-size:10px;color:var(--color-text-secondary);margin-top:2px}
 
-.bnav{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);display:flex;padding:8px 0 6px}
-.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:3px 0}
-.ni i{font-size:20px;color:var(--color-text-secondary)}
-.ni span{font-size:9px;color:var(--color-text-secondary)}
-.ni.on i,.ni.on span{color:#1b5e20}
+.bnav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(390px,100%);z-index:1200;background:rgba(255,255,255,.94);border-top:1px solid rgba(18,82,52,.10);display:flex;align-items:flex-end;padding:7px 8px calc(7px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(9,58,39,.12);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.phone.has-bnav .screen.on{padding-bottom:86px}
+.ni{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:4px 2px 2px;min-width:0;-webkit-tap-highlight-color:transparent;user-select:none}
+.ni .ni-icon{width:38px;height:34px;border-radius:13px;display:flex;align-items:center;justify-content:center;position:relative;transition:transform .18s ease,background .18s ease,box-shadow .18s ease}
+.ni i{font-size:20px;color:#69766f;transition:color .18s ease,transform .18s ease}
+.ni span{font-size:8.5px;font-weight:700;color:#727e77;transition:color .18s ease;white-space:nowrap}
+.ni:active .ni-icon{transform:scale(.92)}
+.ni.on .ni-icon{background:linear-gradient(145deg,#e6f9e8,#d8f4df);box-shadow:0 5px 14px rgba(15,142,70,.16)}
+.ni.on i,.ni.on span{color:#0b7f3f}
+.ni.on i{transform:translateY(-1px)}
+.ni.on:after{content:"";position:absolute;top:-7px;width:24px;height:3px;border-radius:999px;background:linear-gradient(90deg,#0a8f43,#76df54);box-shadow:0 2px 8px rgba(31,174,82,.34)}
+.ni-ai .ni-icon{width:46px;height:42px;margin-top:-12px;border-radius:16px;background:linear-gradient(145deg,#0a5b39,#0f8b4b);box-shadow:0 7px 18px rgba(6,92,53,.24);border:3px solid rgba(255,255,255,.95)}
+.ni-ai i{color:#b7ff79!important;font-size:22px}
+.ni-ai span{color:#0d5034;font-weight:800}
+.ni-ai.on .ni-icon{background:linear-gradient(145deg,#0a6c3f,#13a453);box-shadow:0 8px 20px rgba(7,122,62,.30)}
+@media(min-width:700px){.bnav{border-radius:18px 18px 0 0}}
 
 .pg-hdr{background:var(--color-background-secondary);padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:0.5px solid var(--color-border-tertiary)}
 .back{background:none;border:none;cursor:pointer;color:#1b5e20;display:flex;align-items:center;gap:5px;font-size:13px;font-weight:500;font-family:inherit;padding:0}
@@ -1647,10 +1658,10 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 </div>
 
 <div class="bnav" id="bnav">
-  <div class="ni on" id="ni-home" onclick="go('home','home')"><i class="ti ti-home"></i><span>Inicio</span></div>
-  <div class="ni" id="ni-tienda" onclick="go('tienda','tienda')"><i class="ti ti-building-store"></i><span>Tienda</span></div>
-  <div class="ni" id="ni-agronomo" onclick="go('agronomo','agronomo')"><i class="ti ti-brain"></i><span>Dr. Agro</span></div>
-  <div class="ni" id="ni-cultivo" onclick="go('cultivo','cultivo')"><i class="ti ti-plant-2"></i><span>Cultivo</span></div>
+  <div class="ni on" id="ni-home" onclick="go('home','home')"><div class="ni-icon"><i class="ti ti-home"></i></div><span>Inicio</span></div>
+  <div class="ni" id="ni-tienda" onclick="go('tienda','tienda')"><div class="ni-icon"><i class="ti ti-building-store"></i></div><span>AgroTienda</span></div>
+  <div class="ni ni-ai" id="ni-agronomo" onclick="go('agronomo','agronomo')"><div class="ni-icon"><i class="ti ti-brain"></i></div><span>Dr. Agro IA</span></div>
+  <div class="ni" id="ni-cultivo" onclick="go('cultivo','cultivo')"><div class="ni-icon"><i class="ti ti-plant-2"></i></div><span>Mi Cultivo</span></div>
 </div>
 
 </div>
@@ -2870,7 +2881,10 @@ async function go(sid,nid){
   const ni=document.getElementById('ni-'+nid);
   if(ni)ni.classList.add('on');
   const bnav=document.getElementById('bnav');
-  bnav.style.display=(sid==='reg'||sid==='carrito'||sid==='pedido-confirmado'||sid==='notif'||sid==='perfil'||sid==='pedidos'||sid==='panel-agronomo'||sid==='panel-admin'||sid==='agronomo-pendiente'||sid==='splash'||sid==='curso-detalle'||sid==='curso-contenido')?'none':'flex';
+  const ocultarBnav=(sid==='reg'||sid==='carrito'||sid==='pedido-confirmado'||sid==='notif'||sid==='perfil'||sid==='pedidos'||sid==='panel-agronomo'||sid==='panel-admin'||sid==='agronomo-pendiente'||sid==='splash'||sid==='curso-detalle'||sid==='curso-contenido');
+  bnav.style.display=ocultarBnav?'none':'flex';
+  const phone=document.querySelector('.phone');
+  if(phone)phone.classList.toggle('has-bnav',!ocultarBnav);
   if(sid==='reg')renderRegMode();
   if(sid==='carrito')renderCart();
   if(sid==='cultivo'){renderLotesList();renderResumenCultivoProfesional();prepararFormularioCultivoProfesional();}
