@@ -578,6 +578,34 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 .cultivo-filter{margin-top:10px;background:#e7f6e8;border-radius:10px;padding:8px 10px;align-items:center;justify-content:space-between;gap:8px}.cultivo-filter span{font-size:9.5px;color:#1b5e20;font-weight:700}.cultivo-filter button{background:none;border:none;color:#1b5e20;font-size:9px;text-decoration:underline;cursor:pointer}
 .cultivo-lotes-list{padding-top:11px;display:flex;flex-direction:column;gap:9px}.cultivo-lotes-list>.unit-card{border:1px solid #dce8df!important;border-radius:15px!important;overflow:hidden!important;box-shadow:0 6px 18px rgba(8,65,42,.06);background:#fff!important}.cultivo-lotes-list .unit-hdr{background:linear-gradient(135deg,#0b5638,#147847)!important;color:#fff!important;padding:11px 12px!important}.cultivo-lotes-list .lesson-row{transition:background .15s ease}.cultivo-lotes-list .lesson-row:active{background:#f0f8f2}
 .cultivo-trust{margin:0 12px 15px;padding:12px 13px;border-radius:14px;background:linear-gradient(135deg,#eaf7ec,#f7fbf8);border:1px solid #d8e8dc;display:flex;gap:9px;align-items:flex-start}.cultivo-trust>i{width:31px;height:31px;border-radius:9px;background:#0b7041;color:#b8ff7c;display:flex;align-items:center;justify-content:center;flex:0 0 31px}.cultivo-trust b{font-size:10px;display:block;color:#173c29}.cultivo-trust span{font-size:8.5px;line-height:1.4;color:#68786f;display:block;margin-top:2px}
+
+/* Agritech controls */
+.cultivo-quick-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#0a3e2d,#0e6840)!important;border:1px solid rgba(127,236,113,.22)!important;color:#fff!important;box-shadow:0 9px 22px rgba(6,67,42,.13);min-height:78px}
+.cultivo-quick-card:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(140,255,118,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(140,255,118,.055) 1px,transparent 1px);background-size:18px 18px;pointer-events:none}
+.cultivo-quick-card>i:first-child{position:relative;z-index:1;background:rgba(168,255,118,.13)!important;border:1px solid rgba(168,255,118,.24);color:#aaff73!important}
+.cultivo-quick-card span,.cultivo-quick-card>i:last-child{position:relative;z-index:1}.cultivo-quick-card b{color:#fff!important}.cultivo-quick-card small{color:#cce7d6!important}.cultivo-quick-card>i:last-child{color:#aaff73!important}
+.cultivo-quick-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(6,67,42,.18)}
+.home-eco-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#0a3d2c,#0c5d3a)!important;border:1px solid rgba(128,230,120,.18)!important;color:#fff!important;box-shadow:0 9px 22px rgba(6,62,40,.11)}
+.home-eco-card:before{content:"";position:absolute;right:-20px;top:-20px;width:86px;height:86px;border-radius:50%;background:radial-gradient(circle,rgba(151,255,105,.13),transparent 68%)}
+.home-eco-card>i:first-child{position:relative;z-index:1;background:rgba(165,255,113,.12)!important;border:1px solid rgba(165,255,113,.2);color:#aaff73!important}.home-eco-card span,.home-eco-card>i:last-child{position:relative;z-index:1}.home-eco-card b{color:#fff!important}.home-eco-card small{color:#cce4d5!important}.home-eco-card>i:last-child{color:#aaff73!important}
+.home-eco-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(6,62,40,.16)}
+
+.cultivo-fincas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:11px;padding-top:12px}
+.finca-card{border:1px solid #d9e8dd;border-radius:17px;background:#fff;box-shadow:0 8px 22px rgba(7,65,42,.06);overflow:hidden}
+.finca-card-head{position:relative;padding:14px;background:linear-gradient(145deg,#083b2a,#0e7042);color:#fff;cursor:pointer;min-height:112px}
+.finca-card-head:after{content:"";position:absolute;right:-24px;top:-24px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(144,255,100,.16),transparent 68%)}
+.finca-icon{width:38px;height:38px;border-radius:12px;background:rgba(176,255,119,.13);border:1px solid rgba(176,255,119,.22);color:#b8ff7c;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:10px}
+.finca-name{font-size:14px;font-weight:850;position:relative;z-index:1}.finca-meta{font-size:8.5px;color:#cfe7d8;line-height:1.35;margin-top:4px;position:relative;z-index:1}.finca-stats{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;position:relative;z-index:1}.finca-stats span{font-size:7.5px;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14)}
+.finca-actions{display:flex;gap:7px;padding:9px 10px;background:#f8fbf9;border-bottom:1px solid #e3ece6}.finca-report-btn{border:0;border-radius:10px;background:linear-gradient(90deg,#0a8b45,#26c75b);color:#fff;padding:8px 10px;font:inherit;font-size:8.5px;font-weight:850;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 5px 12px rgba(10,139,69,.18)}.finca-report-btn.secondary{background:#edf7ef;color:#0a713b;box-shadow:none;border:1px solid #d3e9d8}
+.finca-lotes{display:none;padding:10px;background:#fbfdfb}.finca-card.open .finca-lotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.lote-tile{border:1px solid #dde9e1;border-radius:12px;background:#fff;padding:10px;cursor:pointer;min-height:92px;display:flex;flex-direction:column;justify-content:space-between;transition:transform .16s ease,box-shadow .16s ease}.lote-tile:hover{transform:translateY(-2px);box-shadow:0 7px 18px rgba(8,68,43,.08)}
+.lote-tile-top{display:flex;align-items:center;gap:8px}.lote-tile-ico{width:30px;height:30px;border-radius:9px;background:#e6f7e9;color:#0a8442;display:flex;align-items:center;justify-content:center}.lote-tile b{font-size:9.5px;color:#173326}.lote-tile small{font-size:7.5px;color:#748078;line-height:1.35;margin-top:5px}.lote-tile-foot{display:flex;justify-content:space-between;align-items:center;margin-top:7px;color:#0a8141;font-size:7.5px;font-weight:800}
+.finca-weather{padding:0 10px 9px;background:#fbfdfb}.finca-card:not(.open) .finca-weather{display:none}
+
+.lote-section{margin:10px 12px!important;border:1px solid #dce8df;border-radius:16px;background:#fff;box-shadow:0 7px 20px rgba(7,65,42,.05);overflow:hidden}
+.lote-section>.sec-lbl{padding:12px 14px!important;margin:0!important;cursor:pointer;background:linear-gradient(135deg,#f9fcfa,#f0f8f3);display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;color:#153b28}
+.lote-section>.sec-lbl:after{content:"+";font-size:16px;color:#0a7f41;font-weight:700}.lote-section.open>.sec-lbl:after{content:"−"}
+.lote-section:not(.open)>:not(.sec-lbl){display:none!important}.lote-section.open{padding-bottom:10px}.lote-section.open>.sec-lbl{border-bottom:1px solid #e2ece5}
 @media(min-width:700px){.cultivo-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.cultivo-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.cultivo-hero{min-height:280px}.cultivo-hero-content{padding:34px 28px}.cultivo-hero h2{font-size:34px}.cultivo-quick,.cultivo-lotes-section{margin:16px}}
 </style>
 </head>
@@ -2462,58 +2490,64 @@ function slugify(t){return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u0
 
 let filtroFinca=null;
 
+function toggleFincaCard(slug){
+  const card=document.getElementById('finca-card-'+slug);if(!card)return;
+  card.classList.toggle('open');
+  if(card.classList.contains('open')){
+    const lotes=LOTES.filter(l=>slugify(l.finca)===slug);
+    if(lotes[0])loadFincaWeather(slug,lotes[0].ubicacionId);
+  }
+}
 function renderLotesList(){
   const wrap=document.getElementById('lotes-list');
   const banner=document.getElementById('lotes-filtro-banner');
+  if(!wrap)return;
   const todasFincas=[...new Set(LOTES.map(l=>l.finca))];
   const fincas=filtroFinca?todasFincas.filter(f=>f===filtroFinca):todasFincas;
   if(banner){
-    if(filtroFinca){
-      banner.style.display='flex';
-      banner.querySelector('span').textContent='Viendo solo: '+filtroFinca;
-    }else{
-      banner.style.display='none';
-    }
+    if(filtroFinca){banner.style.display='flex';banner.querySelector('span').textContent='Viendo solo: '+filtroFinca;}
+    else banner.style.display='none';
   }
   if(!fincas.length){
     const puedeVerDemo=(SESION.rol==='admin'||SESION.rolEmpresarial==='ejecutivo_comercial')&&SESION.modoDemo;
-    wrap.innerHTML=`<div class="unit-card" style="padding:22px;text-align:center">
-      <div class="lesson-ico" style="margin:0 auto 10px"><i class="ti ti-map-2"></i></div>
-      <b>${puedeVerDemo?'No hay escenarios demo cargados':'Aún no tienes fincas ni lotes'}</b>
-      <div class="lab-desc" style="margin-top:6px">${puedeVerDemo?'Genera un escenario desde Demo Studio para comenzar la demostración.':'Crea tu primera finca y lote con el formulario de esta sección. Tus datos aparecerán aquí.'}</div>
-    </div>`;
+    wrap.className='cultivo-lotes-list';
+    wrap.innerHTML=`<div class="unit-card" style="padding:22px;text-align:center"><div class="lesson-ico" style="margin:0 auto 10px"><i class="ti ti-map-2"></i></div><b>${puedeVerDemo?'No hay escenarios demo cargados':'Aún no tienes fincas ni lotes'}</b><div class="lab-desc" style="margin-top:6px">${puedeVerDemo?'Genera un escenario desde Demo Studio para comenzar la demostración.':'Crea tu primera finca y lote. Cada finca aparecerá como una tarjeta y dentro de ella encontrarás sus lotes.'}</div></div>`;
     return;
   }
+  wrap.className='cultivo-fincas-grid';
   wrap.innerHTML=fincas.map(f=>{
     const lotesFinca=LOTES.filter(l=>l.finca===f);
-    const areaTotal=lotesFinca.reduce((s,l)=>s+l.area,0);
-    const ubicacionId=lotesFinca[0].ubicacionId;
-    const ubic=ubicacionSegura(ubicacionId);
+    const areaTotal=lotesFinca.reduce((s,l)=>s+Number(l.area||0),0);
+    const ubic=ubicacionSegura(lotesFinca[0]?.ubicacionId);
     const fslug=slugify(f);
-    return `<div class="unit-card">
-      <div class="unit-hdr">${f} · ${ubic.label} <span style="opacity:0.75;font-weight:400">(${lotesFinca.length} lotes · ${areaTotal.toFixed(1)} ha)</span>${(FINCAS_META[f]?.cliente_nombre||FINCAS_META[f]?.cliente_nombre_cache)?`<div style="font-size:10px;font-weight:500;opacity:.9;margin-top:3px"><i class="ti ti-user"></i> Cliente: ${FINCAS_META[f].cliente_nombre||FINCAS_META[f].cliente_nombre_cache}</div>`:''}<div style="margin-top:8px"><button class="mini-btn" onclick="event.stopPropagation();abrirInforme('finca','${FINCA_IDS[f]||''}','${f.replace(/'/g,"\'")}')"><i class="ti ti-file-type-pdf"></i> Generar informe de finca</button></div></div>
-      <div id="fwx-${fslug}" style="padding:10px 12px 0"><div class="wx-mini-loading">Cargando clima de la zona…</div></div>
-      ${lotesFinca.map(l=>{
-        const crop=CROPS[l.cultivoId];
-        const week=weekOf(l);
-        const pct=Math.round(week/crop.ciclo*100);
-        return `<div class="lesson-row" onclick="openLote('${l.id}')">
-          <div class="lesson-ico"><i class="ti ${CROP_ICON[l.cultivoId]||'ti-plant-2'}"></i></div>
-          <div style="flex:1">
-            <div class="lesson-name">${l.nombre}</div>
-            <div class="lesson-meta">${crop.emoji} ${crop.label} · ${l.area} ha · Semana ${week}/${crop.ciclo} · Salud ${l.salud}%</div>
-          </div>
-          <i class="ti ti-arrow-left" style="transform:scaleX(-1);color:var(--color-text-secondary)"></i>
-        </div>`;
-      }).join('')}
-    </div>`;
+    const cliente=FINCAS_META[f]?.cliente_nombre||FINCAS_META[f]?.cliente_nombre_cache||'';
+    const cultivos=[...new Set(lotesFinca.map(l=>(CROPS[l.cultivoId]||cropDataPorNombre(l.cultivoNombre||l.cultivoId,l.variedad).data).label))];
+    return `<article class="finca-card" id="finca-card-${fslug}">
+      <div class="finca-card-head" onclick="toggleFincaCard('${fslug}')">
+        <div class="finca-icon"><i class="ti ti-building-farm"></i></div>
+        <div class="finca-name">${escapeHtml(f)}</div>
+        <div class="finca-meta"><i class="ti ti-map-pin"></i> ${escapeHtml(ubic.label||'Ubicación registrada')}${cliente?` · Cliente: ${escapeHtml(cliente)}`:''}</div>
+        <div class="finca-stats"><span>${lotesFinca.length} lote${lotesFinca.length===1?'':'s'}</span><span>${areaTotal.toFixed(1)} ha</span><span>${escapeHtml(cultivos.slice(0,2).join(' · ')||'Cultivos')}</span></div>
+      </div>
+      <div class="finca-actions">
+        <button class="finca-report-btn" onclick="event.stopPropagation();abrirInforme('finca','${FINCA_IDS[f]||''}','${f.replace(/'/g,"\'")}')"><i class="ti ti-file-type-pdf"></i> Generar informe</button>
+        <button class="finca-report-btn secondary" onclick="event.stopPropagation();toggleFincaCard('${fslug}')"><i class="ti ti-layout-grid"></i> Ver lotes</button>
+      </div>
+      <div id="fwx-${fslug}" class="finca-weather"><div class="wx-mini-loading">Abre la finca para cargar el clima.</div></div>
+      <div class="finca-lotes">
+        ${lotesFinca.map(l=>{
+          const crop=CROPS[l.cultivoId]||cropDataPorNombre(l.cultivoNombre||l.cultivoId,l.variedad).data;
+          const week=weekOf(l);
+          const salud=Number.isFinite(Number(l.salud))?Number(l.salud):null;
+          return `<div class="lote-tile" onclick="openLote('${l.id}')">
+            <div><div class="lote-tile-top"><div class="lote-tile-ico"><i class="ti ${CROP_ICON[l.cultivoId]||'ti-plant-2'}"></i></div><div><b>${escapeHtml(l.nombre)}</b><small>${escapeHtml(crop.label)} · ${Number(l.area||0).toFixed(1)} ha</small></div></div><small>Semana ${week}/${crop.ciclo}${salud!==null?' · Salud '+salud+'%':''}</small></div>
+            <div class="lote-tile-foot"><span>Abrir lote</span><i class="ti ti-arrow-right"></i></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </article>`;
   }).join('');
-  fincas.forEach(f=>{
-    const lotesFinca=LOTES.filter(l=>l.finca===f);
-    loadFincaWeather(slugify(f),lotesFinca[0].ubicacionId);
-  });
 }
-
 function verFincaFiltrada(nombreFinca){
   filtroFinca=nombreFinca;
   go('cultivo','cultivo');
@@ -2642,6 +2676,23 @@ function renderLoteDetalle(){
   document.getElementById('ld-appform').style.display='none';
   document.getElementById('ld-analisisform').style.display='none';
   document.getElementById('ld-costoform').style.display='none';
+  inicializarSeccionesLote();
+}
+function inicializarSeccionesLote(){
+  const root=document.getElementById('s-lote-detalle');if(!root)return;
+  const sections=[...root.children].filter(el=>el.querySelector&&el.querySelector(':scope > .sec-lbl'));
+  sections.forEach((section,idx)=>{
+    section.classList.add('lote-section');
+    section.classList.toggle('open',idx<2);
+    const label=section.querySelector(':scope > .sec-lbl');
+    if(label&&!label.dataset.toggleReady){
+      label.dataset.toggleReady='1';
+      label.addEventListener('click',e=>{
+        if(e.target.closest('button'))return;
+        section.classList.toggle('open');
+      });
+    }
+  });
 }
 
 function renderProyeccion(lote){
