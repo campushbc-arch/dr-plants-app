@@ -56,12 +56,17 @@ router.post('/register', (req, res) => {
       const { nombre, email, telefono, password, rol, tipoProductor, pais, region, tarjetaProfesional, especialidad } = req.body;
       const emailNormalizado = validarEmail(email);
       const telefonoNormalizado = validarTelefono(telefono);
-      if (!nombre || !emailNormalizado || !telefonoNormalizado || !password || !rol || !tipoProductor || !pais || !region) {
-        limpiar();
-        return res.status(400).json({ error: 'Debes completar todos los datos obligatorios del formulario.' });
-      }
-      if (!emailNormalizado) { limpiar(); return res.status(400).json({ error: 'El correo electrónico no es válido.' }); }
-      if (!strongPassword(password)) { limpiar(); return res.status(400).json({ error: 'La contraseña debe tener entre 10 y 128 caracteres e incluir letras y números.' }); }
+      if (!nombre) { limpiar(); return res.status(400).json({ error: 'Escribe tu nombre completo.' }); }
+      if (!email) { limpiar(); return res.status(400).json({ error: 'Escribe tu correo electrónico.' }); }
+      if (!emailNormalizado) { limpiar(); return res.status(400).json({ error: 'Ingresa un correo electrónico válido.' }); }
+      if (!telefono) { limpiar(); return res.status(400).json({ error: 'Escribe tu número de teléfono.' }); }
+      if (!telefonoNormalizado) { limpiar(); return res.status(400).json({ error: 'Ingresa un teléfono válido, por ejemplo +57 300 123 4567.' }); }
+      if (!password) { limpiar(); return res.status(400).json({ error: 'Escribe una contraseña.' }); }
+      if (!strongPassword(password)) { limpiar(); return res.status(400).json({ error: 'La contraseña debe tener entre 6 y 20 caracteres e incluir al menos una letra y un número.' }); }
+      if (!rol) { limpiar(); return res.status(400).json({ error: 'Selecciona el tipo de cuenta.' }); }
+      if (!tipoProductor) { limpiar(); return res.status(400).json({ error: 'Selecciona el tipo de productor.' }); }
+      if (!pais) { limpiar(); return res.status(400).json({ error: 'Selecciona el país.' }); }
+      if (!region) { limpiar(); return res.status(400).json({ error: 'Escribe la región, provincia o estado.' }); }
       if (db.prepare('SELECT 1 FROM usuarios WHERE lower(email) = ?').get(emailNormalizado)) { limpiar(); return res.status(409).json({ error: 'Ya existe una cuenta registrada con ese correo.' }); }
       const rolSolicitado = ['agricultor', 'agronomo'].includes(rol) ? rol : null;
       if (!rolSolicitado) { limpiar(); return res.status(400).json({ error: 'Tipo de cuenta inválido.' }); }
