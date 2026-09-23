@@ -16,23 +16,40 @@ function seedSiVacio() {
 
   // Recuperación controlada: solo se ejecuta si Hostinger habilita explícitamente
   // RESET_ADMIN_PASSWORD_ON_START=true. No crea usuarios ni modifica otros datos.
+  // Nunca debe impedir el arranque de la aplicación.
   if (String(process.env.RESET_ADMIN_PASSWORD_ON_START || '').toLowerCase() === 'true') {
-    if (!adminUsername || !adminPassword) {
-      throw new Error('Para recuperar el administrador se requieren ADMIN_USERNAME y ADMIN_PASSWORD.');
+    if (!adminPassword) {
+      console.warn('Recuperación admin omitida: falta ADMIN_PASSWORD.');
+    } else {
+      let adminExistente = null;
+
+      if (adminUsername) {
+        adminExistente = db.prepare(
+          "SELECT id, email FROM usuarios WHERE lower(email)=lower(?) AND rol='admin' LIMIT 1"
+        ).get(adminUsername);
+      }
+
+      if (!adminExistente) {
+        const admins = db.prepare(
+          "SELECT id, email FROM usuarios WHERE rol='admin' ORDER BY creado_en ASC"
+        ).all();
+
+        if (admins.length === 1) {
+          adminExistente = admins[0];
+          console.warn('ADMIN_USERNAME no coincidió; se usará el único administrador existente para la recuperación.');
+        } else if (admins.length === 0) {
+          console.warn('Recuperación admin omitida: no existe ningún usuario con rol admin.');
+        } else {
+          console.warn('Recuperación admin omitida: hay varios administradores y ADMIN_USERNAME no coincide de forma inequívoca.');
+        }
+      }
+
+      if (adminExistente) {
+        db.prepare('UPDATE usuarios SET password_hash=? WHERE id=?')
+          .run(bcrypt.hashSync(adminPassword, Number(process.env.BCRYPT_ROUNDS || 12)), adminExistente.id);
+        console.log('Contraseña del administrador existente actualizada por recuperación controlada.');
+      }
     }
-
-    const adminExistente = db.prepare(
-      "SELECT id, email FROM usuarios WHERE lower(email)=lower(?) AND rol='admin' LIMIT 1"
-    ).get(adminUsername);
-
-    if (!adminExistente) {
-      throw new Error('No se encontró un administrador existente con el ADMIN_USERNAME configurado.');
-    }
-
-    db.prepare('UPDATE usuarios SET password_hash=? WHERE id=?')
-      .run(bcrypt.hashSync(adminPassword, Number(process.env.BCRYPT_ROUNDS || 12)), adminExistente.id);
-
-    console.log('Contraseña del administrador existente actualizada por recuperación controlada.');
   }
 
   const yaHayDatos = db.prepare('SELECT COUNT(*) AS n FROM usuarios').get().n > 0;
