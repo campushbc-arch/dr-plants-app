@@ -536,6 +536,28 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 .mc-plan-cta{width:100%;margin-top:13px;border:0;border-radius:11px;padding:11px 12px;background:linear-gradient(90deg,#0a8f43,#2bc85b);color:#fff;font:inherit;font-size:10.5px;font-weight:850;cursor:pointer;box-shadow:0 7px 16px rgba(18,157,73,.18);display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .18s ease,box-shadow .18s ease}
 .mc-plan-cta:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(18,157,73,.24)}.mc-plan-cta i{font-size:11px}
 @media(max-width:360px){.mc-hero-title{font-size:34px}.mc-feature-grid{grid-template-columns:1fr}.mc-preview-head{align-items:flex-start;flex-direction:column}.mc-preview-toggle{width:100%}}
+
+/* Mi Cultivo · dashboard operativo */
+.cultivo-dashboard{background:#f3f8f4}
+.cultivo-topbar{background:#082f24;border-bottom:0}.cultivo-topbar .back,.cultivo-topbar .pg-title{color:#fff}
+.cultivo-hero{position:relative;min-height:245px;overflow:hidden;background:#063a29}
+.cultivo-hero-bg{position:absolute;inset:0;background-image:url('https://images.pexels.com/photos/4975400/pexels-photo-4975400.jpeg?auto=compress&cs=tinysrgb&w=1400');background-size:cover;background-position:center 54%}
+.cultivo-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,38,27,.94),rgba(4,53,35,.72) 58%,rgba(5,49,33,.32))}
+.cultivo-hero-content{position:relative;z-index:2;padding:24px 18px;color:#fff;max-width:560px}
+.cultivo-kicker{font-size:8px;letter-spacing:1.6px;font-weight:900;color:#a7f475}
+.cultivo-hero h2{font-size:27px;line-height:1.05;letter-spacing:-.7px;margin:8px 0;color:#fff}.cultivo-hero h2 strong{color:#8bf43f}
+.cultivo-hero p{font-size:10.5px;line-height:1.5;color:#d7e9df;max-width:420px;margin:0}
+.cultivo-hero-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.cultivo-hero-actions button{border:0;border-radius:10px;padding:9px 12px;background:linear-gradient(90deg,#13a24d,#39cf66);color:#fff;font:inherit;font-size:9.5px;font-weight:850;cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 7px 18px rgba(11,122,59,.22)}.cultivo-hero-actions .secondary{background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.25);box-shadow:none;backdrop-filter:blur(10px)}
+.cultivo-kpis-wrap{padding:0 12px;margin-top:-18px;position:relative;z-index:3}.cultivo-kpis{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important;margin:0!important}.cultivo-kpis .ms2{background:#fff;border:1px solid #dce9df;border-radius:14px;padding:11px 8px;box-shadow:0 8px 22px rgba(6,64,42,.08);text-align:center}.cultivo-kpis .ms2v{font-size:18px!important;font-weight:850!important;color:#0b6e3b!important}.cultivo-kpis .ms2l{font-size:8.5px!important;color:#6a776f!important;margin-top:2px}
+.cultivo-quick,.cultivo-lotes-section{margin:12px;background:#fff;border:1px solid #dce8df;border-radius:18px;padding:15px;box-shadow:0 8px 24px rgba(6,64,42,.05)}
+.cultivo-section-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.cultivo-section-head>div>span{font-size:8px;letter-spacing:1.3px;font-weight:900;color:#0a8a46}.cultivo-section-head h3{font-size:17px;color:#10291d;line-height:1.1;margin:4px 0}.cultivo-section-head p{font-size:9.5px;line-height:1.4;color:#6a786f;margin:0}
+.cultivo-quick-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}.cultivo-quick-card{width:100%;border:1px solid #dfe9e2;background:linear-gradient(135deg,#fbfdfb,#f2f9f4);border-radius:13px;padding:10px;display:flex;align-items:center;gap:10px;text-align:left;font:inherit;color:#163125;cursor:pointer}.cultivo-quick-card>i:first-child{width:35px;height:35px;flex:0 0 35px;border-radius:10px;background:#e4f7e7;color:#0a8945;display:flex;align-items:center;justify-content:center;font-size:17px}.cultivo-quick-card span{flex:1}.cultivo-quick-card b{font-size:10.5px;display:block}.cultivo-quick-card small{font-size:8.5px;color:#6b7971;line-height:1.3;display:block;margin-top:2px}.cultivo-quick-card>i:last-child{color:#7d8a82}.cultivo-quick-card:active{transform:scale(.99)}
+.cultivo-pro-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}.cultivo-quick-card.compact{padding:9px}.cultivo-quick-card.compact>i:first-child{width:31px;height:31px;flex-basis:31px}
+.cultivo-add-small{border:0;border-radius:10px;background:#e6f7e9;color:#08733c;padding:8px 10px;font:inherit;font-size:9px;font-weight:850;display:flex;gap:4px;align-items:center;cursor:pointer}
+.cultivo-filter{margin-top:10px;background:#e7f6e8;border-radius:10px;padding:8px 10px;align-items:center;justify-content:space-between;gap:8px}.cultivo-filter span{font-size:9.5px;color:#1b5e20;font-weight:700}.cultivo-filter button{background:none;border:none;color:#1b5e20;font-size:9px;text-decoration:underline;cursor:pointer}
+.cultivo-lotes-list{padding-top:11px;display:flex;flex-direction:column;gap:9px}.cultivo-lotes-list>.unit-card{border:1px solid #dce8df!important;border-radius:15px!important;overflow:hidden!important;box-shadow:0 6px 18px rgba(8,65,42,.06);background:#fff!important}.cultivo-lotes-list .unit-hdr{background:linear-gradient(135deg,#0b5638,#147847)!important;color:#fff!important;padding:11px 12px!important}.cultivo-lotes-list .lesson-row{transition:background .15s ease}.cultivo-lotes-list .lesson-row:active{background:#f0f8f2}
+.cultivo-trust{margin:0 12px 15px;padding:12px 13px;border-radius:14px;background:linear-gradient(135deg,#eaf7ec,#f7fbf8);border:1px solid #d8e8dc;display:flex;gap:9px;align-items:flex-start}.cultivo-trust>i{width:31px;height:31px;border-radius:9px;background:#0b7041;color:#b8ff7c;display:flex;align-items:center;justify-content:center;flex:0 0 31px}.cultivo-trust b{font-size:10px;display:block;color:#173c29}.cultivo-trust span{font-size:8.5px;line-height:1.4;color:#68786f;display:block;margin-top:2px}
+@media(min-width:700px){.cultivo-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.cultivo-kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.cultivo-hero{min-height:280px}.cultivo-hero-content{padding:34px 28px}.cultivo-hero h2{font-size:34px}.cultivo-quick,.cultivo-lotes-section{margin:16px}}
 </style>
 </head>
 <body>
@@ -1047,30 +1069,61 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   </div>
 </div>
 
-<div id="s-cultivo" class="screen">
-  <div class="pg-hdr">
+<div id="s-cultivo" class="screen cultivo-dashboard">
+  <div class="pg-hdr cultivo-topbar">
     <button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button>
-    <span class="pg-title">Mis Lotes</span>
+    <span class="pg-title">Mi Cultivo</span>
   </div>
-  <div style="margin:12px 14px 0;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;display:flex;gap:9px;align-items:flex-start">
-    <i class="ti ti-shield-check" style="color:#3B6D11;flex-shrink:0;margin-top:1px" aria-hidden="true"></i>
-    <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.5">
-      <b style="color:var(--color-text-primary)">Gestión privada de cultivos.</b> Productores administran sus propias fincas. Los ingenieros agrónomos pueden registrar clientes, fincas asistidas, lotes, aplicaciones, costos, análisis y visitas técnicas manteniendo separados los datos de cada cliente.
+
+  <section class="cultivo-hero">
+    <div class="cultivo-hero-bg"></div>
+    <div class="cultivo-hero-shade"></div>
+    <div class="cultivo-hero-content">
+      <div class="cultivo-kicker">CENTRO DE CONTROL AGRÍCOLA</div>
+      <h2>Tu operación,<br><strong>más clara y conectada.</strong></h2>
+      <p id="cultivo-summary-line">Organiza fincas y lotes, registra lo que ocurre en campo y convierte tus datos en decisiones útiles.</p>
+      <div class="cultivo-hero-actions">
+        <button onclick="go('lote-nuevo','cultivo')"><i class="ti ti-plus"></i> Nuevo lote</button>
+        <button class="secondary" onclick="go('agronomo','agronomo')"><i class="ti ti-brain"></i> Consultar Dr. Agro</button>
+      </div>
     </div>
-  </div>
-  <div id="cultivo-prof-stats" class="mstats" style="margin-top:10px"></div>
-  <div id="cultivo-pro-actions" style="display:none;padding:0 14px 4px;gap:8px">
-    <button class="mini-btn" onclick="crearClienteProfesional()"><i class="ti ti-user-plus"></i> Nuevo cliente</button>
-    <button class="mini-btn" onclick="verClientesProfesionales()"><i class="ti ti-users"></i> Mis clientes</button>
-  </div>
-  <div id="lotes-filtro-banner" style="display:none;margin:0 14px 10px;background:#EAF3DE;border-radius:8px;padding:8px 10px;align-items:center;justify-content:space-between;gap:8px">
-    <span style="font-size:11px;color:#1b5e20;font-weight:500"></span>
-    <button onclick="quitarFiltroFinca()" style="background:none;border:none;color:#1b5e20;font-size:10.5px;text-decoration:underline;cursor:pointer;font-family:inherit">Ver todas</button>
-  </div>
-  <div id="lotes-list" style="padding:12px 14px 0;display:flex;flex-direction:column;gap:10px"></div>
-  <div style="padding:14px">
-    <button class="cta-btn gold" onclick="go('lote-nuevo','cultivo')"><i class="ti ti-plus" aria-hidden="true"></i> Agregar nuevo lote</button>
-  </div>
+  </section>
+
+  <section class="cultivo-kpis-wrap">
+    <div id="cultivo-prof-stats" class="mstats cultivo-kpis"></div>
+  </section>
+
+  <section class="cultivo-quick">
+    <div class="cultivo-section-head">
+      <div><span>ACCESOS RÁPIDOS</span><h3>Gestiona sin perder tiempo</h3></div>
+    </div>
+    <div class="cultivo-quick-grid">
+      <button class="cultivo-quick-card" onclick="go('lote-nuevo','cultivo')"><i class="ti ti-map-plus"></i><span><b>Crear lote</b><small>Registra finca, cultivo, área y ubicación.</small></span><i class="ti ti-chevron-right"></i></button>
+      <button class="cultivo-quick-card" onclick="document.getElementById('lotes-list').scrollIntoView({behavior:'smooth'})"><i class="ti ti-list-details"></i><span><b>Ver mis lotes</b><small>Consulta seguimiento, aplicaciones y costos.</small></span><i class="ti ti-chevron-right"></i></button>
+      <button class="cultivo-quick-card" onclick="go('agronomo','agronomo')"><i class="ti ti-brain"></i><span><b>Analizar con IA</b><small>Consulta Dr. Agro con el contexto de tu cultivo.</small></span><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div id="cultivo-pro-actions" class="cultivo-pro-actions" style="display:none">
+      <button class="cultivo-quick-card compact" onclick="crearClienteProfesional()"><i class="ti ti-user-plus"></i><span><b>Nuevo cliente</b><small>Asocia fincas y lotes a un cliente asistido.</small></span></button>
+      <button class="cultivo-quick-card compact" onclick="verClientesProfesionales()"><i class="ti ti-users"></i><span><b>Mis clientes</b><small>Consulta tu cartera de productores asistidos.</small></span></button>
+    </div>
+  </section>
+
+  <section class="cultivo-lotes-section">
+    <div class="cultivo-section-head">
+      <div><span>SEGUIMIENTO</span><h3>Fincas y lotes</h3><p>Entra a cada lote para registrar aplicaciones, análisis, costos, observaciones y visitas.</p></div>
+      <button class="cultivo-add-small" onclick="go('lote-nuevo','cultivo')"><i class="ti ti-plus"></i><span>Agregar</span></button>
+    </div>
+    <div id="lotes-filtro-banner" class="cultivo-filter" style="display:none">
+      <span></span>
+      <button onclick="quitarFiltroFinca()">Ver todas</button>
+    </div>
+    <div id="lotes-list" class="cultivo-lotes-list"></div>
+  </section>
+
+  <section class="cultivo-trust">
+    <i class="ti ti-shield-check"></i>
+    <div><b>Gestión privada de cultivos</b><span>Tu información se organiza por finca y lote. Los agrónomos pueden separar la información de cada cliente asistido.</span></div>
+  </section>
 </div>
 
 <div id="s-lote-nuevo" class="screen">
@@ -2445,7 +2498,12 @@ function prepararFormularioCultivoProfesional(){
 async function renderResumenCultivoProfesional(){
   const box=document.getElementById('cultivo-prof-stats');if(!box)return;let r={clientes:SESION.rol==='agronomo'?CLIENTES_PRO.length:0,fincas:new Set(LOTES.map(l=>l.finca)).size,lotes:LOTES.length,hectareas:LOTES.reduce((a,l)=>a+Number(l.area||0),0)};
   try{if(BACKEND_URL&&SESION.token)r=await apiFetch('/api/fincas/resumen-profesional');}catch(_e){}
-  box.innerHTML=`${SESION.rol==='agronomo'?`<div class="ms2"><div class="ms2v">${r.clientes||0}</div><div class="ms2l">Clientes</div></div>`:''}<div class="ms2"><div class="ms2v">${r.fincas||0}</div><div class="ms2l">Fincas</div></div><div class="ms2"><div class="ms2v">${r.lotes||0}</div><div class="ms2l">Lotes</div></div><div class="ms2"><div class="ms2v">${Number(r.hectareas||0).toFixed(1)}</div><div class="ms2l">Hectáreas</div></div>`;prepararFormularioCultivoProfesional();
+  box.innerHTML=`${SESION.rol==='agronomo'?`<div class="ms2"><div class="ms2v">${r.clientes||0}</div><div class="ms2l">Clientes</div></div>`:''}<div class="ms2"><div class="ms2v">${r.fincas||0}</div><div class="ms2l">Fincas</div></div><div class="ms2"><div class="ms2v">${r.lotes||0}</div><div class="ms2l">Lotes</div></div><div class="ms2"><div class="ms2v">${Number(r.hectareas||0).toFixed(1)}</div><div class="ms2l">Hectáreas</div></div>`;
+  const summary=document.getElementById('cultivo-summary-line');
+  if(summary)summary.textContent=(Number(r.lotes||0)>0)
+    ?`Tienes ${r.lotes} lote${Number(r.lotes)===1?'':'s'} en ${r.fincas} finca${Number(r.fincas)===1?'':'s'}, con ${Number(r.hectareas||0).toFixed(1)} ha bajo seguimiento. Entra a cada lote para actualizar y analizar su información.`
+    :'Crea tu primera finca y lote para empezar a registrar aplicaciones, costos, análisis, clima y seguimiento técnico.';
+  prepararFormularioCultivoProfesional();
 }
 async function crearClienteProfesional(){
   if(SESION.rol!=='agronomo')return;const nombre=prompt('Nombre completo o razón social del cliente:');if(!nombre)return;const telefono=prompt('Teléfono (opcional):')||'';const email=prompt('Correo (opcional):')||'';const documento=prompt('Documento/NIT (opcional):')||'';
