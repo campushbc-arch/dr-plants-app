@@ -47,6 +47,6 @@ function estadoAcceso(usuarioId, rol){
 function requiereSuscripcionCultivos(req,res,next){
   const e=estadoAcceso(req.usuario.id,req.usuario.rol);
   if(e.permitido){req.suscripcion=e;return next();}
-  return res.status(402).json({code:'SUBSCRIPTION_REQUIRED',error:e.excedePlan?'Superaste las hectáreas incluidas en tu plan. Actualiza tu suscripción para registrar o administrar más área.':'Esta sección requiere una suscripción activa o una prueba gratuita vigente.',...e});
+  return res.status(402).json({code:'SUBSCRIPTION_REQUIRED',error:e.excedePlan?'Superaste las hectáreas incluidas en tu plan. Actualiza tu suscripción para registrar o administrar más área.':'Esta sección requiere una suscripción activa a Dr. Plants Professional.',...e});
 }
 module.exports={PLANES,hectareasUsuario,planPorHectareas,suscripcionActual,accesoTemporalActivo,estadoAcceso,requiereSuscripcionCultivos};
