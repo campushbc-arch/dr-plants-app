@@ -496,6 +496,18 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 .mc-dynamic-box{padding:10px 12px 0}.mc-dynamic-box .unit-card{border-radius:14px!important;border-color:#dce8df!important}
 .mc-plans-title{padding:16px 14px 8px}.mc-plans{padding:0 12px;display:grid;grid-template-columns:1fr;gap:9px}.mc-plans .unit-card{border-radius:15px!important;border:1px solid #dce8df!important;box-shadow:0 6px 18px rgba(6,64,42,.06);background:#fff!important}.mc-plans .mini-btn{background:#e7f7e9!important;color:#086a38!important;border-color:#c9e9ce!important;font-weight:800!important}
 .mc-payment{margin:12px;border-radius:18px;background:#fff;border:1px solid #dce8df;overflow:hidden;box-shadow:0 10px 26px rgba(6,64,42,.09)}.mc-payment-head{background:linear-gradient(135deg,#073c2b,#0b5f3d);color:#fff;padding:14px;display:flex;gap:10px;align-items:center}.mc-payment-icon{width:36px;height:36px;border-radius:10px;background:#8bf43f;color:#073c2b;display:flex;align-items:center;justify-content:center}.mc-payment-head b{font-size:12px;display:block}.mc-payment-head span{font-size:9px;color:#d2e7da;display:block;margin-top:2px}.mc-payment-form{padding:14px!important}.mc-payment-msg{font-size:10px;color:#53655b;margin:10px 0}.mc-activate-btn{background:linear-gradient(90deg,#0a963f,#30c85a)!important;box-shadow:0 8px 18px rgba(21,160,72,.23)}
+.mc-plan-card{position:relative;overflow:hidden;border-radius:18px;background:#fff;border:1px solid #d8e7dc;box-shadow:0 9px 24px rgba(7,70,45,.08);padding:0}
+.mc-plan-card.recommended{border:1.5px solid #28b957;box-shadow:0 12px 28px rgba(20,157,75,.14)}
+.mc-plan-band{background:linear-gradient(135deg,#0b3e2e,#0c5a3b);padding:13px 14px;color:#fff;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.mc-plan-card.recommended .mc-plan-band{background:linear-gradient(135deg,#0a4b34,#118d4d)}
+.mc-plan-name{font-size:16px;font-weight:850;letter-spacing:-.2px}.mc-plan-range{font-size:9px;color:#cde4d5;margin-top:3px}
+.mc-plan-badge{display:inline-flex;align-items:center;gap:4px;background:#8bf43f;color:#08351f;border-radius:999px;padding:4px 7px;font-size:8px;font-weight:900;white-space:nowrap}
+.mc-plan-body{padding:14px}.mc-plan-price{display:flex;align-items:flex-end;gap:4px}.mc-plan-price strong{font-size:25px;line-height:1;color:#10271d;letter-spacing:-.7px}.mc-plan-price span{font-size:9px;color:#6e7c74;padding-bottom:3px}
+.mc-plan-annual{font-size:9.5px;color:#64736b;margin-top:5px}.mc-plan-annual b{color:#163c29}.mc-plan-save{color:#0a9b45;font-weight:850}
+.mc-plan-focus{margin-top:11px;padding:10px;border-radius:12px;background:linear-gradient(135deg,#eef8f0,#f7fbf8);border:1px solid #deebe1}.mc-plan-focus b{display:block;font-size:10.5px;color:#0f3c28}.mc-plan-focus span{display:block;font-size:9.5px;line-height:1.4;color:#64736b;margin-top:3px}
+.mc-plan-diff{display:flex;gap:7px;align-items:flex-start;margin-top:9px;font-size:9.5px;line-height:1.4;color:#40554a}.mc-plan-diff i{color:#0aa44b;margin-top:1px;flex:0 0 auto}
+.mc-plan-cta{width:100%;margin-top:13px;border:0;border-radius:11px;padding:11px 12px;background:linear-gradient(90deg,#0a8f43,#2bc85b);color:#fff;font:inherit;font-size:10.5px;font-weight:850;cursor:pointer;box-shadow:0 7px 16px rgba(18,157,73,.18);display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .18s ease,box-shadow .18s ease}
+.mc-plan-cta:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(18,157,73,.24)}.mc-plan-cta i{font-size:11px}
 @media(max-width:360px){.mc-hero-title{font-size:34px}.mc-feature-grid{grid-template-columns:1fr}.mc-preview-head{align-items:flex-start;flex-direction:column}.mc-preview-toggle{width:100%}}
 </style>
 </head>
@@ -956,8 +968,8 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 
   <section class="mc-cta">
     <div class="mc-cta-tag"><i class="ti ti-crown"></i> DR. PLANTS PROFESSIONAL</div>
-    <h3>Activa tu plan hoy<br>y recibe <strong>7 días gratis</strong></h3>
-    <p>El primer período se cobra al activar. Los 7 días se agregan al final del período comprado y el acceso completo se habilita cuando Wompi confirma el pago.</p>
+    <h3>Elige el plan ideal para tu operación.</h3>
+    <p>Activa hoy y recibe <strong>7 días gratis</strong> para empezar a gestionar tu cultivo con inteligencia.</p>
     <div class="mc-trust"><span><i class="ti ti-lock"></i> Pago seguro</span><span><i class="ti ti-credit-card"></i> Wompi</span><span><i class="ti ti-check"></i> Renovación automática</span></div>
   </section>
 
@@ -2200,7 +2212,24 @@ async function renderSuscripcionesV8C(){
     const [p,e,a]=await Promise.all([apiFetch('/api/suscripciones/planes'),apiFetch('/api/suscripciones/estado'),apiFetch('/api/suscripciones/wompi-aceptacion')]);SUB_V8C.planes=p.planes||[];SUB_V8C.estado=e;SUB_V8C.aceptacion=a;
     const ha=Number(p.hectareas||0);const recomendado=p.recomendado?.id;
     estadoBox.innerHTML=`<div class="unit-card" style="padding:12px"><b>Área actualmente administrada:</b> ${ha.toFixed(1)} ha<br><span style="font-size:11px;color:var(--color-text-secondary)">${e.estado==='sin_suscripcion'?'Conoce Mi Cultivo, revisa la vista previa y elige el plan que se ajuste al área que administras.':e.estado==='acceso_temporal'?`Acceso temporal habilitado hasta ${new Date(e.venceEn).toLocaleDateString('es-CO')}`:`Estado: ${e.estado}`}</span></div>`;
-    planesBox.innerHTML=SUB_V8C.planes.map(x=>`<div class="unit-card" style="padding:14px;border:${x.id===recomendado?'1.5px solid #3B6D11':'0.5px solid var(--color-border-tertiary)'}"><div style="display:flex;justify-content:space-between;gap:8px"><b>${x.nombre}</b>${x.id===recomendado?'<span class="viz-badge">Recomendado</span>':''}</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px">${x.minHa}–${x.maxHa||'∞'} hectáreas</div><div style="font-size:18px;font-weight:700;margin-top:9px">${dineroCOP(x.mensual)}<span style="font-size:10px;font-weight:400"> / mes</span></div><div style="font-size:11px;margin-top:4px">Anual: <b>${dineroCOP(x.anual)}</b> · 30% menos</div><button class="mini-btn" style="width:100%;margin-top:10px" onclick="seleccionarPlanV8C('${x.id}')">Elegir plan</button></div>`).join('');
+    const planCopy={
+      starter:{focus:'Para productores que quieren organizar su operación con datos.',diff:'Digitaliza el control de fincas y lotes hasta 50 ha.'},
+      professional:{focus:'Para operaciones en crecimiento con más lotes y seguimiento.',diff:'Amplía tu capacidad de gestión hasta 200 ha.'},
+      business:{focus:'Para empresas agrícolas con una operación más estructurada.',diff:'Gestiona múltiples unidades productivas hasta 800 ha.'},
+      enterprise:{focus:'Para operaciones grandes con alto volumen de información.',diff:'Escala el control y la proyección hasta 1.600 ha.'},
+      corporate:{focus:'Para grupos empresariales y operaciones agrícolas de gran escala.',diff:'Capacidad superior a 1.600 ha para estructuras amplias.'}
+    };
+    planesBox.innerHTML=SUB_V8C.planes.map(x=>{const copy=planCopy[x.id]||{focus:'Gestión agrícola inteligente para tu operación.',diff:'Escala según el área que administras.'};return `<article class="mc-plan-card ${x.id===recomendado?'recommended':''}">
+      <div class="mc-plan-band"><div><div class="mc-plan-name">${escapeHtml(x.nombre)}</div><div class="mc-plan-range">${x.minHa}–${x.maxHa||'∞'} hectáreas</div></div>${x.id===recomendado?'<span class="mc-plan-badge"><i class="ti ti-star"></i> Recomendado</span>':''}</div>
+      <div class="mc-plan-body">
+        <div class="mc-plan-price"><strong>${dineroCOP(x.mensual)}</strong><span>/ mes</span></div>
+        <div class="mc-plan-annual">Anual: <b>${dineroCOP(x.anual)}</b> · <span class="mc-plan-save">30% menos</span></div>
+        <div class="mc-plan-focus"><b>${escapeHtml(copy.focus)}</b><span>${escapeHtml(copy.diff)}</span></div>
+        <div class="mc-plan-diff"><i class="ti ti-check"></i><span>Incluye Mi Cultivo, seguimiento por lotes, costos, clima e inteligencia agronómica.</span></div>
+        <div class="mc-plan-diff"><i class="ti ti-check"></i><span>Recibe 7 días gratis adicionales al activar.</span></div>
+        <button class="mc-plan-cta" onclick="seleccionarPlanV8C('${x.id}')">Elegir ${escapeHtml(x.nombre)} <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </article>`}).join('');
     if(a?.terminos?.permalink)document.getElementById('sub-terms-link').href=a.terminos.permalink;if(a?.datos?.permalink)document.getElementById('sub-data-link').href=a.datos.permalink;
     await renderMiSuscripcionV8C2();
   }catch(err){estadoBox.innerHTML=`<div class="unit-card" style="padding:12px;color:#b42318">${err.message}</div>`;}
