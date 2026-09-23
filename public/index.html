@@ -1522,7 +1522,7 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
       <div class="rs" id="reg-subtitulo">Regístrate para acceder al agrónomo inteligente y personalizar tu experiencia.</div>
       <div class="fl"><label>Nombre completo *</label><input type="text" id="reg-nombre" placeholder="Tu nombre"></div>
       <div class="fl"><label id="reg-email-label">Correo electrónico *</label><input type="text" id="reg-email" placeholder="tucorreo@ejemplo.com"></div>
-      <div class="fl"><label>Contraseña *</label><input type="password" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="fl"><label>Contraseña *</label><input type="password" id="reg-password" minlength="6" maxlength="20" placeholder="6 a 20 caracteres, con letra y número"><div style="font-size:9.5px;color:var(--color-text-secondary);margin-top:4px">Debe tener entre 6 y 20 caracteres e incluir al menos una letra y un número.</div></div>
       <div id="reg-extra-fields">
         <div class="fl"><label>Teléfono *</label><input type="tel" id="reg-telefono" placeholder="+57 300 000 0000"></div>
         <div class="fl"><label>Tipo de productor *</label>
@@ -3575,8 +3575,13 @@ async function doReg(){
     err.style.display='block';
     return;
   }
-  if(!password||password.length<6){
-    err.textContent='La contraseña debe tener al menos 6 caracteres.';
+  if(!password){
+    err.textContent='Escribe una contraseña.';
+    err.style.display='block';
+    return;
+  }
+  if(password.length<6||password.length>20||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password)){
+    err.textContent='La contraseña debe tener entre 6 y 20 caracteres e incluir al menos una letra y un número.';
     err.style.display='block';
     return;
   }
