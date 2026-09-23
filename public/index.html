@@ -596,12 +596,6 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
           <div class="svc-name">Mi Cultivo</div>
           <div class="svc-mini">Control y administración de finca</div>
         </div>
-        <div class="svc" onclick="go('reciclaje','reciclaje')">
-          <div class="svc-top"><span class="svc-num">05</span><span class="svc-dot a"></span></div>
-          <div class="svc-ico a"><i class="ti ti-recycle"></i></div>
-          <div class="svc-name">AgroCircular</div>
-          <div class="svc-mini">Reciclaje y economía sostenible</div>
-        </div>
       </div>
     </div>
     <div>
@@ -1219,62 +1213,6 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   <div style="height:16px"></div>
 </div>
 
-<div id="s-reciclaje" class="screen">
-  <div class="pg-hdr">
-    <button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button>
-    <span class="pg-title">AgroCircular</span>
-  </div>
-  <div class="rec-card">
-    <div class="rec-t">AgroCircular</div>
-    <div class="rec-s">Transforma tus residuos agrícolas en recursos. Economía circular y sostenible.</div>
-    <div class="recst">
-      <div class="rst"><div class="rstv">1.2T</div><div class="rstl">Reciclado</div></div>
-      <div class="rst"><div class="rstv">340</div><div class="rstl">Agricultores</div></div>
-      <div class="rst"><div class="rstv">850</div><div class="rstl">Puntos earn.</div></div>
-    </div>
-  </div>
-  <div style="padding:12px 14px 6px"><div class="sec-lbl">Tipos de residuos</div></div>
-  <div class="wlist">
-    <div class="wc" onclick="abrirTipoCircular('vegetales')"><div class="wico"><i class="ti ti-plant"></i></div><div style="flex:1"><div class="wn">Residuos vegetales</div><div class="wd">Tallos, hojas, rastrojos</div></div><div><div class="wpts">+50 pts</div><div class="wptsl">por 100kg</div></div></div>
-    <div class="wc" onclick="abrirTipoCircular('agroquimicos')"><div class="wico"><i class="ti ti-bottle"></i></div><div style="flex:1"><div class="wn">Envases agroquímicos</div><div class="wd">Triple lavado certificado</div></div><div><div class="wpts">+80 pts</div><div class="wptsl">por unidad</div></div></div>
-    <div class="wc" onclick="abrirTipoCircular('empaques')"><div class="wico"><i class="ti ti-box"></i></div><div style="flex:1"><div class="wn">Empaques y sacos</div><div class="wd">Plástico, fibra y papel</div></div><div><div class="wpts">+30 pts</div><div class="wptsl">por kg</div></div></div>
-    <div class="wc" onclick="abrirTipoCircular('organicos')"><div class="wico"><i class="ti ti-recycle"></i></div><div style="flex:1"><div class="wn">Cáscaras y pulpa</div><div class="wd">Compostaje y biogás</div></div><div><div class="wpts">+45 pts</div><div class="wptsl">por 50kg</div></div></div>
-  </div>
-  <button class="cta-btn" onclick="go('rec-puntos','reciclaje')"><i class="ti ti-map-pin" aria-hidden="true"></i> Puntos de recolección cercanos</button>
-</div>
-
-<div id="s-rec-puntos" class="screen">
-  <div class="pg-hdr">
-    <button class="back" onclick="go('reciclaje','reciclaje')"><i class="ti ti-arrow-left"></i> AgroCircular</button>
-    <span class="pg-title">Puntos cercanos</span>
-  </div>
-  <div class="phdr-card">
-    <div class="phdr-t">Puntos verificados cerca de tu finca</div>
-    <div class="phdr-s">Directorio propio de Dr. Plants y datos geográficos abiertos de OpenStreetMap, sin APIs comerciales.</div>
-  </div>
-  <div style="padding:0 14px 10px">
-    <div class="fgrp" style="margin:0 0 8px"><label>País</label>
-      <select id="rec-pais" onchange="cargarRecRegiones()"><option>Colombia</option><option value="Peru">Perú</option><option>Chile</option></select>
-    </div>
-    <div class="fgrp" style="margin:0 0 8px"><label id="rec-region-label">Departamento</label>
-      <select id="rec-region" onchange="cargarRecCiudades()"><option value="">Selecciona…</option></select>
-    </div>
-    <div class="fgrp" style="margin:0 0 8px"><label>Ciudad / municipio / comuna</label>
-      <select id="rec-ciudad"><option value="">Selecciona primero la región</option></select>
-    </div>
-    <div class="fgrp" style="margin:0 0 8px"><label>Producto o residuo a entregar</label>
-      <select id="rec-tipo"><option value="general">Reciclables en general</option><option value="agroquimicos">Envases agroquímicos</option><option value="empaques">Empaques, sacos, plástico y papel</option><option value="vegetales">Residuos vegetales</option><option value="organicos">Cáscaras, pulpa y residuos orgánicos</option></select>
-    </div>
-    <button class="cta-btn" onclick="buscarPuntosCirculares()"><i class="ti ti-search"></i> Buscar sitios y empresas</button>
-    <div id="rec-estado" style="font-size:10px;color:var(--color-text-secondary);margin-top:8px"></div>
-  </div>
-  <div id="rec-points-list" style="padding:0 14px;display:flex;flex-direction:column;gap:8px"></div>
-  <div style="padding:12px 14px 24px">
-    <button class="cta-btn gold" onclick="solicitarRecoleccionCircular()"><i class="ti ti-truck"></i> No encontré un punto: solicitar recolección</button>
-    <div style="font-size:10px;color:var(--color-text-secondary);margin-top:7px">La solicitud será revisada por el equipo de Dr. Plants y podrás recibir actualizaciones en la campana de notificaciones.</div>
-  </div>
-</div>
-
 <div id="s-formacion" class="screen">
   <div class="pg-hdr">
     <button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button>
@@ -1713,7 +1651,6 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   <div class="ni" id="ni-tienda" onclick="go('tienda','tienda')"><i class="ti ti-building-store"></i><span>Tienda</span></div>
   <div class="ni" id="ni-agronomo" onclick="go('agronomo','agronomo')"><i class="ti ti-brain"></i><span>Dr. Agro</span></div>
   <div class="ni" id="ni-cultivo" onclick="go('cultivo','cultivo')"><i class="ti ti-plant-2"></i><span>Cultivo</span></div>
-  <div class="ni" id="ni-reciclaje" onclick="go('reciclaje','reciclaje')"><i class="ti ti-recycle"></i><span>Circular</span></div>
 </div>
 
 </div>
@@ -2923,6 +2860,7 @@ function iniciarActualizacionAdminCircular(){
   adminCircularInterval=setInterval(()=>{if(document.getElementById('s-panel-admin')?.classList.contains('on')){renderAdminNotificaciones();renderAdminSolicitudesCircular();renderAdminDashboard();}},30000);
 }
 async function go(sid,nid){
+  if(sid==='reciclaje'||sid==='rec-puntos'){sid='home';nid='home';}
   const pantallasPublicas=['splash','reg'];
   if(sid==='cultivo' && SESION.autenticado && SESION.rol!=='admin'){const ok=await verificarAccesoCultivoV8C();if(!ok){sid='suscripcion-cultivo';nid='';}}
   if(!SESION.autenticado && !pantallasPublicas.includes(sid)){const haySesion=await obtenerSesionValida()||await renovarTokenSesion();if(!haySesion){regModo='login';sid='reg';nid='';}}
@@ -2938,7 +2876,6 @@ async function go(sid,nid){
   if(sid==='cultivo'){renderLotesList();renderResumenCultivoProfesional();prepararFormularioCultivoProfesional();}
   if(sid==='suscripcion-cultivo')renderSuscripcionesV8C();
   if(sid==='precios')renderMarketList();
-  if(sid==='rec-puntos')renderRecPoints();
   if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
@@ -4470,7 +4407,7 @@ let drAgroHistory = [];
 const SOPORTE_SYSTEM = `Eres el asistente de "Soporte Técnico" de Dr Plants / Campus HBC (agro.campushbc.com), uno de los 3 pilares del ecosistema junto a Formación Tecnológica y el Laboratorio de diagnóstico. Hablas español, tono cercano, resolutivo y profesional — como una persona real de soporte, no un bot de menú.
 
 TU ALCANCE (diferente al de Dr. Agro, que da consejo agronómico técnico de cultivo):
-- Ayudar a usar la app Dr Plants: cómo crear un lote, registrar aplicaciones, usar el carrito, entender el plan de fertilización, navegar AgroTienda, Precios & Mercado, AgroCircular y Formación Tecnológica.
+- Ayudar a usar la app Dr Plants: cómo crear un lote, registrar aplicaciones, usar el carrito, entender el plan de fertilización, navegar AgroTienda, Precios & Mercado y Formación Tecnológica.
 - Resolver dudas sobre pedidos, envíos, disponibilidad y garantías de los productos CampusHBC (RAIZCAMPUS, CRECICAMPUS, PRODUCAMPUS y demás insumos de AgroTienda).
 - Recibir reportes de un producto que no dio el resultado esperado, y guiar los primeros pasos (¿cuándo se aplicó?, ¿qué dosis?, ¿condiciones del cultivo?) antes de escalar.
 - Conectar con soporte humano cuando el caso lo amerita (reclamos, garantías formales, visitas técnicas en campo, algo que la IA no debe resolver sola).
@@ -4845,7 +4782,6 @@ let MARKETING_SLIDES=[
  {tag:'Problemas que resolvemos',title:'Menos suposiciones. Más decisiones basadas en datos.',copy:'Organiza fincas y lotes, registra aplicaciones, analiza costos, consulta clima y convierte información dispersa en decisiones de campo.',image:'https://images.pexels.com/photos/17797257/pexels-photo-17797257.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Abrir Cultivo Professional',action:()=>go('cultivo','cultivo')},
  {tag:'Agrónomo Inteligente · IA',title:'Una foto, una pregunta y más contexto para decidir.',copy:'Consulta síntomas, adjunta imágenes o PDF y recibe orientación agronómica respaldada por el contexto de tu cultivo.',image:'https://images.pexels.com/photos/15876334/pexels-photo-15876334.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Consultar ahora',action:()=>go('agronomo','agronomo')},
  {tag:'Precios & Mercado',title:'Precio, fuente, unidad, fecha y TRM en un mismo lugar.',copy:'Consulta referencias de mercado con mayor trazabilidad y el precio del dólar para apoyar decisiones comerciales.',image:'https://images.pexels.com/photos/17797257/pexels-photo-17797257.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Ver precios',action:()=>go('precios','precios')},
- {tag:'Economía circular',title:'Convierte residuos agrícolas en nuevas oportunidades.',copy:'AgroCircular conecta sostenibilidad, aprovechamiento de residuos y nuevas posibilidades para el campo.',image:'https://images.pexels.com/photos/15876334/pexels-photo-15876334.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Explorar AgroCircular',action:()=>go('reciclaje','reciclaje')},
  {tag:'Seminarios virtuales certificados',title:'Aprende, actualízate y certifica nuevas competencias.',copy:'Este espacio podrá anunciar webinars, jornadas técnicas, promociones e invitaciones especiales de Dr. Plants.',image:'https://images.pexels.com/photos/4975400/pexels-photo-4975400.jpeg?auto=compress&cs=tinysrgb&w=1600',cta:'Ir a Formación',action:()=>go('formacion',''),kind:'event'}
 ];
 let MARKETING_IDX=0,MARKETING_TIMER=null,MARKETING_PAUSED=false,MARKETING_CURSOS_CARGADOS=false;
