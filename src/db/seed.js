@@ -10,15 +10,36 @@ function isoDaysAgo(n) {
 }
 
 function seedSiVacio() {
+  const demoPassword = process.env.DEMO_PASSWORD;
+  const adminUsername = process.env.ADMIN_USERNAME;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  // Recuperación controlada: solo se ejecuta si Hostinger habilita explícitamente
+  // RESET_ADMIN_PASSWORD_ON_START=true. No crea usuarios ni modifica otros datos.
+  if (String(process.env.RESET_ADMIN_PASSWORD_ON_START || '').toLowerCase() === 'true') {
+    if (!adminUsername || !adminPassword) {
+      throw new Error('Para recuperar el administrador se requieren ADMIN_USERNAME y ADMIN_PASSWORD.');
+    }
+
+    const adminExistente = db.prepare(
+      "SELECT id, email FROM usuarios WHERE lower(email)=lower(?) AND rol='admin' LIMIT 1"
+    ).get(adminUsername);
+
+    if (!adminExistente) {
+      throw new Error('No se encontró un administrador existente con el ADMIN_USERNAME configurado.');
+    }
+
+    db.prepare('UPDATE usuarios SET password_hash=? WHERE id=?')
+      .run(bcrypt.hashSync(adminPassword, Number(process.env.BCRYPT_ROUNDS || 12)), adminExistente.id);
+
+    console.log('Contraseña del administrador existente actualizada por recuperación controlada.');
+  }
+
   const yaHayDatos = db.prepare('SELECT COUNT(*) AS n FROM usuarios').get().n > 0;
   if (yaHayDatos) {
     console.log('Ya hay datos en la base — no se vuelve a sembrar.');
     return false;
   }
-
-  const demoPassword = process.env.DEMO_PASSWORD;
-  const adminUsername = process.env.ADMIN_USERNAME;
-  const adminPassword = process.env.ADMIN_PASSWORD;
 
   const productor = { id: nuevoId('usr'), nombre: 'Productor Demo' };
   db.prepare(`
