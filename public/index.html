@@ -832,7 +832,31 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 
 <div id="s-suscripcion-cultivo" class="screen">
   <div class="pg-hdr"><button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button><span class="pg-title">Dr. Plants Professional</span></div>
-  <div class="phdr-card"><div class="phdr-t">7 días gratis · Gestión profesional de cultivos</div><div class="phdr-s">Administra clientes, fincas, lotes, aplicaciones, clima, proyecciones y Dr. Agro. La prueba comienza cuando registras tu tarjeta y puedes cancelar antes del primer cobro.</div></div>
+  <div class="phdr-card"><div class="phdr-t">Mi Cultivo · Control real de tu operación agrícola</div><div class="phdr-s">Centraliza fincas, lotes, costos, aplicaciones, clima, análisis y decisiones agronómicas en un solo lugar. Activa tu plan hoy y recibe 7 días gratis adicionales.</div></div>
+  <div style="padding:0 14px 12px">
+    <div class="unit-card" style="padding:14px">
+      <div style="font-size:14px;font-weight:800;color:var(--color-text-primary)">¿Qué es Mi Cultivo?</div>
+      <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.55;margin-top:6px">Es el centro de gestión de Dr. Plants para productores y agrónomos. Convierte información dispersa del cultivo en una operación organizada por finca y lote, con seguimiento técnico y económico.</div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px">
+        <div style="padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Fincas y lotes</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">Área, cultivo, variedad, ubicación, etapa y trazabilidad.</div></div>
+        <div style="padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Costos y aplicaciones</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">Registra labores, insumos y costos para saber cuánto estás invirtiendo.</div></div>
+        <div style="padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Clima accionable</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">Relaciona lluvia, temperatura y condiciones del lote con decisiones de manejo.</div></div>
+        <div style="padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Inteligencia agronómica</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">Proyecciones, análisis, historial y contexto conectado con Dr. Agro IA.</div></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;margin-top:13px">Problemas que ayuda a resolver</div>
+      <div style="font-size:10.5px;color:var(--color-text-secondary);line-height:1.6;margin-top:5px">• Información del cultivo repartida entre cuadernos, chats y hojas de cálculo.<br>• No saber con claridad cuánto cuesta cada lote o qué se aplicó y cuándo.<br>• Decisiones de riego, fertilización o manejo sin contexto suficiente.<br>• Dificultad para hacer seguimiento a varias fincas, lotes o clientes.</div>
+      <button class="mini-btn" style="width:100%;margin-top:12px" type="button" onclick="toggleVistaPreviaCultivo()"><i class="ti ti-eye"></i> Ver cómo se ve antes de comprar</button>
+    </div>
+    <div id="sub-preview-cultivo" style="display:none;margin-top:10px">
+      <div class="unit-card" style="padding:14px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><div style="font-size:10px;color:var(--color-text-secondary)">Vista previa · solo demostración</div><div style="font-size:14px;font-weight:800">Finca La Esperanza</div></div><span class="viz-badge">12.4 ha</span></div>
+        <div class="mstats" style="margin:10px 0 0"><div class="ms2"><div class="ms2v">3</div><div class="ms2l">Lotes</div></div><div class="ms2"><div class="ms2v">82%</div><div class="ms2l">Salud</div></div><div class="ms2"><div class="ms2v">$2.8M</div><div class="ms2l">Costos</div></div></div>
+        <div style="margin-top:10px;padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Lote Norte · Aguacate Hass</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:4px">4.5 ha · Floración · Lluvia 18 mm · Balance hídrico estable</div></div>
+        <div style="margin-top:8px;padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Próxima decisión</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:4px">Revisar humedad del suelo antes de programar riego y contrastar con lluvia registrada.</div></div>
+        <div style="font-size:9.5px;color:var(--color-text-secondary);line-height:1.45;margin-top:9px">Esta vista usa datos de ejemplo y no permite crear, editar ni guardar información. El acceso completo se habilita cuando el primer pago es aprobado.</div>
+      </div>
+    </div>
+  </div>
   <div id="sub-estado-box" style="padding:0 14px 10px"></div>
   <div id="sub-mi-suscripcion" style="padding:0 14px 10px"></div>
   <div id="sub-cancel-form" style="display:none;padding:0 14px 14px">
@@ -851,7 +875,7 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
   </div>
   <div id="sub-planes" style="padding:0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"></div>
   <div id="sub-card-form" style="display:none;padding:14px">
-    <div class="phdr-card" style="margin:0"><div class="phdr-t">Activa tu prueba gratuita</div><div class="phdr-s">La tarjeta se tokeniza directamente con Wompi. Dr. Plants no almacena número de tarjeta ni CVC.</div></div>
+    <div class="phdr-card" style="margin:0"><div class="phdr-t">Activa tu plan y recibe 7 días gratis</div><div class="phdr-s">El primer periodo se cobra al activar. Los 7 días se agregan al final de ese periodo. La tarjeta se tokeniza directamente con Wompi y Dr. Plants no almacena número de tarjeta ni CVC.</div></div>
     <div class="fform" style="padding:12px 0 0">
       <div class="fgrp"><label>Plan seleccionado</label><input id="sub-plan-label" readonly></div>
       <div class="fgrp"><label>Periodicidad</label><select id="sub-periodicidad"><option value="mensual">Mensual</option><option value="anual">Anual · 30% de descuento</option></select></div>
@@ -861,7 +885,7 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
       <label class="form-check" style="margin-top:8px"><input id="sub-accept-terms" class="form-check-input" type="checkbox"><span class="form-check-label">Acepto los <a id="sub-terms-link" href="#" target="_blank" rel="noopener">términos de Wompi</a>.</span></label>
       <label class="form-check" style="margin-top:8px"><input id="sub-accept-data" class="form-check-input" type="checkbox"><span class="form-check-label">Autorizo el <a id="sub-data-link" href="#" target="_blank" rel="noopener">tratamiento de datos personales</a>.</span></label>
       <div id="sub-form-msg" style="font-size:11px;color:var(--color-text-secondary);margin:10px 0"></div>
-      <button id="sub-activate-btn" class="cta-btn" onclick="activarTrialSuscripcion()"><i class="ti ti-credit-card"></i> Registrar tarjeta y comenzar 7 días gratis</button>
+      <button id="sub-activate-btn" class="cta-btn" onclick="activarPlanSuscripcion()"><i class="ti ti-credit-card"></i> Activar plan + 7 días gratis</button>
       <button class="mini-btn" style="width:100%;margin-top:8px" onclick="cerrarFormularioSuscripcion()">Cancelar</button>
     </div>
   </div>
@@ -2067,7 +2091,7 @@ async function renderSuscripcionesV8C(){
   try{
     const [p,e,a]=await Promise.all([apiFetch('/api/suscripciones/planes'),apiFetch('/api/suscripciones/estado'),apiFetch('/api/suscripciones/wompi-aceptacion')]);SUB_V8C.planes=p.planes||[];SUB_V8C.estado=e;SUB_V8C.aceptacion=a;
     const ha=Number(p.hectareas||0);const recomendado=p.recomendado?.id;
-    estadoBox.innerHTML=`<div class="unit-card" style="padding:12px"><b>Área actualmente administrada:</b> ${ha.toFixed(1)} ha<br><span style="font-size:11px;color:var(--color-text-secondary)">${e.estado==='sin_suscripcion'?'Selecciona un plan y registra tu tarjeta para comenzar la prueba gratuita.':e.estado==='acceso_temporal'?`Acceso temporal habilitado hasta ${new Date(e.venceEn).toLocaleDateString('es-CO')}`:`Estado: ${e.estado}`}</span></div>`;
+    estadoBox.innerHTML=`<div class="unit-card" style="padding:12px"><b>Área actualmente administrada:</b> ${ha.toFixed(1)} ha<br><span style="font-size:11px;color:var(--color-text-secondary)">${e.estado==='sin_suscripcion'?'Conoce Mi Cultivo, revisa la vista previa y elige el plan que se ajuste al área que administras.':e.estado==='acceso_temporal'?`Acceso temporal habilitado hasta ${new Date(e.venceEn).toLocaleDateString('es-CO')}`:`Estado: ${e.estado}`}</span></div>`;
     planesBox.innerHTML=SUB_V8C.planes.map(x=>`<div class="unit-card" style="padding:14px;border:${x.id===recomendado?'1.5px solid #3B6D11':'0.5px solid var(--color-border-tertiary)'}"><div style="display:flex;justify-content:space-between;gap:8px"><b>${x.nombre}</b>${x.id===recomendado?'<span class="viz-badge">Recomendado</span>':''}</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px">${x.minHa}–${x.maxHa||'∞'} hectáreas</div><div style="font-size:18px;font-weight:700;margin-top:9px">${dineroCOP(x.mensual)}<span style="font-size:10px;font-weight:400"> / mes</span></div><div style="font-size:11px;margin-top:4px">Anual: <b>${dineroCOP(x.anual)}</b> · 30% menos</div><button class="mini-btn" style="width:100%;margin-top:10px" onclick="seleccionarPlanV8C('${x.id}')">Elegir plan</button></div>`).join('');
     if(a?.terminos?.permalink)document.getElementById('sub-terms-link').href=a.terminos.permalink;if(a?.datos?.permalink)document.getElementById('sub-data-link').href=a.datos.permalink;
     await renderMiSuscripcionV8C2();
@@ -2075,19 +2099,36 @@ async function renderSuscripcionesV8C(){
 }
 function seleccionarPlanV8C(id){const p=SUB_V8C.planes.find(x=>x.id===id);if(!p)return;SUB_V8C.seleccion=p;document.getElementById('sub-plan-label').value=`${p.nombre} · ${p.minHa}–${p.maxHa||'∞'} ha`;document.getElementById('sub-card-holder').value=SESION.nombre||'';document.getElementById('sub-card-form').style.display='block';document.getElementById('sub-card-form').scrollIntoView({behavior:'smooth'});}
 function cerrarFormularioSuscripcion(){document.getElementById('sub-card-form').style.display='none';}
-async function activarTrialSuscripcion(){
+function toggleVistaPreviaCultivo(){
+  const el=document.getElementById('sub-preview-cultivo');if(!el)return;
+  el.style.display=el.style.display==='none'?'block':'none';
+  if(el.style.display==='block')el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function activarPlanSuscripcion(){
  const msg=document.getElementById('sub-form-msg'),btn=document.getElementById('sub-activate-btn');if(!SUB_V8C.seleccion)return;
  if(!document.getElementById('sub-accept-terms').checked||!document.getElementById('sub-accept-data').checked){msg.textContent='Debes aceptar ambos contratos antes de continuar.';return;}
  const number=document.getElementById('sub-card-number').value.replace(/\D/g,''),cvc=document.getElementById('sub-card-cvc').value.replace(/\D/g,''),exp=document.getElementById('sub-card-exp').value.trim().split('/'),holder=document.getElementById('sub-card-holder').value.trim();
  if(number.length<13||cvc.length<3||exp.length!==2||!holder){msg.textContent='Revisa los datos de la tarjeta.';return;}
- try{btn.disabled=true;msg.textContent='Tokenizando tarjeta de forma segura con Wompi…';const pk=SUB_V8C.aceptacion?.publicKey;if(!pk)throw new Error('No se encontró la llave pública de Wompi.');const base=pk.startsWith('pub_test_')?'https://sandbox.wompi.co/v1':'https://production.wompi.co/v1';
-   const tr=await fetch(base+'/tokens/cards',{method:'POST',headers:{Authorization:'Bearer '+pk,'Content-Type':'application/json'},body:JSON.stringify({number,cvc,exp_month:String(exp[0]).padStart(2,'0'),exp_year:String(exp[1]).slice(-2),card_holder:holder})});const tj=await tr.json();if(!tr.ok||!tj?.data?.id)throw new Error(tj?.error?.reason||tj?.error?.type||'Wompi no pudo tokenizar la tarjeta.');
-   // Limpiar inmediatamente datos sensibles del DOM.
+ try{
+   btn.disabled=true;
+   msg.textContent='Protegiendo los datos de tu tarjeta con Wompi…';
+   const pk=SUB_V8C.aceptacion?.publicKey;if(!pk)throw new Error('No se encontró la llave pública de Wompi.');
+   const base=pk.startsWith('pub_test_')?'https://sandbox.wompi.co/v1':'https://production.wompi.co/v1';
+   const tr=await fetch(base+'/tokens/cards',{method:'POST',headers:{Authorization:'Bearer '+pk,'Content-Type':'application/json'},body:JSON.stringify({number,cvc,exp_month:String(exp[0]).padStart(2,'0'),exp_year:String(exp[1]).slice(-2),card_holder:holder})});
+   const tj=await tr.json();if(!tr.ok||!tj?.data?.id)throw new Error(tj?.error?.reason||tj?.error?.type||'Wompi no pudo tokenizar la tarjeta.');
    document.getElementById('sub-card-number').value='';document.getElementById('sub-card-cvc').value='';
-   msg.textContent='Creando fuente de pago y activando prueba…';const r=await apiFetch('/api/suscripciones/activar-prueba',{method:'POST',body:JSON.stringify({planId:SUB_V8C.seleccion.id,periodicidad:document.getElementById('sub-periodicidad').value,cardToken:tj.data.id,acceptanceToken:SUB_V8C.aceptacion.terminos.acceptance_token,personalAuth:SUB_V8C.aceptacion.datos.acceptance_token})});
-   alert('Prueba gratuita activada hasta '+new Date(r.pruebaHasta).toLocaleDateString('es-CO')+'.');await cargarFincasDesdeBackend();go('cultivo','cultivo');
- }catch(e){msg.textContent=e.message||'No fue posible activar la prueba.';}finally{btn.disabled=false;}
+   msg.textContent='Procesando el primer pago y activando tu plan…';
+   const r=await apiFetch('/api/suscripciones/activar-plan',{method:'POST',body:JSON.stringify({planId:SUB_V8C.seleccion.id,periodicidad:document.getElementById('sub-periodicidad').value,cardToken:tj.data.id,acceptanceToken:SUB_V8C.aceptacion.terminos.acceptance_token,personalAuth:SUB_V8C.aceptacion.datos.acceptance_token})});
+   if(r.estado==='PENDING'){
+     msg.textContent='Tu pago está pendiente de confirmación. Mi Cultivo se habilitará automáticamente cuando Wompi lo apruebe.';
+     alert('Pago pendiente de confirmación. Aún no se habilitó Mi Cultivo.');
+     return;
+   }
+   alert('¡Plan activado! Tu pago fue aprobado y recibiste 7 días gratis adicionales. Próximo cobro: '+new Date(r.proximoCobro).toLocaleDateString('es-CO')+'.');
+   await cargarFincasDesdeBackend();go('cultivo','cultivo');
+ }catch(e){msg.textContent=e.message||'No fue posible activar el plan.';}finally{btn.disabled=false;}
 }
+
 async function renderMiSuscripcionV8C2(){
   const box=document.getElementById('sub-mi-suscripcion');if(!box||!SESION.autenticado)return;
   try{
