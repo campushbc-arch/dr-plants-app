@@ -459,6 +459,45 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 @media(max-width:900px){.admin-erp-layout{grid-template-columns:1fr;padding:0 10px 18px}.admin-erp-sidebar{position:sticky;top:64px;z-index:30;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-height:none;overflow:visible}.admin-erp-brand{grid-column:1/-1}.admin-erp-sidebar button{justify-content:center;font-size:.68rem;padding:8px 5px}.admin-erp-sidebar button span{display:none}.admin-erp-top{position:sticky;top:156px;z-index:20;background:var(--color-background-primary);padding:8px 0}}
 </style>
 
+<style id="mi-cultivo-sales-styles">
+.mc-sales-screen{background:#f4f8f5;padding-bottom:18px}
+.mc-topbar{background:#082f24;border-bottom:1px solid rgba(255,255,255,.08)}
+.mc-topbar .back,.mc-topbar .pg-title{color:#fff}
+.mc-hero{position:relative;min-height:310px;overflow:hidden;background:#073a2a}
+.mc-hero-bg{position:absolute;inset:0;background-image:url('https://images.pexels.com/photos/4975400/pexels-photo-4975400.jpeg?auto=compress&cs=tinysrgb&w=1200');background-size:cover;background-position:center}
+.mc-hero-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,34,25,.2) 0%,rgba(3,38,27,.68) 46%,rgba(3,36,26,.96) 100%)}
+.mc-hero-content{position:relative;z-index:2;padding:28px 18px 22px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;min-height:310px}
+.mc-eyebrow{font-size:9px;letter-spacing:1.8px;font-weight:800;display:flex;align-items:center;gap:7px;color:#d8f6df}.mc-eyebrow span{width:22px;height:2px;background:#8bf43f;border-radius:5px}
+.mc-hero-title{font-size:39px;line-height:.98;font-weight:800;letter-spacing:-1.3px;margin-top:9px}.mc-hero-title strong{color:#8bf43f}
+.mc-hero-copy{font-size:17px;line-height:1.15;font-weight:700;margin-top:9px;max-width:330px}
+.mc-hero-sub{font-size:10.5px;line-height:1.5;color:#d7eee2;margin-top:7px;max-width:330px}
+.mc-pill-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}.mc-pill-row span{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(139,244,63,.35);background:rgba(4,45,32,.65);backdrop-filter:blur(8px);padding:6px 9px;border-radius:999px;font-size:9.5px;font-weight:700}.mc-pill-row i{color:#8bf43f}
+.mc-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 12px 4px;margin-top:-18px;position:relative;z-index:3}
+.mc-metric{background:#fff;border:1px solid #dce8df;border-radius:15px;padding:11px;min-height:128px;box-shadow:0 8px 22px rgba(6,64,42,.09)}
+.mc-metric-icon{width:28px;height:28px;border-radius:9px;background:#e8f8e9;color:#0b7a3e;display:flex;align-items:center;justify-content:center}.mc-metric-icon.gold{background:#fff7df;color:#b97d00}
+.mc-metric-label{font-size:9px;color:#6a766f;margin-top:7px}.mc-metric-value{font-size:22px;font-weight:850;color:#0b1f17;letter-spacing:-.5px;margin-top:2px}.mc-metric-value small{font-size:11px}.mc-metric-note{font-size:9px;color:#66736c}.mc-trend,.good{color:#0a9b45!important;font-weight:800}.mc-trend{font-size:9px;margin-top:3px}
+.mc-sparkline,.mc-bars,.mc-projection-bars{height:28px;display:flex;align-items:flex-end;gap:3px;margin-top:6px}.mc-sparkline i,.mc-bars i,.mc-projection-bars i{display:block;flex:1;background:linear-gradient(#69dc78,#0a9b45);border-radius:3px 3px 0 0}.mc-sparkline i:nth-child(1){height:23%}.mc-sparkline i:nth-child(2){height:42%}.mc-sparkline i:nth-child(3){height:35%}.mc-sparkline i:nth-child(4){height:58%}.mc-sparkline i:nth-child(5){height:65%}.mc-sparkline i:nth-child(6){height:92%}.mc-bars i:nth-child(1){height:28%}.mc-bars i:nth-child(2){height:45%}.mc-bars i:nth-child(3){height:60%}.mc-bars i:nth-child(4){height:76%}.mc-bars i:nth-child(5){height:95%}.mc-bars.soft i:nth-child(2n){background:#cdd7d1}
+.mc-mini-map{height:34px;margin-top:6px;border-radius:8px;background:linear-gradient(135deg,#bfdc9a,#78ad62);display:flex;gap:3px;padding:4px;align-items:center}.mc-mini-map span{background:rgba(255,255,255,.78);border:1px solid #218342;border-radius:5px;padding:2px 4px;font-size:7px;font-weight:800;color:#14532d}
+.mc-intro,.mc-solutions,.mc-problems{margin:10px 12px 0;background:#fff;border:1px solid #dde9e0;border-radius:18px;padding:16px;box-shadow:0 8px 24px rgba(6,64,42,.05)}
+.mc-section-kicker{font-size:8.5px;letter-spacing:1.3px;color:#0a8a46;font-weight:900}.mc-section-kicker.light{color:#a6f46c}
+.mc-intro h3,.mc-solutions h3,.mc-problems h3,.mc-preview-head h3,.mc-plans-title h3,.mc-cta h3{font-size:19px;line-height:1.08;color:#092b1f;margin:5px 0 7px;font-weight:850;letter-spacing:-.4px}
+.mc-intro p,.mc-solutions p,.mc-problems p,.mc-preview-head p,.mc-plans-title p,.mc-cta p{font-size:10.5px;line-height:1.52;color:#617168;margin:0}
+.mc-promise{margin-top:13px;padding:12px;background:linear-gradient(135deg,#eef9ef,#e4f4e9);border-radius:13px;display:flex;gap:10px;align-items:center;color:#0b3b28}.mc-promise>i{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#0b5637;color:#8bf43f;font-size:20px}.mc-promise span{font-size:12px;line-height:1.35}.mc-promise strong{color:#0a8a46}
+.mc-feature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.mc-feature{overflow:hidden;border:1px solid #dde7df;border-radius:13px;background:#fff}.mc-feature-photo{height:78px;background-size:cover;background-position:center}.mc-feature-photo.one{background-image:url('https://images.pexels.com/photos/17797257/pexels-photo-17797257.jpeg?auto=compress&cs=tinysrgb&w=800')}.mc-feature-photo.two{background-image:url('https://images.pexels.com/photos/4975400/pexels-photo-4975400.jpeg?auto=compress&cs=tinysrgb&w=800')}.mc-feature-photo.three{background-image:url('https://images.pexels.com/photos/15876334/pexels-photo-15876334.jpeg?auto=compress&cs=tinysrgb&w=800')}.mc-feature-photo.four{background-image:url('https://images.pexels.com/photos/17797257/pexels-photo-17797257.jpeg?auto=compress&cs=tinysrgb&w=800')}
+.mc-feature-body{padding:10px}.mc-feature-body i{width:25px;height:25px;border-radius:7px;background:#e5f7e8;color:#0b7a3e;display:flex;align-items:center;justify-content:center;margin-bottom:6px}.mc-feature-body b{font-size:10.5px;color:#13251d;display:block}.mc-feature-body p{font-size:9px;line-height:1.35;margin-top:3px}
+.mc-check{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:10.5px;color:#42564b;line-height:1.4}.mc-check i{width:19px;height:19px;border-radius:50%;background:#0aaa4f;color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 19px;font-size:10px}
+.mc-preview-wrap{margin:10px 12px 0;border-radius:18px;background:linear-gradient(160deg,#073a2b,#062b20);padding:16px;color:#fff;box-shadow:0 10px 28px rgba(4,45,32,.2)}.mc-preview-head{display:flex;gap:10px;align-items:flex-end;justify-content:space-between}.mc-preview-head h3{color:#fff;margin-bottom:5px}.mc-preview-head p{color:#cce3d6}.mc-preview-toggle{border:1px solid rgba(139,244,63,.5);background:rgba(139,244,63,.1);color:#dfffd0;border-radius:10px;padding:8px 10px;font:inherit;font-size:9.5px;font-weight:800;white-space:nowrap;cursor:pointer}
+.mc-preview{margin-top:13px;background:#f8fbf9;border-radius:15px;padding:10px;color:#12281e}.mc-demo-toolbar{display:flex;align-items:center;gap:8px}.mc-demo-logo{width:30px;height:30px;border-radius:8px;background:#e4f8e7;color:#0a8a46;display:flex;align-items:center;justify-content:center}.mc-demo-toolbar>div:nth-child(2){flex:1}.mc-demo-toolbar b{font-size:10.5px;display:block}.mc-demo-toolbar span{font-size:8.5px;color:#6a766f}.mc-demo-badge{background:#e5f7e8!important;color:#0a8a46!important;border-radius:999px;padding:4px 7px;font-weight:800}
+.mc-demo-tabs{display:flex;gap:9px;border-bottom:1px solid #e4ebe6;margin-top:10px;overflow:auto}.mc-demo-tabs span{font-size:8px;padding:7px 1px;color:#7a847e;white-space:nowrap}.mc-demo-tabs .on{color:#0a7a3c;border-bottom:2px solid #0a9b45;font-weight:800}
+.mc-demo-map{height:135px;border-radius:11px;margin-top:9px;background-image:linear-gradient(rgba(7,58,43,.1),rgba(7,58,43,.15)),url('https://images.pexels.com/photos/17797257/pexels-photo-17797257.jpeg?auto=compress&cs=tinysrgb&w=800');background-size:cover;background-position:center;position:relative;overflow:hidden}.mc-map-overlay{position:absolute;inset:8px;display:grid;grid-template-columns:1fr 1fr;gap:5px}.mc-map-overlay span{align-self:center;justify-self:center;background:rgba(5,72,46,.86);color:#fff;border:1px solid #7eed7c;border-radius:7px;padding:5px 7px;text-align:center;font-size:7px;box-shadow:0 3px 10px rgba(0,0,0,.2)}.mc-map-overlay span:last-child{grid-column:1/-1}
+.mc-demo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}.mc-demo-card{background:#fff;border:1px solid #e2eae4;border-radius:10px;padding:9px;min-height:86px}.mc-demo-card>span{font-size:8px;color:#66736c;display:block}.mc-demo-card>b{font-size:18px;color:#11251c;display:block;margin-top:4px}.mc-demo-card small{font-size:7.5px;color:#718078;line-height:1.3}.mc-line{height:26px;margin-top:6px;background:linear-gradient(180deg,rgba(46,198,91,.16),transparent);border-top:2px solid #2ec65b;border-radius:50% 60% 0 0}.mc-projection-bars{height:25px}
+.mc-demo-alert{display:flex;gap:8px;margin-top:8px;padding:9px;background:#e9f7eb;border-radius:10px;color:#143d27}.mc-demo-alert>i{width:28px;height:28px;border-radius:8px;background:#0b633b;color:#8bf43f;display:flex;align-items:center;justify-content:center;flex:0 0 28px}.mc-demo-alert b{font-size:9px;display:block}.mc-demo-alert span{font-size:8px;color:#54705e;line-height:1.3;display:block;margin-top:2px}.mc-demo-disclaimer{font-size:7.5px;color:#79877f;margin-top:8px;text-align:center}
+.mc-cta{margin:10px 12px 0;padding:18px;border-radius:18px;background:linear-gradient(135deg,#063c2c,#0b5b3a);color:#fff;position:relative;overflow:hidden;box-shadow:0 10px 26px rgba(5,56,40,.18)}.mc-cta:after{content:"";position:absolute;right:-30px;bottom:-50px;width:140px;height:140px;border-radius:50%;background:rgba(139,244,63,.1)}.mc-cta-tag{font-size:8px;color:#aaf271;font-weight:900;letter-spacing:1px;display:flex;gap:5px;align-items:center}.mc-cta h3{color:#fff;font-size:22px;position:relative;z-index:1}.mc-cta h3 strong{color:#8bf43f}.mc-cta p{color:#d5e9de;position:relative;z-index:1}.mc-trust{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;position:relative;z-index:1}.mc-trust span{font-size:8px;display:inline-flex;align-items:center;gap:4px;color:#dff4e8}.mc-trust i{color:#8bf43f}
+.mc-dynamic-box{padding:10px 12px 0}.mc-dynamic-box .unit-card{border-radius:14px!important;border-color:#dce8df!important}
+.mc-plans-title{padding:16px 14px 8px}.mc-plans{padding:0 12px;display:grid;grid-template-columns:1fr;gap:9px}.mc-plans .unit-card{border-radius:15px!important;border:1px solid #dce8df!important;box-shadow:0 6px 18px rgba(6,64,42,.06);background:#fff!important}.mc-plans .mini-btn{background:#e7f7e9!important;color:#086a38!important;border-color:#c9e9ce!important;font-weight:800!important}
+.mc-payment{margin:12px;border-radius:18px;background:#fff;border:1px solid #dce8df;overflow:hidden;box-shadow:0 10px 26px rgba(6,64,42,.09)}.mc-payment-head{background:linear-gradient(135deg,#073c2b,#0b5f3d);color:#fff;padding:14px;display:flex;gap:10px;align-items:center}.mc-payment-icon{width:36px;height:36px;border-radius:10px;background:#8bf43f;color:#073c2b;display:flex;align-items:center;justify-content:center}.mc-payment-head b{font-size:12px;display:block}.mc-payment-head span{font-size:9px;color:#d2e7da;display:block;margin-top:2px}.mc-payment-form{padding:14px!important}.mc-payment-msg{font-size:10px;color:#53655b;margin:10px 0}.mc-activate-btn{background:linear-gradient(90deg,#0a963f,#30c85a)!important;box-shadow:0 8px 18px rgba(21,160,72,.23)}
+@media(max-width:360px){.mc-hero-title{font-size:34px}.mc-feature-grid{grid-template-columns:1fr}.mc-preview-head{align-items:flex-start;flex-direction:column}.mc-preview-toggle{width:100%}}
+</style>
 </head>
 <body>
 <div id="impersonation-banner" class="impersonation-banner"><span id="impersonation-text">Vista como usuario</span><button type="button" onclick="volverASuperAdmin()">Volver a Super Admin</button></div>
@@ -830,35 +869,101 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
 </div>
 
 
-<div id="s-suscripcion-cultivo" class="screen">
-  <div class="pg-hdr"><button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button><span class="pg-title">Dr. Plants Professional</span></div>
-  <div class="phdr-card"><div class="phdr-t">Mi Cultivo · Control real de tu operación agrícola</div><div class="phdr-s">Centraliza fincas, lotes, costos, aplicaciones, clima, análisis y decisiones agronómicas en un solo lugar. Activa tu plan hoy y recibe 7 días gratis adicionales.</div></div>
-  <div style="padding:0 14px 12px">
-    <div class="unit-card" style="padding:14px">
-      <div style="font-size:14px;font-weight:800;color:var(--color-text-primary)">¿Qué es Mi Cultivo?</div>
-      <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.55;margin-top:6px">Es el centro de gestión de Dr. Plants para productores y agrónomos. Convierte información dispersa del cultivo en una operación organizada por finca y lote, con seguimiento técnico y económico.</div>
-      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px">
-        <div style="padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Fincas y lotes</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">Área, cultivo, variedad, ubicación, etapa y trazabilidad.</div></div>
-        <div style="padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Costos y aplicaciones</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">Registra labores, insumos y costos para saber cuánto estás invirtiendo.</div></div>
-        <div style="padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Clima accionable</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">Relaciona lluvia, temperatura y condiciones del lote con decisiones de manejo.</div></div>
-        <div style="padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Inteligencia agronómica</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">Proyecciones, análisis, historial y contexto conectado con Dr. Agro IA.</div></div>
-      </div>
-      <div style="font-size:11px;font-weight:700;margin-top:13px">Problemas que ayuda a resolver</div>
-      <div style="font-size:10.5px;color:var(--color-text-secondary);line-height:1.6;margin-top:5px">• Información del cultivo repartida entre cuadernos, chats y hojas de cálculo.<br>• No saber con claridad cuánto cuesta cada lote o qué se aplicó y cuándo.<br>• Decisiones de riego, fertilización o manejo sin contexto suficiente.<br>• Dificultad para hacer seguimiento a varias fincas, lotes o clientes.</div>
-      <button class="mini-btn" style="width:100%;margin-top:12px" type="button" onclick="toggleVistaPreviaCultivo()"><i class="ti ti-eye"></i> Ver cómo se ve antes de comprar</button>
-    </div>
-    <div id="sub-preview-cultivo" style="display:none;margin-top:10px">
-      <div class="unit-card" style="padding:14px">
-        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div><div style="font-size:10px;color:var(--color-text-secondary)">Vista previa · solo demostración</div><div style="font-size:14px;font-weight:800">Finca La Esperanza</div></div><span class="viz-badge">12.4 ha</span></div>
-        <div class="mstats" style="margin:10px 0 0"><div class="ms2"><div class="ms2v">3</div><div class="ms2l">Lotes</div></div><div class="ms2"><div class="ms2v">82%</div><div class="ms2l">Salud</div></div><div class="ms2"><div class="ms2v">$2.8M</div><div class="ms2l">Costos</div></div></div>
-        <div style="margin-top:10px;padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Lote Norte · Aguacate Hass</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:4px">4.5 ha · Floración · Lluvia 18 mm · Balance hídrico estable</div></div>
-        <div style="margin-top:8px;padding:10px;border-radius:10px;background:var(--color-background-secondary)"><b style="font-size:11px">Próxima decisión</b><div style="font-size:10px;color:var(--color-text-secondary);margin-top:4px">Revisar humedad del suelo antes de programar riego y contrastar con lluvia registrada.</div></div>
-        <div style="font-size:9.5px;color:var(--color-text-secondary);line-height:1.45;margin-top:9px">Esta vista usa datos de ejemplo y no permite crear, editar ni guardar información. El acceso completo se habilita cuando el primer pago es aprobado.</div>
+<div id="s-suscripcion-cultivo" class="screen mc-sales-screen">
+  <div class="pg-hdr mc-topbar"><button class="back" onclick="go('home','home')"><i class="ti ti-arrow-left"></i> Inicio</button><span class="pg-title">Mi Cultivo</span></div>
+
+  <section class="mc-hero">
+    <div class="mc-hero-bg"></div>
+    <div class="mc-hero-shade"></div>
+    <div class="mc-hero-content">
+      <div class="mc-eyebrow"><span></span> TU CAMPO, CON INTELIGENCIA</div>
+      <div class="mc-hero-title">Mi <strong>Cultivo</strong></div>
+      <div class="mc-hero-copy">Gestiona tu cultivo con datos, seguimiento y proyección.</div>
+      <div class="mc-hero-sub">Convierte la información de tus fincas y lotes en decisiones más claras sobre costos, clima, manejo y rendimiento.</div>
+      <div class="mc-pill-row">
+        <span><i class="ti ti-chart-line"></i> Analiza</span>
+        <span><i class="ti ti-map-2"></i> Monitorea</span>
+        <span><i class="ti ti-brain"></i> Decide</span>
       </div>
     </div>
-  </div>
-  <div id="sub-estado-box" style="padding:0 14px 10px"></div>
-  <div id="sub-mi-suscripcion" style="padding:0 14px 10px"></div>
+  </section>
+
+  <section class="mc-metrics" aria-label="Vista de indicadores de Mi Cultivo">
+    <article class="mc-metric"><div class="mc-metric-icon"><i class="ti ti-leaf"></i></div><div class="mc-metric-label">Área total</div><div class="mc-metric-value">12.4 <small>ha</small></div><div class="mc-trend">↗ +6%</div><div class="mc-sparkline"><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+    <article class="mc-metric"><div class="mc-metric-icon"><i class="ti ti-map-2"></i></div><div class="mc-metric-label">Lotes activos</div><div class="mc-metric-value">3</div><div class="mc-metric-note">En producción</div><div class="mc-mini-map"><span>L1</span><span>L2</span><span>L3</span></div></article>
+    <article class="mc-metric"><div class="mc-metric-icon"><i class="ti ti-chart-line"></i></div><div class="mc-metric-label">Proyección</div><div class="mc-metric-value">+12%</div><div class="mc-metric-note">Rendimiento estimado</div><div class="mc-bars"><i></i><i></i><i></i><i></i><i></i></div></article>
+    <article class="mc-metric"><div class="mc-metric-icon gold"><i class="ti ti-cash"></i></div><div class="mc-metric-label">Costos</div><div class="mc-metric-value">$2.8M</div><div class="mc-metric-note">Acumulados</div><div class="mc-bars soft"><i></i><i></i><i></i><i></i><i></i></div></article>
+  </section>
+
+  <section class="mc-intro">
+    <div class="mc-section-kicker">CONTROL AGRÍCOLA INTELIGENTE</div>
+    <h3>¿Qué es Mi Cultivo?</h3>
+    <p>Es el centro de control agrícola de Dr. Plants. Organiza la operación por finca y lote, conecta el seguimiento técnico con los costos y transforma los datos del cultivo en información útil para decidir.</p>
+    <div class="mc-promise"><i class="ti ti-leaf"></i><span><b>Más control.</b><br>Mejores decisiones.<br><strong>Cultivos más rentables.</strong></span></div>
+  </section>
+
+  <section class="mc-solutions">
+    <div class="mc-section-kicker">LO QUE PUEDES HACER</div>
+    <h3>Todo el cultivo en un solo lugar</h3>
+    <div class="mc-feature-grid">
+      <article class="mc-feature">
+        <div class="mc-feature-photo one"></div>
+        <div class="mc-feature-body"><i class="ti ti-map-2"></i><b>Fincas y lotes</b><p>Organiza área, cultivo, variedad, ubicación, etapa y trazabilidad.</p></div>
+      </article>
+      <article class="mc-feature">
+        <div class="mc-feature-photo two"></div>
+        <div class="mc-feature-body"><i class="ti ti-cash"></i><b>Costos y aplicaciones</b><p>Registra labores, insumos y costos para conocer tu inversión real.</p></div>
+      </article>
+      <article class="mc-feature">
+        <div class="mc-feature-photo three"></div>
+        <div class="mc-feature-body"><i class="ti ti-cloud"></i><b>Clima accionable</b><p>Relaciona lluvia, temperatura y condiciones del lote con decisiones de manejo.</p></div>
+      </article>
+      <article class="mc-feature">
+        <div class="mc-feature-photo four"></div>
+        <div class="mc-feature-body"><i class="ti ti-brain"></i><b>Inteligencia agronómica</b><p>Consulta proyecciones, riesgos, historial y contexto conectado con Dr. Agro IA.</p></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="mc-problems">
+    <div class="mc-section-kicker">MENOS IMPROVISACIÓN</div>
+    <h3>¿Qué problemas resuelve?</h3>
+    <div class="mc-check"><i class="ti ti-check"></i><span>Información dispersa entre cuadernos, chats y hojas de cálculo.</span></div>
+    <div class="mc-check"><i class="ti ti-check"></i><span>No saber cuánto cuesta realmente cada lote ni qué se aplicó.</span></div>
+    <div class="mc-check"><i class="ti ti-check"></i><span>Tomar decisiones de riego, nutrición o manejo sin suficiente contexto.</span></div>
+    <div class="mc-check"><i class="ti ti-check"></i><span>Dificultad para proyectar rendimiento y hacer seguimiento a varias fincas o clientes.</span></div>
+  </section>
+
+  <section class="mc-preview-wrap">
+    <div class="mc-preview-head">
+      <div><div class="mc-section-kicker light">VISTA PREVIA</div><h3>Así se verá tu información</h3><p>Explora una demostración visual antes de activar tu plan.</p></div>
+      <button type="button" class="mc-preview-toggle" onclick="toggleVistaPreviaCultivo()"><i class="ti ti-eye"></i> Ver demo</button>
+    </div>
+    <div id="sub-preview-cultivo" class="mc-preview" style="display:none">
+      <div class="mc-demo-toolbar"><div class="mc-demo-logo"><i class="ti ti-leaf"></i></div><div><b>Finca La Esperanza</b><span>Lote Norte · Aguacate Hass</span></div><span class="mc-demo-badge">12.4 ha</span></div>
+      <div class="mc-demo-tabs"><span class="on">Resumen</span><span>Clima</span><span>Costos</span><span>Proyección</span></div>
+      <div class="mc-demo-map"><div class="mc-map-overlay"><span>Lote 1<br><b>5.2 ha</b></span><span>Lote 2<br><b>4.1 ha</b></span><span>Lote 3<br><b>3.1 ha</b></span></div></div>
+      <div class="mc-demo-grid">
+        <div class="mc-demo-card"><span>Salud del cultivo</span><b>82%</b><div class="mc-line"></div></div>
+        <div class="mc-demo-card"><span>Clima</span><b>24°</b><small>Humedad 68% · Lluvia 10%</small></div>
+        <div class="mc-demo-card"><span>Costos acumulados</span><b>$2.8M</b><small class="good">↓ 8% vs. estimado</small></div>
+        <div class="mc-demo-card"><span>Proyección de rendimiento</span><b class="good">+12%</b><div class="mc-projection-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      </div>
+      <div class="mc-demo-alert"><i class="ti ti-brain"></i><div><b>Recomendación inteligente</b><span>Revisar humedad del suelo antes de programar el próximo riego y contrastar con la lluvia registrada.</span></div></div>
+      <div class="mc-demo-disclaimer">Datos de ejemplo. La vista previa no permite crear, editar ni guardar información.</div>
+    </div>
+  </section>
+
+  <section class="mc-cta">
+    <div class="mc-cta-tag"><i class="ti ti-crown"></i> DR. PLANTS PROFESSIONAL</div>
+    <h3>Activa tu plan hoy<br>y recibe <strong>7 días gratis</strong></h3>
+    <p>El primer período se cobra al activar. Los 7 días se agregan al final del período comprado y el acceso completo se habilita cuando Wompi confirma el pago.</p>
+    <div class="mc-trust"><span><i class="ti ti-lock"></i> Pago seguro</span><span><i class="ti ti-credit-card"></i> Wompi</span><span><i class="ti ti-check"></i> Renovación automática</span></div>
+  </section>
+
+  <div id="sub-estado-box" class="mc-dynamic-box"></div>
+  <div id="sub-mi-suscripcion" class="mc-dynamic-box"></div>
+
   <div id="sub-cancel-form" style="display:none;padding:0 14px 14px">
     <div class="unit-card" style="padding:14px">
       <div style="font-weight:700;margin-bottom:4px">Solicitar cancelación</div>
@@ -868,15 +973,18 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
       <div class="fgrp"><label>¿Recomendarías Dr. Plants?</label><select id="sub-cancel-recomienda"><option value="">Selecciona…</option><option value="5">5 · Sí, totalmente</option><option value="4">4 · Probablemente sí</option><option value="3">3 · Tal vez</option><option value="2">2 · Probablemente no</option><option value="1">1 · No</option></select></div>
       <div class="fgrp"><label>¿Qué deberíamos mejorar?</label><textarea id="sub-cancel-mejoras" rows="3" placeholder="Tu retroalimentación es obligatoria y nos ayuda a mejorar."></textarea></div>
       <label class="form-check"><input id="sub-cancel-confirm" class="form-check-input" type="checkbox"><span class="form-check-label">Confirmo que deseo solicitar la cancelación.</span></label>
-      <div id="sub-cancel-msg" style="font-size:11px;color:var(--color-text-secondary);margin:8px 0"></div>
+      <div id="sub-cancel-msg" style="font-size:11px;color:#c62828;margin:8px 0"></div>
       <button class="cta-btn" style="background:#b42318" onclick="enviarSolicitudCancelacionV8C2()">Enviar solicitud de cancelación</button>
       <button class="mini-btn" style="width:100%;margin-top:8px" onclick="document.getElementById('sub-cancel-form').style.display='none'">Volver</button>
     </div>
   </div>
-  <div id="sub-planes" style="padding:0 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"></div>
-  <div id="sub-card-form" style="display:none;padding:14px">
-    <div class="phdr-card" style="margin:0"><div class="phdr-t">Activa tu plan y recibe 7 días gratis</div><div class="phdr-s">El primer periodo se cobra al activar. Los 7 días se agregan al final de ese periodo. La tarjeta se tokeniza directamente con Wompi y Dr. Plants no almacena número de tarjeta ni CVC.</div></div>
-    <div class="fform" style="padding:12px 0 0">
+
+  <div class="mc-plans-title"><div class="mc-section-kicker">ELIGE TU PLAN</div><h3>Escala según las hectáreas que administras</h3><p>Todos los planes incluyen Mi Cultivo y los 7 días adicionales en la primera activación.</p></div>
+  <div id="sub-planes" class="mc-plans"></div>
+
+  <div id="sub-card-form" class="mc-payment" style="display:none">
+    <div class="mc-payment-head"><div class="mc-payment-icon"><i class="ti ti-lock"></i></div><div><b>Activa tu plan + 7 días gratis</b><span>Pago procesado de forma segura por Wompi.</span></div></div>
+    <div class="fform mc-payment-form">
       <div class="fgrp"><label>Plan seleccionado</label><input id="sub-plan-label" readonly></div>
       <div class="fgrp"><label>Periodicidad</label><select id="sub-periodicidad"><option value="mensual">Mensual</option><option value="anual">Anual · 30% de descuento</option></select></div>
       <div class="fgrp"><label>Nombre del titular</label><input id="sub-card-holder" autocomplete="cc-name"></div>
@@ -884,8 +992,8 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
       <div class="frow2"><div class="fgrp"><label>Vencimiento (MM/AA)</label><input id="sub-card-exp" inputmode="numeric" autocomplete="cc-exp" placeholder="08/28"></div><div class="fgrp"><label>CVC</label><input id="sub-card-cvc" inputmode="numeric" autocomplete="cc-csc" type="password" maxlength="4" placeholder="123"></div></div>
       <label class="form-check" style="margin-top:8px"><input id="sub-accept-terms" class="form-check-input" type="checkbox"><span class="form-check-label">Acepto los <a id="sub-terms-link" href="#" target="_blank" rel="noopener">términos de Wompi</a>.</span></label>
       <label class="form-check" style="margin-top:8px"><input id="sub-accept-data" class="form-check-input" type="checkbox"><span class="form-check-label">Autorizo el <a id="sub-data-link" href="#" target="_blank" rel="noopener">tratamiento de datos personales</a>.</span></label>
-      <div id="sub-form-msg" style="font-size:11px;color:var(--color-text-secondary);margin:10px 0"></div>
-      <button id="sub-activate-btn" class="cta-btn" onclick="activarPlanSuscripcion()"><i class="ti ti-credit-card"></i> Activar plan + 7 días gratis</button>
+      <div id="sub-form-msg" class="mc-payment-msg"></div>
+      <button id="sub-activate-btn" class="cta-btn mc-activate-btn" onclick="activarPlanSuscripcion()"><i class="ti ti-credit-card"></i> Activar plan + 7 días gratis</button>
       <button class="mini-btn" style="width:100%;margin-top:8px" onclick="cerrarFormularioSuscripcion()">Cancelar</button>
     </div>
   </div>
