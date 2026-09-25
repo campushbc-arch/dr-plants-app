@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c19-restored-latest';
+const CACHE_NAME = 'dr-plants-v8c20-soil-human';
 const APP_SHELL = [
   '/',
   '/manifest.json',
