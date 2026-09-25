@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c16-pdf-compressor';
+const CACHE_NAME = 'dr-plants-v8c17-admin-agrotech';
 const APP_SHELL = [
   '/',
   '/manifest.json',
