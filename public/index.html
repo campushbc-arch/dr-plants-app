@@ -5078,7 +5078,7 @@ async function pagarTeleconsultaPendiente(id){
 
 let SOIL_IMPORTS_CACHE=[];
 function extraerJsonSeguro(texto){
-  const raw=String(texto||'').replace(/\`\`\`json/gi,'').replace(/\`\`\`/g,'').trim();
+  const raw=String(texto||'').replace(/```json/gi,'').replace(/```/g,'').trim();
   const a=raw.indexOf('{'),b=raw.lastIndexOf('}');
   if(a<0||b<=a)throw new Error('Dr. Agro no devolvió una lectura estructurada. Intenta nuevamente.');
   return JSON.parse(raw.slice(a,b+1));
