@@ -38,6 +38,6 @@ function sanitizeRequest(req, _res, next) {
 }
 function strongPassword(value) {
   const p = String(value || '');
-  return p.length >= 10 && p.length <= 128 && /[A-Za-z]/.test(p) && /\d/.test(p);
+  return p.length >= 6 && p.length <= 20 && /[A-Za-z]/.test(p) && /\d/.test(p);
 }
 module.exports = { cleanString, email, phone, enumValue, id, sanitizeObject, sanitizeRequest, strongPassword };
