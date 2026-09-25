@@ -3,6 +3,7 @@ const { requiereSuscripcionCultivos } = require('../subscription');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
 const { esEjecutivoComercial, modoDemo, puedeDemo } = require('../enterprise');
+const { crearNotificacionAdmin, crearNotificacionUsuario } = require('../notificaciones');
 
 const router = express.Router();
 router.use(requiereAuth);
@@ -303,6 +304,82 @@ router.delete('/observaciones/:id',(req,res)=>{
  const o=db.prepare('SELECT * FROM observaciones_agronomicas WHERE id=? AND eliminado_en IS NULL').get(req.params.id); if(!o) return res.status(404).json({error:'Observación no encontrada.'});
  if(req.usuario.rol!=='admin'&&o.autor_id!==req.usuario.id) return res.status(403).json({error:'Solo su autor puede eliminarla.'});
  db.prepare("UPDATE observaciones_agronomicas SET eliminado_en=datetime('now') WHERE id=?").run(o.id); res.json({ok:true});
+});
+
+
+// V8C.20 · Análisis de suelo leído por IA y validado por un profesional antes de incorporarlo.
+router.get('/lotes/:id/analisis-suelo/importaciones',(req,res)=>{
+  const lote=loteVisible(req.usuario,req.params.id); if(!lote) return res.status(403).json({error:'No tienes acceso a este lote.'});
+  const filas=db.prepare(`
+    SELECT i.*,a.nombre_original archivo_nombre,a.mime_type,u.nombre solicitante_nombre,r.nombre revisor_nombre
+    FROM importaciones_analisis_suelo i
+    JOIN archivos_usuario a ON a.id=i.archivo_id
+    JOIN usuarios u ON u.id=i.solicitante_id
+    LEFT JOIN usuarios r ON r.id=i.revisor_id
+    WHERE i.lote_id=? ORDER BY i.creado_en DESC
+  `).all(lote.id);
+  res.json(filas.map(x=>({...x,datos:(()=>{try{return JSON.parse(x.datos_json||'{}')}catch(_){return {}}})()})));
+});
+
+router.post('/lotes/:id/analisis-suelo/importaciones',(req,res)=>{
+  const lote=loteVisible(req.usuario,req.params.id); if(!lote) return res.status(403).json({error:'No tienes acceso a este lote.'});
+  const archivoId=limpiarTexto(req.body.archivoId,120);
+  const archivo=db.prepare('SELECT * FROM archivos_usuario WHERE id=? AND usuario_id=?').get(archivoId,req.usuario.id);
+  if(!archivo||archivo.tipo!=='analisis_suelo') return res.status(400).json({error:'Adjunta un análisis de suelo válido en PDF.'});
+  const datos=req.body.datos&&typeof req.body.datos==='object'?req.body.datos:{};
+  const resumen=limpiarTexto(req.body.resumen,3000)||'Análisis de suelo leído por Dr. Agro, pendiente de validación profesional.';
+  const id=nuevoId('soilimp');
+  db.prepare(`INSERT INTO importaciones_analisis_suelo(id,lote_id,archivo_id,solicitante_id,datos_json,resumen)
+              VALUES(?,?,?,?,?,?)`).run(id,lote.id,archivo.id,req.usuario.id,JSON.stringify(datos).slice(0,20000),resumen);
+  const finca=fincaPorId(lote.finca_id);
+  const revisores=new Set();
+  if(finca?.gestor_id) revisores.add(finca.gestor_id);
+  for(const a of db.prepare('SELECT agronomo_id FROM agronomo_asignacion WHERE finca_id=?').all(lote.finca_id)) revisores.add(a.agronomo_id);
+  for(const rid of revisores){
+    const u=db.prepare("SELECT id,rol FROM usuarios WHERE id=? AND activo=1").get(rid);
+    if(u&&u.rol==='agronomo') crearNotificacionUsuario({
+      usuarioId:u.id,tipo:'analisis_suelo_revision',titulo:'Análisis de suelo pendiente de validación',
+      mensaje:(req.usuario.nombre||req.usuario.email)+' cargó un análisis para el lote '+lote.nombre+'. Revisa los datos extraídos antes de incorporarlos a la ficha.',
+      entidadTipo:'importacion_analisis_suelo',entidadId:id,urlDestino:'cultivo',prioridad:'alta'
+    });
+  }
+  crearNotificacionAdmin({
+    tipo:'analisis_suelo_revision',titulo:'Análisis de suelo por validar',
+    mensaje:(req.usuario.nombre||req.usuario.email)+' cargó un análisis para '+lote.nombre+'.',
+    usuarioId:req.usuario.id,entidadTipo:'importacion_analisis_suelo',entidadId:id,prioridad:'alta'
+  });
+  res.status(201).json(db.prepare('SELECT * FROM importaciones_analisis_suelo WHERE id=?').get(id));
+});
+
+router.patch('/analisis-suelo/importaciones/:id/revision',(req,res)=>{
+  const imp=db.prepare('SELECT * FROM importaciones_analisis_suelo WHERE id=?').get(req.params.id);
+  if(!imp) return res.status(404).json({error:'Importación no encontrada.'});
+  const lote=loteVisible(req.usuario,imp.lote_id); if(!lote) return res.status(403).json({error:'No tienes acceso a este lote.'});
+  if(!['agronomo','admin'].includes(req.usuario.rol)) return res.status(403).json({error:'La validación debe hacerla un ingeniero agrónomo o administrador.'});
+  const estado=['verificado','rechazado'].includes(req.body.estado)?req.body.estado:null;
+  if(!estado) return res.status(400).json({error:'Estado de revisión inválido.'});
+  const observacion=limpiarTexto(req.body.observacion,2000)||null;
+  let analisisId=imp.analisis_id||null;
+  if(estado==='verificado'&&!analisisId){
+    analisisId=nuevoId('anal');
+    const datos=(()=>{try{return JSON.parse(imp.datos_json||'{}')}catch(_){return {}}})();
+    const claves=['ph','materia_organica','cic','fosforo','potasio','calcio','magnesio','azufre','boro','zinc','hierro','manganeso','cobre','textura','conductividad'];
+    const detalle=claves.filter(k=>datos[k]!=null&&datos[k]!=='').map(k=>k.replaceAll('_',' ')+': '+(typeof datos[k]==='object'?JSON.stringify(datos[k]):datos[k])).join(' · ');
+    const resultado=[imp.resumen,detalle].filter(Boolean).join(' | ').slice(0,5000);
+    db.prepare(`INSERT INTO analisis_laboratorio(id,lote_id,tipo,fecha,resultado,creado_por)
+                VALUES(?,?,?,date('now'),?,?)`).run(analisisId,lote.id,'Análisis de suelo · PDF verificado',resultado,req.usuario.id);
+  }
+  db.prepare(`UPDATE importaciones_analisis_suelo SET estado=?,revisor_id=?,observacion_revision=?,analisis_id=?,revisado_en=datetime('now') WHERE id=?`)
+    .run(estado,req.usuario.id,observacion,analisisId,imp.id);
+  crearNotificacionUsuario({
+    usuarioId:imp.solicitante_id,tipo:'analisis_suelo_revision',
+    titulo:estado==='verificado'?'Análisis de suelo verificado':'Análisis de suelo requiere revisión',
+    mensaje:estado==='verificado'
+      ?'Un agrónomo validó el análisis de suelo y sus datos ya hacen parte de la ficha del lote '+lote.nombre+'.'
+      :'El análisis de suelo del lote '+lote.nombre+' no fue incorporado. '+(observacion||'Revisa el documento y vuelve a cargarlo.'),
+    entidadTipo:'importacion_analisis_suelo',entidadId:imp.id,urlDestino:'cultivo',prioridad:estado==='verificado'?'normal':'alta'
+  });
+  res.json({ok:true,estado,analisisId});
 });
 
 module.exports = router;
