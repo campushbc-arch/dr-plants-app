@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c13-account-recovery';
+const CACHE_NAME = 'dr-plants-v8c14-dr-agro-integrated-files';
 const APP_SHELL = [
   '/',
   '/manifest.json',
