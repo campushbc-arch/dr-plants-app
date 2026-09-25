@@ -607,7 +607,7 @@ html[data-theme="dark"] body{background:transparent}html[data-theme="dark"] .svc
     <div class="chip" onclick="chipMsg('¿Cuál es el plan de riego recomendado para esta semana del cultivo?')">Plan de riego</div>
     <div class="chip" onclick="chipMsg('¿Qué fertilización recomiendas para esta etapa del cultivo?')">Fertilización</div>
   </div>
-  <div style="padding:0 14px 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label title="Adjuntar foto o PDF" style="width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);color:#1b5e20;cursor:pointer;font-size:18px"><i class="ti ti-paperclip"></i><input id="dr-agro-adjunto" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:none" onchange="subirAdjuntoDrAgro(this.files[0]);this.value=''"></label><span style="font-size:10.5px;color:var(--color-text-secondary)">Foto o PDF</span><div id="dr-agro-adjuntos" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>
+  <div style="padding:0 14px 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label title="Adjuntar foto o PDF" style="width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--color-background-secondary);border:1px solid var(--color-border-tertiary);color:#1b5e20;cursor:pointer;font-size:18px"><i class="ti ti-paperclip"></i><input id="dr-agro-adjunto" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:none" onchange="subirAdjuntoDrAgro(this.files[0]);this.value=''"></label><span style="font-size:10.5px;color:var(--color-text-secondary)">Análisis de suelo, foto o PDF · adjunta y escribe tu pregunta</span><div id="dr-agro-adjuntos" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>
   <div class="cin" id="dr-agro-form" role="group" aria-label="Consulta a Dr. Agro">
     <input id="cin" name="consulta" placeholder="Escribe tu consulta..." autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}">
     <button class="csend" id="csendbtn" type="button" onclick="sendMsg()" aria-label="Enviar pregunta"><i class="ti ti-send"></i></button>
@@ -4357,15 +4357,19 @@ async function enviarMensajeIA(cfg){
   const inp=document.getElementById(cfg.inputId);
   const btn=document.getElementById(cfg.btnId);
   const t=inp.value.trim();
-  if(!t)return;
+  const esDrAgro=cfg.chatId==='chat';
+  const tieneAdjuntos=esDrAgro&&Array.isArray(DR_AGRO_ARCHIVO_IDS)&&DR_AGRO_ARCHIVO_IDS.length>0;
+  if(!t&&!tieneAdjuntos)return;
+  const textoConsulta=t||(tieneAdjuntos?'Analiza los archivos adjuntos y explícame qué significan para mi cultivo.':'');
   const c=document.getElementById(cfg.chatId);
-  c.innerHTML+='<div class="mu">'+escapeHtml(t)+'</div>';
+  const adjuntosHtml=tieneAdjuntos?'<div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">'+DR_AGRO_ADJUNTOS_META.map(a=>'<span style="font-size:9px;background:rgba(255,255,255,.18);padding:3px 6px;border-radius:8px">📎 '+escapeHtml(a.nombre)+'</span>').join('')+'</div>':'';
+  c.innerHTML+='<div class="mu">'+escapeHtml(textoConsulta)+adjuntosHtml+'</div>';
   inp.value='';
   inp.disabled=true;
   if(btn)btn.disabled=true;
   c.scrollTop=c.scrollHeight;
 
-  cfg.history.push({role:'user',content:t});
+  cfg.history.push({role:'user',content:textoConsulta});
   typingBubble(true,cfg.chatId,cfg.label);
 
   try{
@@ -4431,6 +4435,11 @@ async function enviarMensajeIA(cfg){
       || "No pude generar una respuesta en este momento. Intenta de nuevo.";
     const usoBusqueda=false;
     cfg.history.push({role:'assistant',content:reply});
+    if(esDrAgro&&tieneAdjuntos){
+      DR_AGRO_ARCHIVO_IDS=[];
+      DR_AGRO_ADJUNTOS_META=[];
+      renderAdjuntosDrAgro();
+    }
     typingBubble(false,cfg.chatId);
     const badge=usoBusqueda?'<div style="font-size:9px;color:#8ed1ff;margin-top:5px"><i class="ti ti-search" aria-hidden="true"></i> Consultó fuentes actualizadas en la web</div>':'';
     c.innerHTML+='<div class="mb"><div class="mb-lbl">'+cfg.label+'</div>'+escapeHtml(reply).replace(/\n/g,'<br>')+badge+'</div>';
