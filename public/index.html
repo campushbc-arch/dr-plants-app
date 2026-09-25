@@ -4583,12 +4583,48 @@ cargarProductosDesdeBackend();
 
 let DR_AGRO_ARCHIVO_IDS=[];
 let DR_AGRO_ADJUNTOS_META=[];
+function fmtBytes(n){const mb=Number(n||0)/1024/1024;return mb>=1?mb.toFixed(mb>=10?0:1)+' MB':Math.max(1,Math.round(Number(n||0)/1024))+' KB';}
+async function comprimirImagenParaSubir(file){
+  if(!file||!file.type?.startsWith('image/'))return file;
+  const LIMITE_DIRECTO=8*1024*1024, MAX_DIM=2200, OBJETIVO=7.5*1024*1024;
+  const bmp=await createImageBitmap(file);
+  if(file.size<=LIMITE_DIRECTO&&Math.max(bmp.width,bmp.height)<=MAX_DIM){bmp.close?.();return file;}
+  const escala=Math.min(1,MAX_DIM/Math.max(bmp.width,bmp.height));
+  const w=Math.max(1,Math.round(bmp.width*escala)),h=Math.max(1,Math.round(bmp.height*escala));
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext('2d',{alpha:false});ctx.drawImage(bmp,0,0,w,h);bmp.close?.();
+  let calidad=.86,blob=null;
+  const tipoSalida='image/webp';
+  do{
+    blob=await new Promise(resolve=>canvas.toBlob(resolve,tipoSalida,calidad));
+    calidad-=.08;
+  }while(blob&&blob.size>OBJETIVO&&calidad>=.54);
+  if(!blob)throw new Error('No fue posible optimizar la imagen en este dispositivo.');
+  const base=(file.name||'imagen').replace(/\.[^.]+$/,'');
+  return new File([blob],base+'-optimizada.webp',{type:tipoSalida,lastModified:Date.now()});
+}
+async function prepararArchivoParaSubir(file){
+  if(!file)return null;
+  if(file.type==='application/pdf'&&file.size>10*1024*1024){
+    throw new Error('Este PDF pesa '+fmtBytes(file.size)+'. Dr Plants admite PDF de hasta 10 MB. Para no perder legibilidad del análisis, súbelo reducido desde tu celular/computador o adjunta fotos claras de las páginas importantes. Las imágenes sí se optimizan automáticamente.');
+  }
+  if(file.type?.startsWith('image/')){
+    const original=file.size;
+    const listo=await comprimirImagenParaSubir(file);
+    return {file:listo,nota:listo!==file?'Imagen optimizada automáticamente: '+fmtBytes(original)+' → '+fmtBytes(listo.size):''};
+  }
+  return {file,nota:''};
+}
 async function subirArchivoUsuario(file,tipo){
   if(!file)return null;
+  const preparado=await prepararArchivoParaSubir(file);
+  const archivo=preparado.file;
   const token=localStorage.getItem('drplants_token')||SESION.token;
-  const fd=new FormData();fd.append('archivo',file);fd.append('tipo',tipo);
+  const fd=new FormData();fd.append('archivo',archivo);fd.append('tipo',tipo);
   const r=await fetch('/api/archivos/subir',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd});
-  const d=await r.json();if(!r.ok)throw new Error(d.error||'No se pudo subir el archivo');return d;
+  const d=await r.json();if(!r.ok)throw new Error(d.error||'No se pudo subir el archivo');
+  if(preparado.nota)d.optimizacion=preparado.nota;
+  return d;
 }
 async function subirFotoPerfil(file){
   const msg=document.getElementById('perfil-foto-msg');
@@ -4602,7 +4638,12 @@ function quitarAdjuntoDrAgro(i){DR_AGRO_ARCHIVO_IDS.splice(i,1);DR_AGRO_ADJUNTOS
 async function subirAdjuntoDrAgro(file){
   if(!file)return;if(DR_AGRO_ARCHIVO_IDS.length>=3){alert('Puedes adjuntar hasta 3 archivos por consulta.');return;}
   const el=document.getElementById('dr-agro-adjuntos');
-  try{if(el&&!DR_AGRO_ADJUNTOS_META.length)el.textContent='Subiendo adjunto…';const d=await subirArchivoUsuario(file,'chat_adjunto');DR_AGRO_ARCHIVO_IDS.push(d.id);DR_AGRO_ADJUNTOS_META.push(d);renderAdjuntosDrAgro();}catch(e){if(el)el.textContent=e.message;}
+  try{
+    if(el)el.textContent=file.type?.startsWith('image/')&&file.size>8*1024*1024?'Optimizando imagen para que cargue más rápido…':'Subiendo adjunto…';
+    const d=await subirArchivoUsuario(file,'chat_adjunto');
+    DR_AGRO_ARCHIVO_IDS.push(d.id);DR_AGRO_ADJUNTOS_META.push(d);renderAdjuntosDrAgro();
+    if(d.optimizacion&&el){const n=document.createElement('div');n.style='width:100%;font-size:9.5px;color:#2e7d32;margin-top:4px';n.textContent='✓ '+d.optimizacion;el.appendChild(n);}
+  }catch(e){if(el)el.innerHTML='<span style="font-size:10px;color:#b42318">'+escapeHtml(e.message)+'</span>';}
 }
 
 document.getElementById('admin-usuarios-buscar')?.addEventListener('keydown',e=>{if(e.key==='Enter')renderAdminUsuarios();});
