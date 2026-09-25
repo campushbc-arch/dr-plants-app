@@ -3942,7 +3942,7 @@ function adminCargarSubpanel(id){
   };
   try{mapa[id]?.();}catch(e){console.warn('No se pudo cargar subpanel '+id,e);}
 }
-function adminBuscarGlobal(){const q=document.getElementById('admin-global-search')?.value||'';const u=document.getElementById('admin-usuarios-buscar');if(u)u.value=q;adminMostrarModulo('usuarios',document.getElementById('admin-nav-usuarios'));renderAdminUsuarios();}
+function adminBuscarGlobal(){const q=document.getElementById('admin-global-search')?.value||'';const u=document.getElementById('admin-usuarios-buscar');if(u)u.value=q;adminMostrarModulo('usuarios',document.getElementById('admin-nav-usuarios'));const btn=document.querySelector('#s-panel-admin [data-admin-module="usuarios"] .admin-subnav button');adminAbrirSubpanel('usuarios-cuentas',btn);}
 async function asignarRolEmpresarial(id,actual){
   const opcion=prompt('Rol empresarial: ejecutivo_comercial, admin_operativo o ninguno',actual||'ejecutivo_comercial');if(opcion===null)return;
   const rol=opcion.trim().toLowerCase();if(!['ejecutivo_comercial','admin_operativo','ninguno'].includes(rol)){alert('Rol inválido.');return;}
@@ -4014,7 +4014,6 @@ async function cambiarAccesoUsuario(id,activar){
 }
 
 async function renderAdminSolicitudes(){
-  renderAdminUsuarios();
   const wrap=document.getElementById('admin-solicitudes-list');
   if(!wrap)return;
   wrap.innerHTML='<div style="font-size:11px;color:var(--color-text-secondary);padding:8px 0">Cargando solicitudes...</div>';
