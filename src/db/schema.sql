@@ -176,7 +176,7 @@ CREATE INDEX IF NOT EXISTS idx_solicitudes_tele_usuario ON solicitudes_teleconsu
 CREATE TABLE IF NOT EXISTS archivos_usuario (
   id TEXT PRIMARY KEY,
   usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-  tipo TEXT NOT NULL CHECK(tipo IN ('foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf')),
+  tipo TEXT NOT NULL CHECK(tipo IN ('foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf','chat_adjunto')),
   nombre_original TEXT NOT NULL,
   nombre_guardado TEXT NOT NULL,
   mime_type TEXT NOT NULL,
@@ -618,3 +618,21 @@ CREATE TABLE IF NOT EXISTS demo_eventos (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_demo_eventos_usuario ON demo_eventos(usuario_id,creado_en);
+
+
+CREATE TABLE IF NOT EXISTS importaciones_analisis_suelo (
+  id TEXT PRIMARY KEY,
+  lote_id TEXT NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  archivo_id TEXT NOT NULL REFERENCES archivos_usuario(id) ON DELETE CASCADE,
+  solicitante_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  resumen TEXT DEFAULT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK(estado IN ('pendiente','verificado','rechazado')),
+  revisor_id TEXT REFERENCES usuarios(id) ON DELETE SET NULL,
+  observacion_revision TEXT DEFAULT NULL,
+  analisis_id TEXT REFERENCES analisis_laboratorio(id) ON DELETE SET NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  revisado_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_importaciones_suelo_lote ON importaciones_analisis_suelo(lote_id, creado_en);
+CREATE INDEX IF NOT EXISTS idx_importaciones_suelo_estado ON importaciones_analisis_suelo(estado, creado_en);
