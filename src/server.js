@@ -98,7 +98,14 @@ const publicDir = path.join(__dirname, '..', 'public');
 const indexPath = path.join(publicDir, 'index.html');
 let appShell = fs.readFileSync(indexPath, 'utf8');
 if (!appShell.includes('/account.js')) {
-  appShell = appShell.replace('</body>', '<script src="/account.js?v=1"></script>\n</body>');
+  // Inserta el script antes del cierre REAL del documento. index.html contiene
+  // plantillas HTML dentro de JavaScript (informes imprimibles) que también incluyen
+  // la cadena </body>; usar replace() sobre la primera coincidencia rompe el <script>
+  // principal y hace que el navegador muestre JavaScript como texto.
+  const cierreBody = appShell.lastIndexOf('</body>');
+  if (cierreBody >= 0) {
+    appShell = appShell.slice(0, cierreBody) + '<script src="/account.js?v=1"></script>\n' + appShell.slice(cierreBody);
+  }
 }
 app.use(express.static(publicDir, { index: false }));
 app.get(/^(?!\/api\/).*/, (_req, res) => {
