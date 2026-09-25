@@ -506,6 +506,18 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
 @media(max-width:640px){.admin-command-btn span{display:none}.admin-hero-tech{min-height:310px}.admin-hero-content{padding:25px 20px}.admin-category-grid{grid-template-columns:1fr}.admin-subnav,.admin-subnav-six{grid-template-columns:1fr 1fr}.admin-results-grid{grid-template-columns:1fr}.admin-module-cover{min-height:130px;padding:20px}.admin-module-cover>i{font-size:40px}.admin-filterbar{align-items:stretch}.admin-filterbar>*{width:100%}.admin-commandbar{top:148px}}
 </style>
 
+
+<style id="drplants-admin-agrotech-nosidebar">
+#s-panel-admin .admin-agrotech-layout{grid-template-columns:minmax(0,1fr)!important;max-width:1240px!important;padding:18px 22px 30px!important}
+#s-panel-admin .admin-agrotech-main{width:100%;max-width:none}
+#s-panel-admin .admin-commandbar{top:74px}
+#s-panel-admin .admin-home-command{width:42px;height:42px;flex:0 0 42px;border:1px solid rgba(15,107,63,.14);border-radius:13px;background:var(--color-background-primary);color:#0f6b3f;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
+#s-panel-admin .admin-category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#s-panel-admin .admin-category-card{min-height:108px}
+#s-panel-admin .admin-module-shell{max-width:1180px;margin:0 auto}
+@media(max-width:900px){#s-panel-admin .admin-agrotech-layout{padding:10px!important}#s-panel-admin .admin-commandbar{top:64px}#s-panel-admin .admin-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#s-panel-admin .admin-category-grid{grid-template-columns:1fr}#s-panel-admin .admin-command-btn span{display:none}}
+</style>
 </head>
 <body>
 <div id="impersonation-banner" class="impersonation-banner"><span id="impersonation-text">Vista como usuario</span><button type="button" onclick="volverASuperAdmin()">Volver a Super Admin</button></div>
@@ -1276,7 +1288,7 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
   </div>
 </div>
 
-<div id="s-panel-admin" class="screen">
+<div id="s-panel-admin" class="screen" data-admin-build="v8c18">
   <div class="pg-hdr admin-topbar">
     <button class="back" onclick="go('perfil','')"><i class="ti ti-arrow-left"></i> Mi Perfil</button>
     <div>
@@ -1286,26 +1298,13 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
   </div>
 
   <div class="admin-erp-layout admin-agrotech-layout">
-    <aside class="admin-erp-sidebar admin-agrotech-sidebar" aria-label="Módulos administrativos">
-      <div class="admin-erp-brand admin-brand-tech">
-        <div class="admin-brand-mark"><i class="ti ti-leaf"></i></div>
-        <div><b>DR PLANTS</b><span>CONTROL CENTER</span></div>
-      </div>
-      <button id="admin-nav-resumen" class="on" onclick="adminMostrarModulo('resumen',this)"><i class="ti ti-layout-dashboard"></i><span>Inicio</span></button>
-      <button id="admin-nav-alertas" onclick="adminMostrarModulo('alertas',this)"><i class="ti ti-bell"></i><span>Alertas</span></button>
-      <button id="admin-nav-usuarios" onclick="adminMostrarModulo('usuarios',this)"><i class="ti ti-users"></i><span>Usuarios</span></button>
-      <button id="admin-nav-operacion" onclick="adminMostrarModulo('operacion',this)"><i class="ti ti-settings"></i><span>Operación</span></button>
-      <button id="admin-nav-suscripciones" onclick="adminMostrarModulo('suscripciones',this)"><i class="ti ti-credit-card"></i><span>Suscripciones</span></button>
-      <button id="admin-nav-formacion" onclick="adminMostrarModulo('formacion',this)"><i class="ti ti-school"></i><span>Formación</span></button>
-      <button id="admin-nav-ia" onclick="adminMostrarModulo('ia',this)"><i class="ti ti-brain"></i><span>IA & conocimiento</span></button>
-      <button id="admin-nav-demo" onclick="adminMostrarModulo('demo',this)"><i class="ti ti-presentation"></i><span>Demo Studio</span></button>
-    </aside>
+    
 
     <main class="admin-erp-main admin-agrotech-main">
       <div class="admin-erp-top admin-commandbar">
+        <button id="admin-home-command" class="admin-home-command" type="button" onclick="adminMostrarModulo('resumen')" aria-label="Volver al inicio"><i class="ti ti-home"></i></button>
         <div class="admin-searchbox"><i class="ti ti-search"></i><input id="admin-global-search" type="search" placeholder="Buscar usuario, correo o teléfono…" onkeydown="if(event.key==='Enter')adminBuscarGlobal()"></div>
         <button class="admin-command-btn" onclick="adminBuscarGlobal()"><i class="ti ti-search"></i><span>Buscar</span></button>
-        <button class="admin-command-btn ghost" onclick="adminMostrarModulo('alertas',document.getElementById('admin-nav-alertas'))"><i class="ti ti-bell"></i><span>Alertas</span></button>
       </div>
 
       <section data-admin-module="resumen" id="admin-resumen-shell">
@@ -1316,8 +1315,8 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
             <h2>Todo Dr Plants, bajo control.</h2>
             <p>Usuarios, consultas, laboratorio, pagos, formación e IA organizados por módulos. Entra solo a lo que necesitas gestionar.</p>
             <div class="admin-hero-actions">
-              <button onclick="adminMostrarModulo('alertas',document.getElementById('admin-nav-alertas'))"><i class="ti ti-bell"></i> Revisar pendientes</button>
-              <button class="secondary" onclick="adminMostrarModulo('usuarios',document.getElementById('admin-nav-usuarios'))"><i class="ti ti-users"></i> Gestionar usuarios</button>
+              <button onclick="adminMostrarModulo('alertas')"><i class="ti ti-bell"></i> Revisar pendientes</button>
+              <button class="secondary" onclick="adminMostrarModulo('usuarios')"><i class="ti ti-users"></i> Gestionar usuarios</button>
             </div>
           </div>
         </div>
@@ -1332,25 +1331,25 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
           <div><span>MÓDULOS</span><h3>¿Qué quieres administrar?</h3></div>
         </div>
         <div class="admin-category-grid">
-          <button class="admin-category-card c-alert" onclick="adminMostrarModulo('alertas',document.getElementById('admin-nav-alertas'))">
+          <button class="admin-category-card c-alert" onclick="adminMostrarModulo('alertas')">
             <div class="admin-cat-icon"><i class="ti ti-bell"></i></div><div><b>Alertas</b><span>Pendientes y eventos que requieren atención</span></div><i class="ti ti-chevron-right"></i>
           </button>
-          <button class="admin-category-card c-users" onclick="adminMostrarModulo('usuarios',document.getElementById('admin-nav-usuarios'))">
+          <button class="admin-category-card c-users" onclick="adminMostrarModulo('usuarios')">
             <div class="admin-cat-icon"><i class="ti ti-users"></i></div><div><b>Usuarios & accesos</b><span>Cuentas, agrónomos, permisos y cortesías</span></div><i class="ti ti-chevron-right"></i>
           </button>
-          <button class="admin-category-card c-ops" onclick="adminMostrarModulo('operacion',document.getElementById('admin-nav-operacion'))">
+          <button class="admin-category-card c-ops" onclick="adminMostrarModulo('operacion')">
             <div class="admin-cat-icon"><i class="ti ti-settings"></i></div><div><b>Operación</b><span>Pedidos, laboratorio, teleconsultas y circular</span></div><i class="ti ti-chevron-right"></i>
           </button>
-          <button class="admin-category-card c-money" onclick="adminMostrarModulo('suscripciones',document.getElementById('admin-nav-suscripciones'))">
+          <button class="admin-category-card c-money" onclick="adminMostrarModulo('suscripciones')">
             <div class="admin-cat-icon"><i class="ti ti-credit-card"></i></div><div><b>Suscripciones & pagos</b><span>Planes, Wompi, renovaciones y retención</span></div><i class="ti ti-chevron-right"></i>
           </button>
-          <button class="admin-category-card c-edu" onclick="adminMostrarModulo('formacion',document.getElementById('admin-nav-formacion'))">
+          <button class="admin-category-card c-edu" onclick="adminMostrarModulo('formacion')">
             <div class="admin-cat-icon"><i class="ti ti-school"></i></div><div><b>Formación</b><span>Matrículas y activación de estudiantes</span></div><i class="ti ti-chevron-right"></i>
           </button>
-          <button class="admin-category-card c-ai" onclick="adminMostrarModulo('ia',document.getElementById('admin-nav-ia'))">
+          <button class="admin-category-card c-ai" onclick="adminMostrarModulo('ia')">
             <div class="admin-cat-icon"><i class="ti ti-brain"></i></div><div><b>IA & conocimiento</b><span>Trazabilidad de Dr. Agro y base agronómica</span></div><i class="ti ti-chevron-right"></i>
           </button>
-          <button class="admin-category-card c-demo" onclick="adminMostrarModulo('demo',document.getElementById('admin-nav-demo'))">
+          <button class="admin-category-card c-demo" onclick="adminMostrarModulo('demo')">
             <div class="admin-cat-icon"><i class="ti ti-presentation"></i></div><div><b>Demo Studio</b><span>Escenarios comerciales y demostraciones</span></div><i class="ti ti-chevron-right"></i>
           </button>
         </div>
@@ -2882,7 +2881,7 @@ async function go(sid,nid){
   if(sid==='formacion'){renderFormacionList();renderOtrosCursos();}
   if(sid==='perfil')renderPerfilStats();
   if(sid==='panel-agronomo')renderPanelAgronomo();
-  if(sid==='panel-admin'){setTimeout(()=>adminMostrarModulo('resumen',document.getElementById('admin-nav-resumen')),0);iniciarActualizacionAdminCircular();}
+  if(sid==='panel-admin'){setTimeout(()=>adminMostrarModulo('resumen'),0);iniciarActualizacionAdminCircular();}
   if(sid==='lote-nuevo')actualizarHintPiso();
   if(sid==='home')renderHomeStats();
 }
@@ -3902,14 +3901,13 @@ async function abrirHistorialIntegralAdmin(id){
 
 
 let ADMIN_MODULO_ACTUAL='resumen';
-function adminMostrarModulo(modulo,btn){
+function adminMostrarModulo(modulo){
   ADMIN_MODULO_ACTUAL=modulo;
   document.querySelectorAll('#s-panel-admin [data-admin-module]').forEach(el=>el.classList.toggle('admin-module-hidden',el.dataset.adminModule!==modulo));
-  document.querySelectorAll('.admin-agrotech-sidebar button').forEach(b=>b.classList.remove('on'));
-  if(btn)btn.classList.add('on');
   document.querySelectorAll('#s-panel-admin .admin-subpanel').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('#s-panel-admin .admin-subnav button').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('#s-panel-admin [data-admin-intro]').forEach(x=>x.style.display=x.dataset.adminIntro===modulo?'flex':'none');
+  const home=document.getElementById('admin-home-command');if(home)home.style.visibility=modulo==='resumen'?'hidden':'visible';
   if(modulo==='resumen')renderAdminDashboard();
   if(modulo==='alertas')renderAdminNotificaciones();
   if(modulo==='formacion')renderAdminMatriculasCursos();
@@ -3942,7 +3940,7 @@ function adminCargarSubpanel(id){
   };
   try{mapa[id]?.();}catch(e){console.warn('No se pudo cargar subpanel '+id,e);}
 }
-function adminBuscarGlobal(){const q=document.getElementById('admin-global-search')?.value||'';const u=document.getElementById('admin-usuarios-buscar');if(u)u.value=q;adminMostrarModulo('usuarios',document.getElementById('admin-nav-usuarios'));const btn=document.querySelector('#s-panel-admin [data-admin-module="usuarios"] .admin-subnav button');adminAbrirSubpanel('usuarios-cuentas',btn);}
+function adminBuscarGlobal(){const q=document.getElementById('admin-global-search')?.value||'';adminMostrarModulo('usuarios');const u=document.getElementById('admin-usuarios-buscar');if(u)u.value=q;const btn=document.querySelector('#s-panel-admin [data-admin-module="usuarios"] .admin-subnav button');adminAbrirSubpanel('usuarios-cuentas',btn);}
 async function asignarRolEmpresarial(id,actual){
   const opcion=prompt('Rol empresarial: ejecutivo_comercial, admin_operativo o ninguno',actual||'ejecutivo_comercial');if(opcion===null)return;
   const rol=opcion.trim().toLowerCase();if(!['ejecutivo_comercial','admin_operativo','ninguno'].includes(rol)){alert('Rol inválido.');return;}
@@ -4878,7 +4876,7 @@ document.getElementById('admin-usuarios-filtro')?.addEventListener('change',rend
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(error => {
+    navigator.serviceWorker.register('/sw.js?v=18',{updateViaCache:'none'}).catch(error => {
       console.warn('No se pudo registrar el service worker:', error);
     });
   });
