@@ -28,7 +28,7 @@ function addMonths(date, months) { const d = new Date(date); d.setUTCMonth(d.get
 
 function precioServicio(tipo) {
   const envMap = {
-    consulta_personalizada: Number(process.env.PRECIO_CONSULTA_COP || 0),
+    consulta_personalizada: Number(process.env.PRECIO_CONSULTA_COP || 120000),
     analisis_laboratorio: Number(process.env.PRECIO_ANALISIS_LAB_COP || 0)
   };
   return envMap[tipo] || 0;
