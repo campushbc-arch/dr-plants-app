@@ -1,4 +1,4 @@
-const Database = require('better-sqlite3');
+const Database = require('./sqlite-compat');
 const fs = require('fs');
 const path = require('path');
 
