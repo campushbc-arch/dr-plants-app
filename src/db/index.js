@@ -147,6 +147,50 @@ const planesV8C=[
 ];
 for(const p of planesV8C){db.prepare(`INSERT INTO planes_suscripcion(id,nombre,min_ha,max_ha,precio_mensual_cop,precio_anual_cop,activo) VALUES(?,?,?,?,?,?,1) ON CONFLICT(id) DO UPDATE SET nombre=excluded.nombre,min_ha=excluded.min_ha,max_ha=excluded.max_ha,precio_mensual_cop=excluded.precio_mensual_cop,precio_anual_cop=excluded.precio_anual_cop,activo=1`).run(...p);}
 
+
+// V8C.20 · Adjuntos de Dr. Agro y flujo de análisis de suelo verificado.
+const archivosSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='archivos_usuario'").get()?.sql || '';
+if (archivosSql && !archivosSql.includes("'chat_adjunto'")) {
+  db.exec(`PRAGMA foreign_keys=OFF;
+  BEGIN TRANSACTION;
+  CREATE TABLE archivos_usuario_new (
+    id TEXT PRIMARY KEY,
+    usuario_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    tipo TEXT NOT NULL CHECK(tipo IN ('foto_perfil','documento_identidad','tarjeta_profesional','analisis_suelo','otro_pdf','chat_adjunto')),
+    nombre_original TEXT NOT NULL,
+    nombre_guardado TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    tamano_bytes INTEGER NOT NULL,
+    ruta TEXT NOT NULL,
+    creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  INSERT INTO archivos_usuario_new SELECT * FROM archivos_usuario;
+  DROP TABLE archivos_usuario;
+  ALTER TABLE archivos_usuario_new RENAME TO archivos_usuario;
+  CREATE INDEX IF NOT EXISTS idx_archivos_usuario ON archivos_usuario(usuario_id, creado_en);
+  COMMIT;
+  PRAGMA foreign_keys=ON;`);
+}
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS importaciones_analisis_suelo (
+  id TEXT PRIMARY KEY,
+  lote_id TEXT NOT NULL REFERENCES lotes(id) ON DELETE CASCADE,
+  archivo_id TEXT NOT NULL REFERENCES archivos_usuario(id) ON DELETE CASCADE,
+  solicitante_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  datos_json TEXT NOT NULL DEFAULT '{}',
+  resumen TEXT DEFAULT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK(estado IN ('pendiente','verificado','rechazado')),
+  revisor_id TEXT REFERENCES usuarios(id) ON DELETE SET NULL,
+  observacion_revision TEXT DEFAULT NULL,
+  analisis_id TEXT REFERENCES analisis_laboratorio(id) ON DELETE SET NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  revisado_en TEXT DEFAULT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_importaciones_suelo_lote ON importaciones_analisis_suelo(lote_id, creado_en);
+CREATE INDEX IF NOT EXISTS idx_importaciones_suelo_estado ON importaciones_analisis_suelo(estado, creado_en);
+`);
+
 console.log(`Base de datos activa: ${DB_PATH}`);
 module.exports = db;
 
