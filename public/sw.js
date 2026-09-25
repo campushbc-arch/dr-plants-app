@@ -1,7 +1,8 @@
-const CACHE_NAME = 'dr-plants-v8c12-marketing-safe-area';
+const CACHE_NAME = 'dr-plants-v8c13-account-recovery';
 const APP_SHELL = [
   '/',
   '/manifest.json',
+  '/account.js?v=1',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   '/icons/icon-maskable-512x512.png',
