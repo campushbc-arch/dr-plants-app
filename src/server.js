@@ -1,5 +1,6 @@
 require('dotenv').config();
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -7,6 +8,7 @@ const helmet = require('helmet');
 const hpp = require('hpp');
 
 const authRoutes = require('./routes/auth');
+const accountRoutes = require('./routes/account');
 const chatRoutes = require('./routes/chat');
 const fincasRoutes = require('./routes/fincas');
 const adminRoutes = require('./routes/admin');
@@ -66,11 +68,15 @@ app.use('/api', (req, res, next) => {
 app.get('/api/health', (req, res) => res.json({ ok: true, servicio: 'dr-plants-backend', requestId: req.id }));
 app.use('/api/auth/login', loginLimiter);
 app.use('/api/auth/register', registerLimiter);
+app.use('/api/account/forgot-password', loginLimiter);
+app.use('/api/account/recover-username', loginLimiter);
+app.use('/api/account/reset-password', loginLimiter);
 app.use('/api/archivos/subir', uploadLimiter);
 app.use('/api/pagos/intencion', paymentLimiter);
 app.use('/api/pagos/wompi/eventos', webhookLimiter);
 
 app.use('/api/auth', authRoutes);
+app.use('/api/account', accountRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/fincas', fincasRoutes);
 app.use('/api/admin', adminRoutes);
@@ -89,9 +95,14 @@ app.use('/api/suscripciones', suscripcionesRoutes);
 // y puerto que la API — así todo vive en drplants.campushbc.com sin necesidad de CORS
 // entre frontend y backend, ni de configurar dos sitios distintos en Hostinger.
 const publicDir = path.join(__dirname, '..', 'public');
-app.use(express.static(publicDir));
-app.get(/^(?!\/api\/).*/, (req, res) => {
-  res.sendFile(path.join(publicDir, 'index.html'));
+const indexPath = path.join(publicDir, 'index.html');
+let appShell = fs.readFileSync(indexPath, 'utf8');
+if (!appShell.includes('/account.js')) {
+  appShell = appShell.replace('</body>', '<script src="/account.js?v=1"></script>\n</body>');
+}
+app.use(express.static(publicDir, { index: false }));
+app.get(/^(?!\/api\/).*/, (_req, res) => {
+  res.type('html').send(appShell);
 });
 
 app.use((err, req, res, next) => {
