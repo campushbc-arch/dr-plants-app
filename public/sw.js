@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c18-admin-nosidebar';
+const CACHE_NAME = 'dr-plants-v8c19-restored-latest';
 const APP_SHELL = [
   '/',
   '/manifest.json',
