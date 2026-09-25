@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../db');
 const { nuevoId, requiereAuth } = require('../auth');
-const { crearNotificacionAdmin } = require('../notificaciones');
+const { crearNotificacionAdmin, crearNotificacionUsuario } = require('../notificaciones');
 const { enumValue, id: validarId } = require('../validation');
 const { audit } = require('../audit');
 
@@ -23,6 +23,8 @@ function sha256(value) {
 function getByPath(root, path) {
   return String(path).split('.').reduce((value, key) => value == null ? undefined : value[key], root);
 }
+function addDays(date, days) { const d = new Date(date); d.setUTCDate(d.getUTCDate() + days); return d.toISOString(); }
+function addMonths(date, months) { const d = new Date(date); d.setUTCMonth(d.getUTCMonth() + months); return d.toISOString(); }
 
 function precioServicio(tipo) {
   const envMap = {
@@ -169,6 +171,44 @@ router.post('/wompi/eventos', (req, res) => {
         crearNotificacionAdmin({ tipo:'pago_aprobado', titulo:'Pago aprobado', mensaje:`Pago aprobado por $${Number(pago.monto_cop).toLocaleString('es-CO')} COP: ${pago.descripcion || pago.tipo}.`, usuarioId:pago.usuario_id, entidadTipo:'pago', entidadId:pago.id, prioridad:'alta' });
       } else if (['DECLINED','ERROR','VOIDED'].includes(estado)) {
         crearNotificacionAdmin({ tipo:'pago_no_aprobado', titulo:'Pago no aprobado', mensaje:`La transacción ${pago.referencia} quedó en estado ${estado}.`, usuarioId:pago.usuario_id, entidadTipo:'pago', entidadId:pago.id, prioridad:'normal' });
+      }
+    } else {
+      // Los cobros de suscripción se crean directamente con Wompi y también llegan
+      // por transaction.updated. Sincronizamos su estado para activaciones iniciales
+      // y renovaciones asíncronas.
+      const cobro = db.prepare('SELECT * FROM cobros_suscripcion WHERE referencia=?').get(trx.reference);
+      if (cobro) {
+        const estado = String(trx.status || 'PENDING').toUpperCase();
+        db.prepare(`UPDATE cobros_suscripcion SET estado=?,wompi_transaccion_id=?,respuesta_wompi=?,actualizado_en=datetime('now') WHERE id=?`)
+          .run(estado, trx.id || cobro.wompi_transaccion_id || null, JSON.stringify(trx), cobro.id);
+        const s = db.prepare('SELECT * FROM suscripciones WHERE id=?').get(cobro.suscripcion_id);
+        if (s && estado === 'APPROVED') {
+          const ahora = new Date();
+          const esPrimerCobro = !s.periodo_desde;
+          const finPagado = s.periodicidad === 'anual' ? addMonths(ahora, 12) : addMonths(ahora, 1);
+          const hasta = esPrimerCobro ? addDays(new Date(finPagado), 7) : finPagado;
+          db.prepare(`UPDATE suscripciones SET estado='activa',periodo_desde=?,periodo_hasta=?,proximo_cobro=?,intentos_fallidos=0,actualizado_en=datetime('now') WHERE id=?`)
+            .run(ahora.toISOString(), hasta, hasta, s.id);
+          crearNotificacionUsuario({
+            usuarioId:s.usuario_id,
+            tipo:esPrimerCobro?'suscripcion_activada':'suscripcion_cobrada',
+            titulo:esPrimerCobro?'Plan activado + 7 días gratis':'Suscripción renovada',
+            mensaje:esPrimerCobro
+              ? 'Tu primer pago fue aprobado. Mi Cultivo ya está habilitado e incluye 7 días adicionales gratis.'
+              : 'Tu renovación de Dr. Plants Professional fue aprobada.',
+            entidadTipo:'suscripcion',entidadId:s.id,prioridad:'alta'
+          });
+          crearNotificacionAdmin({
+            tipo:esPrimerCobro?'suscripcion_activada':'suscripcion_cobrada',
+            titulo:esPrimerCobro?'Nueva suscripción pagada':'Renovación aprobada',
+            mensaje:`Cobro de suscripción aprobado por ${Number(cobro.monto_cop).toLocaleString('es-CO')} COP.`,
+            usuarioId:s.usuario_id,entidadTipo:'suscripcion',entidadId:s.id,prioridad:'alta'
+          });
+        } else if (s && ['DECLINED','ERROR','VOIDED'].includes(estado)) {
+          db.prepare(`UPDATE suscripciones SET estado='morosa',proximo_cobro=?,intentos_fallidos=intentos_fallidos+1,actualizado_en=datetime('now') WHERE id=?`)
+            .run(s.periodo_desde ? addDays(new Date(),1) : null, s.id);
+        }
+        audit({ req, action:'webhook_wompi_suscripcion', entityType:'suscripcion', entityId:cobro.suscripcion_id, metadata:{ estado, transaccion:trx.id || null, cobroId:cobro.id } });
       }
     }
   }
