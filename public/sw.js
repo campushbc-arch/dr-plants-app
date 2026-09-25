@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c14-dr-agro-integrated-files';
+const CACHE_NAME = 'dr-plants-v8c15-smart-upload';
 const APP_SHELL = [
   '/',
   '/manifest.json',
