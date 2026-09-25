@@ -32,8 +32,12 @@ router.post('/', requiereAuth, async (req, res) => {
 
   const inicioMs = Date.now();
   const mensajesNormalizados = normalizarMensajes(messages);
-  const systemEnriquecido = modulo === 'dr_agro' ? enriquecerSystemAgronomico(req.usuario, system, mensajesNormalizados) : system;
   const adjuntos = obtenerAdjuntos(req.usuario.id, archivoIds);
+  if (Array.isArray(archivoIds) && archivoIds.length && !adjuntos.length) {
+    return res.status(400).json({ code: 'ATTACHMENT_NOT_AVAILABLE', error: 'El archivo adjunto no está disponible para esta consulta. Vuelve a adjuntarlo e intenta de nuevo.' });
+  }
+  const systemBase = modulo === 'dr_agro' ? enriquecerSystemAgronomico(req.usuario, system, mensajesNormalizados) : system;
+  const systemEnriquecido = enriquecerSystemAdjuntos(systemBase, adjuntos);
   let resultado;
   let errores = [];
 
@@ -48,7 +52,7 @@ router.post('/', requiereAuth, async (req, res) => {
 
   if (!resultado && FALLBACK_ENABLED && process.env.OPENAI_API_KEY) {
     try {
-      resultado = await consultarOpenAI({ system: systemEnriquecido, messages: mensajesNormalizados });
+      resultado = await consultarOpenAI({ system: systemEnriquecido, messages: mensajesNormalizados, adjuntos });
     } catch (error) {
       errores.push(error);
       console.error('OpenAI fallback falló:', error.message);
@@ -125,7 +129,23 @@ function obtenerAdjuntos(usuarioId, archivoIds) {
   if (!Array.isArray(archivoIds) || !archivoIds.length) return [];
   return archivoIds.slice(0, 3)
     .map(id => db.prepare('SELECT * FROM archivos_usuario WHERE id=? AND usuario_id=?').get(id, usuarioId))
-    .filter(Boolean);
+    .filter(a => a && a.ruta && fs.existsSync(a.ruta));
+}
+
+function enriquecerSystemAdjuntos(system, adjuntos) {
+  if (!adjuntos.length) return system;
+  const lista = adjuntos.map((a, i) => `${i + 1}. ${a.nombre_original || 'archivo'} (${a.mime_type})`).join('\n');
+  return `${typeof system === 'string' ? system : ''}
+
+INSTRUCCIÓN OBLIGATORIA SOBRE LOS ARCHIVOS ADJUNTOS:
+El usuario adjuntó los siguientes archivos a ESTA MISMA consulta:
+${lista}
+Debes interpretar los archivos junto con la pregunta escrita por el usuario como una sola solicitud integrada. No los trates como elementos separados ni ignores la pregunta al analizar el archivo.
+- Si es un análisis de suelo, extrae los valores realmente visibles/legibles y relaciónalos con el cultivo, lote, etapa y contexto disponible.
+- Si es una imagen de cultivo, describe primero la evidencia visible y luego relaciona esa evidencia con la pregunta.
+- Distingue datos observados del archivo, inferencias y recomendaciones.
+- Si alguna parte del documento no es legible, especifica exactamente qué dato o página no pudiste leer; no digas simplemente que "no puedes leer documentos".
+- Nunca inventes valores que no aparezcan en el archivo.`.slice(0, 32000);
 }
 
 async function consultarAnthropic({ system, messages, adjuntos }) {
@@ -182,10 +202,37 @@ async function consultarAnthropic({ system, messages, adjuntos }) {
   };
 }
 
-async function consultarOpenAI({ system, messages }) {
+async function consultarOpenAI({ system, messages, adjuntos = [] }) {
   const input = [];
   if (typeof system === 'string' && system.trim()) input.push({ role: 'developer', content: system.slice(0, 30000) });
-  for (const m of messages) input.push({ role: m.role, content: m.content });
+
+  const previos = messages.slice(0, -1);
+  for (const m of previos) input.push({ role: m.role, content: m.content });
+
+  const ultimo = messages[messages.length - 1] || { role: 'user', content: 'Analiza los archivos adjuntos.' };
+  if (ultimo.role === 'user' && adjuntos.length) {
+    const content = [{ type: 'input_text', text: ultimo.content || 'Analiza los archivos adjuntos y relaciónalos con mi solicitud.' }];
+    for (const a of adjuntos) {
+      if (!a.ruta || !fs.existsSync(a.ruta)) continue;
+      const base64 = fs.readFileSync(a.ruta).toString('base64');
+      if (a.mime_type === 'application/pdf') {
+        content.push({
+          type: 'input_file',
+          filename: a.nombre_original || 'analisis.pdf',
+          file_data: `data:application/pdf;base64,${base64}`
+        });
+      } else if (['image/jpeg','image/png','image/webp'].includes(a.mime_type)) {
+        content.push({
+          type: 'input_image',
+          image_url: `data:${a.mime_type};base64,${base64}`,
+          detail: 'auto'
+        });
+      }
+    }
+    input.push({ role: 'user', content });
+  } else {
+    input.push({ role: ultimo.role, content: ultimo.content });
+  }
 
   const data = await fetchJsonConTimeout('https://api.openai.com/v1/responses', {
     method: 'POST',
