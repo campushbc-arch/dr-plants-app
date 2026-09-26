@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dr-plants-v8c21-admin-agrostore';
+const CACHE_NAME = 'dr-plants-v8c22-agrotech-ux';
 const APP_SHELL = [
   '/',
   '/manifest.json',
