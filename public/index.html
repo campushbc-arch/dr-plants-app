@@ -677,6 +677,42 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
 .human-assist-card{margin-bottom:22px}.human-assist-form{padding:0 18px 18px}.human-price{border-radius:14px;padding:11px 12px;background:linear-gradient(135deg,#f7f4e7,#fffaf0);border:1px solid #e6d5a0;display:flex;flex-direction:column;justify-content:center}.human-price small{font-size:.58rem;color:#7f6b35}.human-price strong{font-size:.95rem;color:#5e4917;margin:2px 0}.human-price span{font-size:.56rem;color:#8a7a4b}.human-assist-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.human-assist-msg{font-size:.68rem;border-radius:12px;padding:9px 11px;margin-top:9px}
 @media(max-width:720px){.soil-intel-flow{grid-template-columns:1fr 1fr}.soil-flow-line{display:none}.soil-analysis-grid{grid-template-columns:1fr}.human-assist-actions{grid-template-columns:1fr}}
 </style>
+
+<style id="drplants-admin-agrostore">
+.cover-agrotienda{background:
+linear-gradient(120deg,rgba(7,61,35,.96),rgba(17,119,68,.88)),
+url('https://images.pexels.com/photos/2132250/pexels-photo-2132250.jpeg?auto=compress&cs=tinysrgb&w=1400') center/cover}
+.c-store .admin-cat-icon{background:#e8f5ec;color:#0d7544}
+.agrostore-admin-grid{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:10px;margin-bottom:14px}
+.agrostore-admin-stat,.agrostore-new-product{border:1px solid rgba(15,107,63,.10);border-radius:18px;background:var(--color-background-primary);min-height:92px;padding:14px;display:flex;align-items:center;gap:11px;box-shadow:0 10px 26px rgba(10,70,40,.05)}
+.agrostore-admin-stat-icon{width:42px;height:42px;border-radius:14px;background:#e8f5ec;color:#0e7746;display:flex;align-items:center;justify-content:center;font-size:19px}
+.agrostore-admin-stat-icon.gold{background:#fff6dd;color:#8b6512}
+.agrostore-admin-stat span{display:block;font-size:.62rem;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.08em}
+.agrostore-admin-stat strong{display:block;font-size:1.35rem;margin-top:3px}
+.agrostore-new-product{cursor:pointer;border:0;background:linear-gradient(135deg,#0d6c40,#168e54);color:#fff;text-align:left}
+.agrostore-new-product>i{width:42px;height:42px;border-radius:14px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:20px}
+.agrostore-new-product span{display:flex;flex-direction:column}.agrostore-new-product b{font-size:.86rem}.agrostore-new-product small{font-size:.62rem;color:#d4eadc;margin-top:2px}
+.agrostore-admin-panel{border:1px solid rgba(15,107,63,.09);background:var(--color-background-primary);border-radius:22px;padding:16px;box-shadow:0 12px 32px rgba(11,65,39,.05)}
+.agrostore-create-card{border:1px solid rgba(15,107,63,.12);border-radius:20px;padding:16px;background:linear-gradient(180deg,var(--color-background-secondary),var(--color-background-primary));margin-bottom:12px}
+.agrostore-create-head{display:grid;grid-template-columns:46px 1fr auto;gap:11px;align-items:start;margin-bottom:14px}
+.agrostore-create-icon{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#0d6c40,#19a260);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px}
+.agrostore-create-head span,.agrostore-category-card>div>span{font-size:.58rem;letter-spacing:.14em;color:#0f8350;font-weight:850}
+.agrostore-create-head h4,.agrostore-category-card h4{margin:2px 0 3px;font-size:.95rem}.agrostore-create-head p,.agrostore-category-card p{margin:0;font-size:.67rem;color:var(--color-text-secondary)}
+.agrostore-close{border:0;background:transparent;color:var(--color-text-secondary);cursor:pointer;font-size:18px}
+.agrostore-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.agrostore-wide{grid-column:1/-1}
+.agrostore-create-actions{display:flex;gap:8px;margin-top:12px}.admin-secondary-action{border:1px solid rgba(15,107,63,.13);background:var(--color-background-primary);color:var(--color-text-primary);border-radius:12px;padding:10px 14px;font-weight:750;cursor:pointer}
+.agrostore-category-card{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid rgba(15,107,63,.09);border-radius:17px;padding:13px 14px;background:var(--color-background-secondary);margin-bottom:13px}
+.agrostore-category-action{display:flex;gap:7px;min-width:330px}.agrostore-category-action input{flex:1}.agrostore-category-action button{border:0;border-radius:11px;background:#0f6b3f;color:#fff;padding:9px 12px;font-weight:750;cursor:pointer}
+.agrostore-products-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.agrostore-product-admin-card{border:1px solid rgba(15,107,63,.09);border-radius:18px;padding:13px;display:grid;grid-template-columns:44px minmax(0,1fr) 105px 34px;gap:10px;align-items:center;background:var(--color-background-primary)}
+.agrostore-product-icon{width:44px;height:44px;border-radius:14px;background:#e9f5ed;color:#0f7444;display:flex;align-items:center;justify-content:center;font-size:20px}
+.agrostore-product-info span{font-size:.55rem;color:#0f8350;text-transform:uppercase;letter-spacing:.08em;font-weight:800}.agrostore-product-info h4{font-size:.82rem;margin:2px 0}.agrostore-product-info p{font-size:.63rem;color:var(--color-text-secondary);line-height:1.35;margin:0 0 3px}.agrostore-product-info small{font-size:.58rem;color:var(--color-text-secondary)}
+.agrostore-product-price label{display:block;font-size:.55rem;color:var(--color-text-secondary);margin-bottom:3px}.agrostore-product-price input{width:100%;padding:7px 8px;border-radius:9px;border:1px solid var(--color-border-tertiary);background:var(--color-background-secondary);color:var(--color-text-primary)}
+.agrostore-product-actions button{width:32px;height:32px;border:0;border-radius:10px;cursor:pointer}.agrostore-product-actions .danger{background:#fdecea;color:#ad3b32}
+.agrostore-empty{grid-column:1/-1;min-height:160px;border:1px dashed rgba(15,107,63,.20);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--color-text-secondary);gap:4px}.agrostore-empty i{font-size:28px;color:#0f8350}.agrostore-empty b{color:var(--color-text-primary);font-size:.82rem}.agrostore-empty span{font-size:.65rem}
+@media(max-width:850px){.agrostore-admin-grid{grid-template-columns:1fr 1fr}.agrostore-new-product{grid-column:1/-1}.agrostore-products-grid{grid-template-columns:1fr}.agrostore-category-card{align-items:stretch;flex-direction:column}.agrostore-category-action{min-width:0;width:100%}}
+@media(max-width:560px){.agrostore-admin-grid{grid-template-columns:1fr}.agrostore-new-product{grid-column:auto}.agrostore-form-grid{grid-template-columns:1fr}.agrostore-wide{grid-column:auto}.agrostore-product-admin-card{grid-template-columns:42px minmax(0,1fr) 88px 32px}.agrostore-product-info p{display:none}}
+</style>
 </head>
 <body>
 <div id="impersonation-banner" class="impersonation-banner"><span id="impersonation-text">Vista como usuario</span><button type="button" onclick="volverASuperAdmin()">Volver a Super Admin</button></div>
@@ -1634,6 +1670,9 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
           <button class="admin-category-card c-ai" onclick="adminMostrarModulo('ia')">
             <div class="admin-cat-icon"><i class="ti ti-brain"></i></div><div><b>IA & conocimiento</b><span>Trazabilidad de Dr. Agro y base agronómica</span></div><i class="ti ti-chevron-right"></i>
           </button>
+          <button class="admin-category-card c-store" onclick="adminMostrarModulo('agrotienda')">
+            <div class="admin-cat-icon"><i class="ti ti-building-store"></i></div><div><b>AgroTienda</b><span>Productos, categorías y publicación del catálogo</span></div><i class="ti ti-chevron-right"></i>
+          </button>
           <button class="admin-category-card c-demo" onclick="adminMostrarModulo('demo')">
             <div class="admin-cat-icon"><i class="ti ti-presentation"></i></div><div><b>Demo Studio</b><span>Escenarios comerciales y demostraciones</span></div><i class="ti ti-chevron-right"></i>
           </button>
@@ -1696,7 +1735,6 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
           <button onclick="adminAbrirSubpanel('operacion-laboratorio',this)"><i class="ti ti-microscope"></i><b>Laboratorio</b><span>Solicitudes</span></button>
           <button onclick="adminAbrirSubpanel('operacion-conversaciones',this)"><i class="ti ti-message-2"></i><b>Conversaciones</b><span>Laboratorio IA</span></button>
           <button onclick="adminAbrirSubpanel('operacion-teleconsultas',this)"><i class="ti ti-headset"></i><b>Teleconsultas</b><span>Agrónomos</span></button>
-          <button onclick="adminAbrirSubpanel('operacion-catalogo',this)"><i class="ti ti-building-store"></i><b>Catálogo</b><span>AgroTienda</span></button>
         </div>
         <div class="admin-module-intro" data-admin-intro="operacion"><i class="ti ti-hand-click"></i><b>Selecciona una operación</b><span>Los registros se cargan únicamente cuando los solicites.</span></div>
 
@@ -1726,17 +1764,69 @@ html[data-theme="dark"] .admin-module-intro{background:rgba(20,38,28,.5)}
           <div id="admin-soltele-list" class="admin-results-grid"></div>
         </div>
 
-        <div id="admin-sub-operacion-catalogo" class="admin-subpanel" data-parent="operacion">
-          <div class="admin-panel-head"><div><span>AGROTIENDA</span><h3>Catálogo de productos</h3></div><button onclick="toggleNuevoProductoForm()"><i class="ti ti-plus"></i> Nuevo producto</button></div>
-          <div class="fform admin-inline-form" id="admin-nuevo-producto-form" style="display:none">
-            <div class="fgrp"><label>Nombre</label><input type="text" id="np-nombre" placeholder="Ej. NUTRICAMPUS"></div>
-            <div class="frow2"><div class="fgrp"><label>Categoría</label><select id="np-categoria"><option value="campushbc">Línea CampusHBC</option><option value="semillas">Semillas</option><option value="insecticidas">Insecticidas</option></select></div><div class="fgrp"><label>Precio (COP)</label><input type="number" id="np-precio" placeholder="95000"></div></div>
-            <div class="frow2"><div class="fgrp"><label>Unidad</label><input type="text" id="np-unidad" placeholder="por bulto 50kg"></div><div class="fgrp"><label>Ícono</label><select id="np-icono"><option value="ti-flask">Frasco</option><option value="ti-shovel">Bulto sólido</option><option value="ti-droplet">Líquido</option><option value="ti-seedling">Semilla/raíz</option></select></div></div>
-            <div class="fgrp"><label>Descripción corta</label><input type="text" id="np-desc" placeholder="Qué hace este producto"></div>
-            <button class="admin-primary-action" onclick="crearProductoAdmin()"><i class="ti ti-check"></i> Agregar al catálogo</button>
+
+      </section>
+
+      <section data-admin-module="agrotienda" class="admin-module-shell admin-module-hidden">
+        <div class="admin-module-cover cover-agrotienda">
+          <div><span>COMERCIO AGRÍCOLA</span><h2>AgroTienda</h2><p>Administra el catálogo que ven los usuarios: crea productos, organiza categorías y actualiza precios desde un solo lugar.</p></div>
+          <i class="ti ti-building-store"></i>
+        </div>
+
+        <div class="agrostore-admin-grid">
+          <article class="agrostore-admin-stat">
+            <div class="agrostore-admin-stat-icon"><i class="ti ti-package"></i></div>
+            <div><span>Productos publicados</span><strong id="admin-store-products-count">0</strong></div>
+          </article>
+          <article class="agrostore-admin-stat">
+            <div class="agrostore-admin-stat-icon gold"><i class="ti ti-category"></i></div>
+            <div><span>Categorías</span><strong id="admin-store-categories-count">0</strong></div>
+          </article>
+          <button class="agrostore-new-product" onclick="abrirNuevoProductoAdmin()">
+            <i class="ti ti-plus"></i>
+            <span><b>Agregar producto</b><small>Crear y publicar en AgroTienda</small></span>
+          </button>
+        </div>
+
+        <div class="agrostore-admin-panel">
+          <div class="admin-panel-head">
+            <div><span>CATÁLOGO</span><h3>Productos de AgroTienda</h3></div>
+            <button onclick="abrirNuevoProductoAdmin()"><i class="ti ti-plus"></i> Nuevo producto</button>
           </div>
-          <div class="admin-filterbar"><input type="text" id="np-nueva-cat" placeholder="Nueva categoría, ej. Bioinsumos"><button onclick="crearCategoriaAdmin()"><i class="ti ti-plus"></i> Agregar categoría</button></div>
-          <div id="admin-productos-list" class="admin-results-grid"></div>
+
+          <div class="agrostore-create-card" id="admin-nuevo-producto-form" style="display:none">
+            <div class="agrostore-create-head">
+              <div class="agrostore-create-icon"><i class="ti ti-package-import"></i></div>
+              <div><span>NUEVO PRODUCTO</span><h4>Publicar en AgroTienda</h4><p>Completa solo la información necesaria para mostrarlo de forma clara al usuario.</p></div>
+              <button type="button" class="agrostore-close" onclick="cerrarNuevoProductoAdmin()" aria-label="Cerrar"><i class="ti ti-x"></i></button>
+            </div>
+            <div class="agrostore-form-grid">
+              <div class="fgrp agrostore-wide"><label>Nombre del producto</label><input type="text" id="np-nombre" placeholder="Ej. NUTRICAMPUS"></div>
+              <div class="fgrp"><label>Categoría</label><select id="np-categoria"></select></div>
+              <div class="fgrp"><label>Precio (COP)</label><input type="number" id="np-precio" min="0" step="100" placeholder="95000"></div>
+              <div class="fgrp"><label>Presentación / unidad</label><input type="text" id="np-unidad" placeholder="Ej. bulto 50 kg"></div>
+              <div class="fgrp"><label>Icono visual</label><select id="np-icono"><option value="ti-flask">Frasco</option><option value="ti-shovel">Bulto sólido</option><option value="ti-droplet">Líquido</option><option value="ti-seedling">Semilla / raíz</option><option value="ti-package">Producto general</option></select></div>
+              <div class="fgrp agrostore-wide"><label>Descripción corta</label><textarea id="np-desc" rows="3" placeholder="Explica en una frase qué hace este producto y para qué sirve."></textarea></div>
+            </div>
+            <div class="agrostore-create-actions">
+              <button class="admin-primary-action" onclick="crearProductoAdmin()"><i class="ti ti-check"></i> Publicar producto</button>
+              <button class="admin-secondary-action" onclick="cerrarNuevoProductoAdmin()">Cancelar</button>
+            </div>
+          </div>
+
+          <div class="agrostore-category-card">
+            <div>
+              <span>CATEGORÍAS</span>
+              <h4>Organiza el catálogo</h4>
+              <p>Crea una categoría nueva y úsala inmediatamente al publicar productos.</p>
+            </div>
+            <div class="agrostore-category-action">
+              <input type="text" id="np-nueva-cat" placeholder="Ej. Bioinsumos">
+              <button onclick="crearCategoriaAdmin()"><i class="ti ti-plus"></i> Agregar</button>
+            </div>
+          </div>
+
+          <div id="admin-productos-list" class="agrostore-products-grid"></div>
         </div>
       </section>
 
@@ -4258,6 +4348,7 @@ function adminMostrarModulo(modulo){
   if(modulo==='resumen')renderAdminDashboard();
   if(modulo==='alertas')renderAdminNotificaciones();
   if(modulo==='formacion')renderAdminMatriculasCursos();
+  if(modulo==='agrotienda'){sincronizarCategoriasAdminTienda();renderAdminProductos();}
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function adminAbrirSubpanel(id,btn){
@@ -4278,7 +4369,6 @@ function adminCargarSubpanel(id){
     'operacion-laboratorio':()=>renderAdminSolLab(),
     'operacion-conversaciones':()=>renderAdminConversacionesLab(),
     'operacion-teleconsultas':()=>renderAdminSolTele(),
-    'operacion-catalogo':()=>renderAdminProductos(),
     'suscripciones-planes':()=>renderAdminSuscripciones(),
     'suscripciones-retencion':()=>renderAdminRetencionV8C2(),
     'suscripciones-pagos':()=>renderAdminPagos(),
@@ -4595,9 +4685,26 @@ async function rechazarAgronomo(id){
   catch(e){alert('No se pudo rechazar: '+e.message);}
 }
 
+function sincronizarCategoriasAdminTienda(){
+  const sel=document.getElementById('np-categoria');if(!sel)return;
+  const actual=sel.value;
+  sel.innerHTML=CATEGORIAS.map(cat=>'<option value="'+escapeHtml(cat.id)+'">'+escapeHtml(cat.label)+'</option>').join('');
+  if(actual&&CATEGORIAS.some(cat=>cat.id===actual))sel.value=actual;
+  const pc=document.getElementById('admin-store-products-count');if(pc)pc.textContent=PRODUCTS.length;
+  const cc=document.getElementById('admin-store-categories-count');if(cc)cc.textContent=CATEGORIAS.length;
+}
+function abrirNuevoProductoAdmin(){
+  sincronizarCategoriasAdminTienda();
+  const f=document.getElementById('admin-nuevo-producto-form');if(f)f.style.display='block';
+  document.getElementById('np-nombre')?.focus();
+}
+function cerrarNuevoProductoAdmin(){
+  const f=document.getElementById('admin-nuevo-producto-form');if(f)f.style.display='none';
+}
 function toggleNuevoProductoForm(){
-  const f=document.getElementById('admin-nuevo-producto-form');
-  f.style.display=f.style.display==='none'?'flex':'none';
+  const f=document.getElementById('admin-nuevo-producto-form');if(!f)return;
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display!=='none')sincronizarCategoriasAdminTienda();
 }
 
 async function crearProductoAdmin(){
@@ -4626,7 +4733,7 @@ async function crearProductoAdmin(){
   guardarEstado();
   renderProducts();
   renderAdminProductos();
-  toggleNuevoProductoForm();
+  cerrarNuevoProductoAdmin();
 }
 
 async function crearCategoriaAdmin(){
@@ -4640,29 +4747,37 @@ async function crearCategoriaAdmin(){
       .catch(e=>console.warn('No se pudo crear la categoría en el backend:',e.message));
   }
   CATEGORIAS.push({id,label:nombre});
-  const opt=document.createElement('option');
-  opt.value=id;opt.textContent=nombre;
-  document.getElementById('np-categoria').appendChild(opt);
   input.value='';
   guardarEstado();
+  sincronizarCategoriasAdminTienda();
   renderProducts();
 }
 
 function renderAdminProductos(){
-  const wrap=document.getElementById('admin-productos-list');
-  if(!wrap)return;
+  const wrap=document.getElementById('admin-productos-list');if(!wrap)return;
+  sincronizarCategoriasAdminTienda();
+  if(!PRODUCTS.length){
+    wrap.innerHTML='<div class="agrostore-empty"><i class="ti ti-package-off"></i><b>Aún no hay productos</b><span>Usa “Agregar producto” para publicar el primero en AgroTienda.</span></div>';
+    return;
+  }
   wrap.innerHTML=PRODUCTS.map(p=>`
-    <div class="applog-row">
-      <div class="applog-ico"><i class="ti ${p.icon}"></i></div>
-      <div style="flex:1">
-        <div class="applog-name">${p.name}</div>
-        <div class="applog-meta">${p.tag}</div>
+    <article class="agrostore-product-admin-card">
+      <div class="agrostore-product-icon"><i class="ti ${p.icon||'ti-package'}"></i></div>
+      <div class="agrostore-product-info">
+        <span>${escapeHtml(p.tag||'AgroTienda')}</span>
+        <h4>${escapeHtml(p.name)}</h4>
+        <p>${escapeHtml(p.desc||'Sin descripción registrada.')}</p>
+        <small>${escapeHtml(p.unit||'por unidad')}</small>
       </div>
-      <input type="number" value="${p.price}" onchange="editarPrecioAdmin('${p.id}',this.value)" style="width:80px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:6px;padding:5px 6px;font-size:11px;font-family:inherit;color:var(--color-text-primary)">
-      <button onclick="eliminarProductoAdmin('${p.id}')" style="background:none;border:none;color:#c62828;cursor:pointer;padding:4px;font-size:16px;font-weight:600;line-height:1" aria-label="Eliminar producto">×</button>
-    </div>`).join('');
+      <div class="agrostore-product-price">
+        <label>Precio COP</label>
+        <input type="number" value="${Number(p.price||0)}" onchange="editarPrecioAdmin('${p.id}',this.value)">
+      </div>
+      <div class="agrostore-product-actions">
+        <button class="danger" onclick="eliminarProductoAdmin('${p.id}')" title="Eliminar producto"><i class="ti ti-trash"></i></button>
+      </div>
+    </article>`).join('');
 }
-
 function editarPrecioAdmin(id,valor){
   const p=PRODUCTS.find(x=>x.id===id);
   if(!p)return;
@@ -5277,7 +5392,7 @@ document.getElementById('admin-usuarios-filtro')?.addEventListener('change',rend
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js?v=20',{updateViaCache:'none'}).catch(error => {
+    navigator.serviceWorker.register('/sw.js?v=21',{updateViaCache:'none'}).catch(error => {
       console.warn('No se pudo registrar el service worker:', error);
     });
   });
